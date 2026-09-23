@@ -1,0 +1,67 @@
+FOB GRAPH BACKEND INTEGRATION REQUIREMENTS
+========================================
+
+To connect the FOB People Count graphs (HYB and KZJ) to the backend, we need a new API endpoint that provides historical footfall data.
+
+1. API ENDPOINT REQUIRED
+------------------------
+Endpoint:   GET /api/analytics/fob/history
+Method:     GET
+Description: Fetches historical people count data for a specific FOB over a time range.
+
+Query Parameters:
+  - fob_id:   (Required) String. The ID of the FOB (e.g., "HYB" or "KZJ").
+  - start:    (Required) ISO Timestamp. Start of the requested period.
+  - end:      (Required) ISO Timestamp. End of the requested period.
+  - interval: (Optional) String. Data resolution (e.g., "1m", "5m", "1h", "1d"). 
+              This helps reduce payload size for long ranges (e.g., request "1h" interval for "30 days" data).
+
+2. EXPECTED JSON RESPONSE FORMAT
+--------------------------------
+The backend should return a JSON object containing an array of data points.
+
+{
+  "status": "success",
+  "fob_id": "HYB",
+  "interval": "5m",
+  "data": [
+    {
+      "timestamp": "2024-01-08T10:00:00Z",
+      "count": 145
+    },
+    {
+      "timestamp": "2024-01-08T10:05:00Z",
+      "count": 162
+    },
+    {
+      "timestamp": "2024-01-08T10:10:00Z",
+      "count": 150
+    }
+  ]
+}
+
+3. FRONTEND INTEGRATION LOGIC
+-----------------------------
+Current State:
+The frontend currently uses a `getSimulatedCount()` function to generate fake data locally.
+
+Required Change:
+In `src/components/dashboard/FOBPeopleCountChart.tsx`, inside the `useEffect` hook, we will replace the simulation logic with a `fetch()` call to this new endpoint.
+
+Example Frontend Fetch Code:
+----------------------------
+const fetchFobHistory = async () => {
+  const response = await fetch(
+    `/api/analytics/fob/history?fob_id=${fobId}&start=${startTime}&end=${endTime}&interval=${selectedRange.interval}`
+  );
+  const result = await response.json();
+  
+  // Map backend response to chart format
+  const chartData = result.data.map(item => ({
+    timestamp: new Date(item.timestamp),
+    count: item.count,
+    time: formatTime(item.timestamp) // Helper to format "10:00 AM"
+  }));
+  
+  setData(chartData);
+};

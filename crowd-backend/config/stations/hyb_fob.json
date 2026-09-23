@@ -1,0 +1,136 @@
+{
+  "station_id": "HYB",
+  "station_name": "Hyderabad Railway Station",
+  "layout_name": "FOB (Foot Over Bridge)",
+  "layout_version": "v1",
+  "description": "Camera-to-zone mapping for HYB FOB surveillance system",
+  "zones": [
+    {
+      "zone_id": "pf1_fob_kzj",
+      "zone_name": "PF1 FOB - KZJ Side",
+      "svg_region_id": "zone_pf1_fob_kzj",
+      "zone_type": "FOB",
+      "display_order": 1,
+      "description": "Platform 1 FOB section facing Kazipet direction"
+    },
+    {
+      "zone_id": "pf1_fob_hyb_end",
+      "zone_name": "PF1 FOB - HYB END",
+      "svg_region_id": "zone_pf1_fob_hyb_end",
+      "zone_type": "FOB",
+      "display_order": 2,
+      "description": "Platform 1 FOB section at Hyderabad end"
+    },
+    {
+      "zone_id": "pf1_fob_pf10",
+      "zone_name": "PF1 FOB - PF10 Side",
+      "svg_region_id": "zone_pf1_fob_pf10",
+      "zone_type": "FOB",
+      "display_order": 3,
+      "description": "Platform 1 FOB section facing Platform 10"
+    },
+    {
+      "zone_id": "middle_fob_4_5",
+      "zone_name": "Middle FOB - 4&5",
+      "svg_region_id": "zone_middle_fob_4_5",
+      "zone_type": "FOB",
+      "display_order": 4,
+      "description": "Middle FOB section between platforms 4 and 5"
+    },
+    {
+      "zone_id": "middle_fob_6_7",
+      "zone_name": "Middle FOB - 6&7",
+      "svg_region_id": "zone_middle_fob_6_7",
+      "zone_type": "FOB",
+      "display_order": 5,
+      "description": "Middle FOB section between platforms 6 and 7"
+    },
+    {
+      "zone_id": "pf10_fob_pf1",
+      "zone_name": "PF10 FOB - PF1 Side",
+      "svg_region_id": "zone_pf10_fob_pf1",
+      "zone_type": "FOB",
+      "display_order": 6,
+      "description": "Platform 10 FOB section facing Platform 1"
+    },
+    {
+      "zone_id": "pf10_fob_steps",
+      "zone_name": "PF10 FOB - HYB Steps",
+      "svg_region_id": "zone_pf10_fob_steps",
+      "zone_type": "STAIRS",
+      "display_order": 7,
+      "description": "Platform 10 FOB stairs at Hyderabad side"
+    },
+    {
+      "zone_id": "pf10_fob_vip",
+      "zone_name": "PF10 FOB - VIP Entry",
+      "svg_region_id": "zone_pf10_fob_vip",
+      "zone_type": "ENTRY",
+      "display_order": 8,
+      "description": "Platform 10 FOB VIP entry point"
+    },
+    {
+      "zone_id": "pf1_fob_lift",
+      "zone_name": "PF1 FOB - Lift",
+      "svg_region_id": "zone_pf1_fob_lift",
+      "zone_type": "LIFT",
+      "display_order": 9,
+      "description": "Platform 1 FOB lift/elevator area"
+    }
+  ],
+  "camera_mappings": [
+    {
+      "camera_name": "HYB FOB FACING PF 10",
+      "zone_id": "pf1_fob_kzj",
+      "notes": "Camera facing Kazipet direction on PF1 FOB"
+    },
+    {
+      "camera_name": "PF 1 HYB FOB FC HYB END",
+      "zone_id": "pf1_fob_hyb_end",
+      "notes": "Camera at Hyderabad end of PF1 FOB"
+    },
+    {
+      "camera_name": "PF 1 HYB FOB FC PF 10",
+      "zone_id": "pf1_fob_pf10",
+      "notes": "Camera facing PF10 on PF1 FOB"
+    },
+    {
+      "camera_name": "HYB FOB MIDD FC 4&5",
+      "zone_id": "middle_fob_4_5",
+      "notes": "Camera in middle FOB section between platforms 4-5"
+    },
+    {
+      "camera_name": "HYB FOB MIDD FC 6&7",
+      "zone_id": "middle_fob_6_7",
+      "notes": "Camera in middle FOB section between platforms 6-7"
+    },
+    {
+      "camera_name": "PF 10 HYB FOB FC PF1",
+      "zone_id": "pf10_fob_pf1",
+      "notes": "Camera facing PF1 on PF10 FOB"
+    },
+    {
+      "camera_name": "PF 10 HYB FOB FC HYB STEPS",
+      "zone_id": "pf10_fob_steps",
+      "notes": "Camera at Hyderabad side steps on PF10 FOB"
+    },
+    {
+      "camera_name": "PF 10 HYB FOB FC VIP ENTR",
+      "zone_id": "pf10_fob_vip",
+      "notes": "Camera at VIP entry on PF10 FOB"
+    },
+    {
+      "camera_name": "PF 1 HYB FOB LIFT",
+      "zone_id": "pf1_fob_lift",
+      "notes": "Camera at lift/elevator on PF1 FOB"
+    }
+  ],
+  "svg_color_mapping": {
+    "LOW": "#22c55e",
+    "MEDIUM": "#f97316",
+    "HIGH": "#ef4444",
+    "CRITICAL": "#dc2626"
+  },
+  "created_at": "2025-12-30",
+  "updated_at": "2025-12-30"
+}

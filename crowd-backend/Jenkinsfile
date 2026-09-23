@@ -1,0 +1,322 @@
+pipeline {
+    agent any
+
+    triggers {
+        githubPush()
+    }
+
+    parameters {
+        string(
+            name: 'CONFIG_FILE_ID',
+            defaultValue: 'f31f9598-c68d-45a1-b847-c62226446425',
+            description: 'Jenkins Config File Provider ID'
+        )
+    }
+
+    options {
+        timestamps()
+        timeout(time: 2, unit: 'HOURS')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    stages {
+        stage('Load Config') {
+            steps {
+                configFileProvider([configFile(fileId: params.CONFIG_FILE_ID, variable: 'PROJECT_ENV_FILE')]) {
+                    script {
+                        def config = readProperties(file: env.PROJECT_ENV_FILE)
+                        def required = [
+                            'APP_NAME',
+                            'AWS_REGION',
+                            'ECR_REGISTRY',
+                            'ECR_REPOSITORY',
+                            'ECS_CLUSTER',
+                            'ECS_SERVICE',
+                            'ECS_TASK_DEFINITION',
+                            'ECS_EXECUTION_ROLE_ARN',
+                            'ECS_TASK_ROLE_ARN',
+                            'ECS_LOG_GROUP',
+                            'SECRETS_BUNDLE_ARN'
+                        ]
+                        def missing = required.findAll { !config[it]?.toString()?.trim() }
+                        if (missing) {
+                            error "Missing required config values: ${missing.join(', ')}"
+                        }
+                        config.each { key, value ->
+                            env."${key}" = value.toString().trim()
+                        }
+                        env.AWS_DEFAULT_REGION = env.AWS_REGION
+                        env.DEPLOY_ENVIRONMENT = (env.DEPLOY_ENVIRONMENT ?: 'none').toLowerCase()
+                        echo "Loaded deployment config for ${env.APP_NAME}"
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'git log -1 --oneline'
+            }
+        }
+
+        stage('Tool Presence Check') {
+            steps {
+                sh '''
+                    command -v git
+                    command -v python3
+                    command -v docker
+                    command -v aws
+                '''
+            }
+        }
+
+        stage('Detect Project Type') {
+            steps {
+                script {
+                    if (!fileExists('requirements.txt')) {
+                        error 'Python project requirements.txt was not found.'
+                    }
+                    env.PROJECT_TYPE = fileExists('package.json') ? 'python-and-node' : 'python'
+                    echo "Detected project type: ${env.PROJECT_TYPE}"
+                }
+            }
+        }
+
+        stage('Versioning') {
+            steps {
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: 'git rev-parse --short=7 HEAD',
+                        returnStdout: true
+                    ).trim()
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
+                    echo "Building image tag: ${env.IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Lint and Test') {
+            parallel {
+                stage('Client Build') {
+                    when {
+                        expression { fileExists('package.json') }
+                    }
+                    steps {
+                        sh '''
+                            npm ci
+                            npm run build
+                        '''
+                    }
+                }
+
+                stage('Server Build and Test') {
+                    steps {
+                        sh '''
+                            python3 -m venv .venv
+                            . .venv/bin/activate
+                            python -m pip install --upgrade pip
+                            python -m pip install -r requirements.txt
+                            python -m compileall -q api config db models modules services utils
+                            python -m pytest -q --import-mode=importlib tests
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Static Analysis') {
+            parallel {
+                stage('SonarQube') {
+                    when {
+                        expression { env.SONAR_HOST_URL?.trim() }
+                    }
+                    steps {
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            script {
+                                def scannerHome = tool 'SonarScanner'
+                                withEnv(["SONAR_SCANNER_HOME=${scannerHome}"]) {
+                                    sh '''
+                                        "$SONAR_SCANNER_HOME/bin/sonar-scanner" \
+                                            -Dsonar.host.url="$SONAR_HOST_URL" \
+                                            -Dsonar.token="$SONAR_TOKEN" \
+                                            -Dsonar.projectKey="$JOB_BASE_NAME" \
+                                            -Dsonar.projectName="$JOB_BASE_NAME" \
+                                            -Dsonar.sources=.
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Dependency Check') {
+                    steps {
+                        sh '''
+                            . .venv/bin/activate
+                            python -m pip check
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Check ECR Repositories') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    sh '''
+                        aws ecr describe-repositories \
+                            --repository-name "$ECR_REPOSITORY" \
+                            --region "$AWS_REGION" >/dev/null
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Build and Push') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    sh '''
+                        aws ecr get-login-password --region "$AWS_REGION" | \
+                            docker login --username AWS --password-stdin "$ECR_REGISTRY"
+                        docker build \
+                            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+                            -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" .
+                        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+                    '''
+                }
+            }
+        }
+
+        stage('Container Security Scan') {
+            steps {
+                sh '''
+                    command -v trivy
+                    trivy image --exit-code 1 --severity HIGH,CRITICAL \
+                        "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                '''
+            }
+        }
+
+        stage('Approve Production') {
+            when {
+                expression { env.DEPLOY_ENVIRONMENT in ['production', 'prod'] }
+            }
+            steps {
+                input message: "Deploy build ${env.BUILD_NUMBER} to production?", ok: 'Deploy'
+            }
+        }
+
+        stage('Deploy to Dev') {
+            when {
+                expression { env.DEPLOY_ENVIRONMENT == 'dev' }
+            }
+            steps {
+                script {
+                    deployToEcs()
+                }
+            }
+        }
+
+        stage('Deploy to QA') {
+            when {
+                expression { env.DEPLOY_ENVIRONMENT == 'qa' }
+            }
+            steps {
+                script {
+                    deployToEcs()
+                }
+            }
+        }
+
+        stage('Deploy to UAT') {
+            when {
+                expression { env.DEPLOY_ENVIRONMENT == 'uat' }
+            }
+            steps {
+                script {
+                    deployToEcs()
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                expression { env.DEPLOY_ENVIRONMENT in ['production', 'prod'] }
+            }
+            steps {
+                script {
+                    deployToEcs()
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'task-definition.json', allowEmptyArchive: true
+            cleanWs(deleteDirs: true, notFailBuild: true)
+        }
+        success {
+            echo "${env.APP_NAME} pipeline completed successfully."
+        }
+        failure {
+            echo "${env.APP_NAME} pipeline failed. Check the Jenkins console."
+        }
+    }
+}
+
+def deployToEcs() {
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+        sh '''
+            set -e
+            test -f ecs-task-definition.json
+            python3 - <<'PY'
+import json
+import os
+
+with open('ecs-task-definition.json', encoding='utf-8') as file:
+    task_definition = json.load(file)
+
+values = {
+    '__IMAGE_URI__': f"{os.environ['ECR_REGISTRY']}/{os.environ['ECR_REPOSITORY']}:{os.environ['IMAGE_TAG']}",
+    '__ECS_EXECUTION_ROLE_ARN__': os.environ['ECS_EXECUTION_ROLE_ARN'],
+    '__ECS_TASK_ROLE_ARN__': os.environ['ECS_TASK_ROLE_ARN'],
+    '__ECS_LOG_GROUP__': os.environ['ECS_LOG_GROUP'],
+    '__AWS_REGION__': os.environ['AWS_REGION'],
+    '__SECRETS_BUNDLE_ARN__': os.environ['SECRETS_BUNDLE_ARN'],
+}
+
+def render(value):
+    if isinstance(value, dict):
+        return {key: render(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [render(item) for item in value]
+    if isinstance(value, str):
+        for placeholder, replacement in values.items():
+            value = value.replace(placeholder, replacement)
+    return value
+
+with open('task-definition.json', 'w', encoding='utf-8') as file:
+    json.dump(render(task_definition), file)
+PY
+            TASK_DEFINITION_ARN=$(aws ecs register-task-definition \
+                --region "$AWS_REGION" \
+                --cli-input-json file://task-definition.json \
+                --query 'taskDefinition.taskDefinitionArn' \
+                --output text)
+            aws ecs update-service \
+                --region "$AWS_REGION" \
+                --cluster "$ECS_CLUSTER" \
+                --service "$ECS_SERVICE" \
+                --task-definition "$TASK_DEFINITION_ARN" \
+                --force-new-deployment
+            aws ecs wait services-stable \
+                --region "$AWS_REGION" \
+                --cluster "$ECS_CLUSTER" \
+                --services "$ECS_SERVICE"
+        '''
+    }
+}

@@ -1,0 +1,257 @@
+{
+    "HYB": {
+        "station_id": "HYB",
+        "station_name": "Hyderabad Railway Station",
+        "layout_name": "FOB (Foot Over Bridge)",
+        "layout_version": "v2",
+        "description": "Camera-to-zone mapping for HYB FOB surveillance system",
+        "zones": [
+            {
+                "zone_id": "zone_pf1_fob_kzj",
+                "zone_name": "PF 1 HYB FOB FC KZJ Steps",
+                "svg_region_id": "zone_pf1_fob_kzj",
+                "zone_type": "FOB",
+                "display_order": 1,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "top",
+                    "x": 250,
+                    "y": 50
+                },
+                "description": "Platform 1 FOB section facing Kazipet (shown in SVG)"
+            },
+            {
+                "zone_id": "zone_pf1_hyb_fob_fc_pf10",
+                "zone_name": "PF 1 HYB FOB FC PF 10",
+                "svg_region_id": "zone_pf1_hyb_fob_fc_pf10",
+                "zone_type": "FOB",
+                "display_order": 2,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "middle",
+                    "x": 250,
+                    "y": 190
+                },
+                "description": "Platform 1 FOB section facing Platform 10"
+            },
+            {
+                "zone_id": "zone_pf1_fob_hyb_end",
+                "zone_name": "PF 1 HYB FOB FC HYB END Steps",
+                "svg_region_id": "zone_pf1_fob_hyb_end",
+                "zone_type": "FOB",
+                "display_order": 3,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "bottom",
+                    "x": 250,
+                    "y": 330
+                },
+                "description": "Platform 1 FOB section at Hyderabad end"
+            },
+            {
+                "zone_id": "zone_middle_fob_4_5",
+                "zone_name": "HYB FOB MIDD FC 4&5",
+                "svg_region_id": "zone_middle_fob_4_5",
+                "zone_type": "FOB",
+                "display_order": 4,
+                "position": {
+                    "section": "MIDDLE",
+                    "location": "center-left",
+                    "vertical": "top",
+                    "x": 470,
+                    "y": 190
+                },
+                "description": "Middle FOB section between platforms 4 and 5"
+            },
+            {
+                "zone_id": "zone_middle_fob_6_7",
+                "zone_name": "HYB FOB MIDD FC 6&7",
+                "svg_region_id": "zone_middle_fob_6_7",
+                "zone_type": "FOB",
+                "display_order": 5,
+                "position": {
+                    "section": "MIDDLE",
+                    "location": "center-right",
+                    "vertical": "top",
+                    "x": 690,
+                    "y": 190
+                },
+                "description": "Middle FOB section between platforms 6 and 7"
+            },
+            {
+                "zone_id": "zone_pf10_hyb_fob_fc_pf1",
+                "zone_name": "PF 10 HYB FOB FC PF1",
+                "svg_region_id": "zone_pf10_hyb_fob_fc_pf1",
+                "zone_type": "FOB",
+                "display_order": 6,
+                "position": {
+                    "section": "PF-10",
+                    "location": "right",
+                    "vertical": "middle",
+                    "x": 910,
+                    "y": 190
+                },
+                "description": "Platform 10 FOB section facing Platform 1"
+            },
+            {
+                "zone_id": "zone_pf10_fob_steps",
+                "zone_name": "PF 10 HYB FOB FC HYB STEPS",
+                "svg_region_id": "zone_pf10_fob_steps",
+                "zone_type": "STAIRS",
+                "display_order": 7,
+                "position": {
+                    "section": "PF-10",
+                    "location": "right",
+                    "vertical": "bottom",
+                    "x": 910,
+                    "y": 330
+                },
+                "description": "Platform 10 FOB stairs area"
+            },
+            {
+                "zone_id": "zone_pf10_fob_vip",
+                "zone_name": "PF 10 HYB FOB FC VIP ENTRANCE",
+                "svg_region_id": "zone_pf10_fob_vip",
+                "zone_type": "VIP",
+                "display_order": 8,
+                "position": {
+                    "section": "PF-10",
+                    "location": "right",
+                    "vertical": "top",
+                    "x": null,
+                    "y": null
+                },
+                "description": "Platform 10 VIP entrance area (shown in summary card only)"
+            },
+            {
+                "zone_id": "zone_pf1_fob_lift",
+                "zone_name": "PF 1 HYB FOB LIFT",
+                "svg_region_id": "zone_pf1_fob_lift",
+                "zone_type": "LIFT",
+                "display_order": 9,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "top",
+                    "x": null,
+                    "y": null
+                },
+                "description": "Platform 1 FOB lift area (shown in summary card only, shares SVG with zone_pf1_fob_kzj)"
+            }
+        ],
+        "svg_color_mapping": {
+            "LOW": "#22c55e",
+            "MEDIUM": "#f59e0b",
+            "HIGH": "#ef4444",
+            "CRITICAL": "#dc2626"
+        }
+    },
+    "KZJ": {
+        "station_id": "KZJ",
+        "station_name": "Kazipet Railway Station",
+        "layout_name": "FOB (Foot Over Bridge)",
+        "layout_version": "v2",
+        "description": "Camera-to-zone mapping for KZJ FOB surveillance system",
+        "zones": [
+            {
+                "zone_id": "zone_pf1_kzj_fob_fc_kzj",
+                "zone_name": "PF 1 KZJ FOB FC KZJ Steps",
+                "svg_region_id": "zone_pf1_kzj_fob_fc_kzj",
+                "zone_type": "FOB",
+                "display_order": 1,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "top",
+                    "x": 250,
+                    "y": 50
+                },
+                "description": "Platform 1 FOB section facing Kazipet"
+            },
+            {
+                "zone_id": "zone_new_kzj_fob_middle_fc_pf10",
+                "zone_name": "PF 1 KZJ FOB FC PF 10",
+                "svg_region_id": "zone_new_kzj_fob_middle_fc_pf10",
+                "zone_type": "FOB",
+                "display_order": 2,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "middle",
+                    "x": 250,
+                    "y": 190
+                },
+                "description": "Platform 1 FOB section facing Platform 10"
+            },
+            {
+                "zone_id": "zone_pf1_kzj_fob_fc_hyb",
+                "zone_name": "PF 1 KZJ FOB FC HYB END Steps",
+                "svg_region_id": "zone_pf1_kzj_fob_fc_hyb",
+                "zone_type": "FOB",
+                "display_order": 3,
+                "position": {
+                    "section": "PF-1",
+                    "location": "left",
+                    "vertical": "bottom",
+                    "x": 250,
+                    "y": 330
+                },
+                "description": "Platform 1 FOB section facing Hyderabad end"
+            },
+            {
+                "zone_id": "zone_kzj_fob_middle_fc_4_5",
+                "zone_name": "KZJ FOB MIDD FC 4&5",
+                "svg_region_id": "zone_kzj_fob_middle_fc_4_5",
+                "zone_type": "FOB",
+                "display_order": 4,
+                "position": {
+                    "section": "MIDDLE",
+                    "location": "center-left",
+                    "vertical": "top",
+                    "x": 470,
+                    "y": 190
+                },
+                "description": "Middle FOB section above PF 2/3 and 4/5"
+            },
+            {
+                "zone_id": "zone_kzj_fob_middle_fc_8_9",
+                "zone_name": "KZJ FOB MIDD FC 8&9",
+                "svg_region_id": "zone_kzj_fob_middle_fc_8_9",
+                "zone_type": "FOB",
+                "display_order": 5,
+                "position": {
+                    "section": "MIDDLE",
+                    "location": "center-right",
+                    "vertical": "top",
+                    "x": 690,
+                    "y": 190
+                },
+                "description": "Middle FOB section above PF 6/7 and 8/9"
+            },
+            {
+                "zone_id": "zone_kzj_fob_escalator_fc_pf1",
+                "zone_name": "PF 10 KZJ FOB ESCL FC PF1",
+                "svg_region_id": "zone_kzj_fob_escalator_fc_pf1",
+                "zone_type": "ESCALATOR",
+                "display_order": 6,
+                "position": {
+                    "section": "PF-10",
+                    "location": "right",
+                    "vertical": "middle",
+                    "x": 910,
+                    "y": 190
+                },
+                "description": "Platform 10 escalator zone facing Platform 1"
+            }
+        ],
+        "svg_color_mapping": {
+            "LOW": "#22c55e",
+            "MEDIUM": "#f59e0b",
+            "HIGH": "#ef4444",
+            "CRITICAL": "#dc2626"
+        }
+    }
+}

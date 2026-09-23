@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.claude/
+
+# Virtual environments
+venv/
+env/
+ENV/
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data
+docs/
+mdfiles/
+data/*
+data/uploads/*
+data/outputs/*
+data/heatmaps/*
+data/analytics/*
+data/weights/*
+data/images/*
+!data/uploads/.gitkeep
+!data/outputs/.gitkeep
+!data/heatmaps/.gitkeep
+!data/analytics/.gitkeep
+
+# Models
+# data/weights/*.pth
+# data/weights/*.pt
+# *.pkl
+*.pt
+# Logs
+logs/
+*.log
+data-drive/
+
+# Environment
+.env
+production.env
+k3s/stack/secrets.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+yolov8n.pt
+_tmp_pet_upstream/
+config/firebase-service-account.json
+scratch/test_*.py

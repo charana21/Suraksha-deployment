@@ -1,0 +1,59 @@
+{
+  "family": "crowd-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "__ECS_EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__ECS_TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "__IMAGE_URI__",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "80"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "MONGODB_URI",
+          "valueFrom": "__SECRETS_BUNDLE_ARN__:MONGODB_URI::"
+        },
+        {
+          "name": "MSG91_AUTH_KEY",
+          "valueFrom": "__SECRETS_BUNDLE_ARN__:MSG91_AUTH_KEY::"
+        },
+        {
+          "name": "MSG91_WHATSAPP_NUMBER",
+          "valueFrom": "__SECRETS_BUNDLE_ARN__:MSG91_WHATSAPP_NUMBER::"
+        },
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "valueFrom": "__SECRETS_BUNDLE_ARN__:AWS_ACCESS_KEY_ID::"
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "valueFrom": "__SECRETS_BUNDLE_ARN__:AWS_SECRET_ACCESS_KEY::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "__ECS_LOG_GROUP__",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

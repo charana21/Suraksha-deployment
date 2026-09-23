@@ -1,0 +1,76 @@
+Header styles
+.light-header thead {
+  background-color: #f1f1f1;
+  color: #000;
+}
+ 
+.dark-header thead {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+ 
+/* Thin border for table rows */
+.light-header tbody tr td {
+  border-bottom: 0.5px solid #d0d0d0 !important;
+}
+ 
+.dark-header tbody tr td {
+  border-bottom: 0.5px solid #3a3a3a !important;
+}
+ 
+/* HIDE SCROLLBARS COMPLETELY for Mantine DataTable scroll area and all children */
+.mantine-scrollArea-viewport,
+.mantine-scrollArea-root,
+.mantine-datatable-root,
+.mantine-datatable-root * {
+  /* Hide for Firefox */
+  scrollbar-width: none !important;
+  /* Hide for IE, Edge */
+  -ms-overflow-style: none !important;
+}
+ 
+/* Hide for Chrome, Safari, Opera, Edge Chromium */
+.mantine-scrollArea-viewport::-webkit-scrollbar,
+.mantine-scrollArea-root::-webkit-scrollbar,
+.mantine-datatable-root::-webkit-scrollbar,
+.mantine-datatable-root *::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+ 
+/* Hide scrollbars on hover, focus, and active as well */
+.mantine-scrollArea-viewport:hover,
+.mantine-scrollArea-viewport:focus,
+.mantine-scrollArea-viewport:active,
+.mantine-scrollArea-root:hover,
+.mantine-scrollArea-root:focus,
+.mantine-scrollArea-root:active,
+.mantine-datatable-root:hover,
+.mantine-datatable-root:focus,
+.mantine-datatable-root:active,
+.mantine-datatable-root *:hover,
+.mantine-datatable-root *:focus,
+.mantine-datatable-root *:active {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+ 
+.mantine-scrollArea-viewport:hover::-webkit-scrollbar,
+.mantine-scrollArea-viewport:focus::-webkit-scrollbar,
+.mantine-scrollArea-viewport:active::-webkit-scrollbar,
+.mantine-scrollArea-root:hover::-webkit-scrollbar,
+.mantine-scrollArea-root:focus::-webkit-scrollbar,
+.mantine-scrollArea-root:active::-webkit-scrollbar,
+.mantine-datatable-root:hover::-webkit-scrollbar,
+.mantine-datatable-root:focus::-webkit-scrollbar,
+.mantine-datatable-root:active::-webkit-scrollbar,
+.mantine-datatable-root *:hover::-webkit-scrollbar,
+.mantine-datatable-root *:focus::-webkit-scrollbar,
+.mantine-datatable-root *:active::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mediamtx
+  labels:
+    app.kubernetes.io/name: mediamtx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mediamtx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mediamtx
+    spec:
+      containers:
+        - name: mediamtx
+          image: bluenviron/mediamtx:latest
+          ports:
+            - name: rtsp
+              containerPort: 8554
+            - name: hls
+              containerPort: 8888
+            - name: webrtc
+              containerPort: 8889
+          volumeMounts:
+            - name: config
+              mountPath: /mediamtx.yml
+              subPath: mediamtx.yml
+      volumes:
+        - name: config
+          configMap:
+            name: mediamtx-config

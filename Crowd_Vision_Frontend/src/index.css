@@ -1,0 +1,761 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* =========================================================
+   THEME VARIABLES
+   ========================================================= */
+
+@layer base {
+  :root {
+    /* -------------------------
+       LIGHT THEME
+       ------------------------- */
+
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+
+    --primary: 215 90% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 25% 15%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 215 90% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 215 90% 50%;
+
+    --radius: 0.625rem;
+
+
+    /* -------------------------
+       CARD BACKGROUND TOKENS
+       ------------------------- */
+
+    --card-black-bg: 0 0% 100%;
+    --card-black-bg-50: 0 0% 100%;
+    --card-black-bg-30: 0 0% 100%;
+    --card-black-bg-10: 0 0% 100%;
+    --card-black-bg-90: 0 0% 100%;
+
+
+    /* -------------------------
+       RISK COLORS
+       ------------------------- */
+
+    --risk-low: 145 80% 42%;
+    --risk-medium: 48 95% 60%;
+    --risk-high: 0 90% 60%;
+    --risk-critical: 0 100% 45%;
+
+
+    /* -------------------------
+       STATUS COLORS
+       ------------------------- */
+
+    --status-active: 145 80% 42%;
+    --status-inactive: 220 10% 55%;
+    --status-warning: 38 95% 50%;
+
+
+    /* -------------------------
+       CHART COLORS
+       ------------------------- */
+
+    --chart-1: 215 90% 55%;
+    --chart-2: 145 80% 45%;
+    --chart-3: 38 95% 55%;
+    --chart-4: 280 70% 55%;
+    --chart-5: 340 75% 55%;
+
+
+    /* -------------------------
+       SIDEBAR
+       ------------------------- */
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 25% 10%;
+    --sidebar-primary: 215 90% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 220 25% 15%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 215 90% 50%;
+
+
+    /* -------------------------
+       FOOTFALL INSIGHTS
+       ------------------------- */
+
+    --accent-orange: 25 90% 50%;
+    --navy: 213 60% 20%;
+    --navy-foreground: 0 0% 100%;
+  }
+
+
+  /* =======================================================
+     DARK THEME
+     ======================================================= */
+
+  .dark {
+    --background: 222 25% 8%;
+    --foreground: 210 20% 98%;
+
+    --card: 222 25% 12%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 222 25% 11%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 215 90% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 20% 17%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 222 20% 15%;
+    --muted-foreground: 215 15% 72%;
+
+    --accent: 215 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 20% 24%;
+    --input: 222 20% 22%;
+    --ring: 215 90% 55%;
+
+    --radius: 0.625rem;
+
+
+    /* -------------------------
+       CARD BACKGROUND TOKENS
+       ------------------------- */
+
+    /*
+       IMPORTANT:
+       These are NOT pure black anymore.
+       This keeps Dashboard cards consistent
+       with the rest of the dark theme.
+    */
+
+    --card-black-bg: 222 25% 12%;
+    --card-black-bg-50: 222 25% 12%;
+    --card-black-bg-30: 222 25% 12%;
+    --card-black-bg-10: 222 25% 12%;
+    --card-black-bg-90: 222 25% 12%;
+
+
+    /* -------------------------
+       RISK COLORS
+       ------------------------- */
+
+    --risk-low: 145 100% 60%;
+    --risk-medium: 48 95% 60%;
+    --risk-high: 0 90% 65%;
+    --risk-critical: 0 100% 55%;
+
+
+    /* -------------------------
+       STATUS COLORS
+       ------------------------- */
+
+    --status-active: 145 75% 50%;
+    --status-inactive: 220 15% 55%;
+    --status-warning: 38 95% 55%;
+
+
+    /* -------------------------
+       CHART COLORS
+       ------------------------- */
+
+    --chart-1: 215 85% 60%;
+    --chart-2: 145 75% 55%;
+    --chart-3: 38 95% 60%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 70% 60%;
+
+
+    /* -------------------------
+       SIDEBAR
+       ------------------------- */
+
+    --sidebar-background: 225 30% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 215 85% 60%;
+    --sidebar-primary-foreground: 225 35% 6%;
+    --sidebar-accent: 225 25% 15%;
+    --sidebar-accent-foreground: 210 35% 95%;
+    --sidebar-border: 225 20% 20%;
+    --sidebar-ring: 215 85% 60%;
+
+
+    /* -------------------------
+       FOOTFALL INSIGHTS
+       ------------------------- */
+
+    --accent-orange: 25 95% 60%;
+    --navy: 225 35% 15%;
+    --navy-foreground: 210 40% 98%;
+  }
+}
+
+
+/* =========================================================
+   GLOBAL BASE STYLES
+   ========================================================= */
+
+@layer base {
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+
+    font-family: 'Outfit', system-ui, sans-serif;
+
+    font-feature-settings:
+      "cv02",
+      "cv03",
+      "cv04",
+      "cv11";
+
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+
+  /* -------------------------
+     SCROLLBAR
+     ------------------------- */
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+
+/* =========================================================
+   COMPONENT STYLES
+   ========================================================= */
+
+@layer components {
+
+
+  /* =======================================================
+     GLASS PANEL
+     ======================================================= */
+
+  .glass-panel {
+    @apply bg-card/80 backdrop-blur-xl border border-border/60 rounded-xl;
+
+    box-shadow:
+      0 4px 6px -1px hsl(0 0% 0% / 0.1),
+      0 2px 4px -2px hsl(0 0% 0% / 0.1),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+  }
+
+
+  /* =======================================================
+     STAT CARD
+     ======================================================= */
+
+  .stat-card {
+    @apply bg-card border border-border/50 rounded-xl p-5 transition-all duration-300;
+
+    box-shadow:
+      0 2px 8px -2px hsl(220 25% 10% / 0.08),
+      0 0 0 1px hsl(var(--border) / 0.5);
+  }
+
+  .stat-card:hover {
+    @apply border-border;
+
+    box-shadow:
+      0 4px 12px -2px hsl(220 25% 10% / 0.12),
+      0 0 0 1px hsl(var(--border));
+  }
+
+
+  /* =======================================================
+     CARD BLACK
+     
+     Legacy classes are kept so existing Dashboard
+     components continue working.
+     
+     They now follow the active theme.
+     ======================================================= */
+
+  .card-black {
+    background-color: hsl(var(--card-black-bg));
+    color: hsl(var(--card-foreground));
+  }
+
+  .card-black-50 {
+    background-color: hsl(var(--card-black-bg) / 0.5);
+    color: hsl(var(--card-foreground));
+  }
+
+  .card-black-30 {
+    background-color: hsl(var(--card-black-bg) / 0.3);
+    color: hsl(var(--card-foreground));
+  }
+
+  .card-black-10 {
+    background-color: hsl(var(--card-black-bg) / 0.1);
+    color: hsl(var(--card-foreground));
+  }
+
+  .card-black-90 {
+    background-color: hsl(var(--card-black-bg) / 0.9);
+    color: hsl(var(--card-foreground));
+  }
+
+
+  /* =======================================================
+     RISK BADGES
+     ======================================================= */
+
+  .risk-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase;
+  }
+
+  .risk-low {
+    @apply bg-risk-low/15 text-risk-low;
+
+    text-shadow:
+      0 0 10px hsl(var(--risk-low) / 0.3);
+  }
+
+  .risk-medium {
+    @apply bg-risk-medium/15 text-risk-medium;
+
+    text-shadow:
+      0 0 10px hsl(var(--risk-medium) / 0.3);
+  }
+
+  .risk-high {
+    @apply bg-risk-high/15 text-risk-high;
+
+    text-shadow:
+      0 0 10px hsl(var(--risk-high) / 0.3);
+  }
+
+  .risk-critical {
+    @apply bg-risk-critical/20 text-risk-critical;
+
+    text-shadow:
+      0 0 12px hsl(var(--risk-critical) / 0.4);
+
+    animation: pulse-critical 2s ease-in-out infinite;
+  }
+
+
+  /* =======================================================
+     METRIC VALUES
+     ======================================================= */
+
+  .metric-value {
+    @apply text-3xl font-bold tracking-tight;
+
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-value-lg {
+    @apply text-5xl font-extrabold tracking-tighter;
+
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-label {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wider;
+  }
+
+
+  /* =======================================================
+     NAVIGATION
+     ======================================================= */
+
+  .nav-tab {
+    @apply px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200 relative rounded-lg;
+  }
+
+  .nav-tab:hover {
+    @apply bg-muted/50;
+  }
+
+  .nav-tab-active {
+    @apply text-primary bg-primary/10;
+  }
+
+  .nav-tab-active::after {
+    content: '';
+
+    @apply absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full;
+  }
+
+
+  /* =======================================================
+     FOB SELECTOR
+     ======================================================= */
+
+  .fob-selector {
+    @apply relative inline-flex items-center gap-3 px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300;
+
+    @apply bg-gradient-to-br from-primary/20 via-primary/10 to-transparent;
+
+    @apply border-2 border-primary/40 hover:border-primary/60;
+
+    box-shadow:
+      0 0 20px hsl(var(--primary) / 0.15),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.1);
+  }
+
+  .fob-selector:hover {
+    box-shadow:
+      0 0 30px hsl(var(--primary) / 0.25),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.15);
+  }
+
+
+  /* =======================================================
+     STATUS INDICATOR
+     ======================================================= */
+
+  .status-indicator {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium;
+
+    background-color: hsl(var(--muted) / 0.5);
+
+    border: 1px solid hsl(var(--border) / 0.5);
+
+    color: hsl(var(--foreground));
+  }
+
+  .status-indicator.live {
+    background-color: hsl(var(--status-active) / 0.1);
+    border-color: hsl(var(--status-active) / 0.3);
+    color: hsl(var(--status-active));
+  }
+
+  .status-indicator.offline {
+    background-color: hsl(var(--destructive) / 0.1);
+    border-color: hsl(var(--destructive) / 0.3);
+    color: hsl(var(--destructive));
+  }
+
+
+  /* =======================================================
+     ALERT CARDS
+     ======================================================= */
+
+  .alert-card {
+    @apply relative overflow-hidden rounded-xl border p-4 transition-all duration-300;
+  }
+
+  .alert-card.critical {
+    @apply border-risk-critical/50 bg-risk-critical/5;
+
+    box-shadow:
+      0 0 30px hsl(var(--risk-critical) / 0.15),
+      inset 0 0 60px hsl(var(--risk-critical) / 0.05);
+  }
+
+  .alert-card.normal {
+    @apply border-border/40 bg-card/50;
+  }
+
+
+  /* =======================================================
+     GLOW EFFECTS
+     ======================================================= */
+
+  .glow-primary {
+    box-shadow:
+      0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  .glow-success {
+    box-shadow:
+      0 0 20px hsl(var(--status-active) / 0.3);
+  }
+
+  .glow-danger {
+    box-shadow:
+      0 0 25px hsl(var(--risk-critical) / 0.4);
+  }
+}
+
+
+/* =========================================================
+   CUSTOM UTILITIES
+   ========================================================= */
+
+@layer utilities {
+
+  /* -------------------------
+     RISK COLORS
+     ------------------------- */
+
+  .text-risk-low {
+    color: hsl(var(--risk-low));
+  }
+
+  .text-risk-medium {
+    color: hsl(var(--risk-medium));
+  }
+
+  .text-risk-high {
+    color: hsl(var(--risk-high));
+  }
+
+  .text-risk-critical {
+    color: hsl(var(--risk-critical));
+  }
+
+
+  .bg-risk-low {
+    background-color: hsl(var(--risk-low));
+  }
+
+  .bg-risk-medium {
+    background-color: hsl(var(--risk-medium));
+  }
+
+  .bg-risk-high {
+    background-color: hsl(var(--risk-high));
+  }
+
+  .bg-risk-critical {
+    background-color: hsl(var(--risk-critical));
+  }
+
+
+  .border-risk-low {
+    border-color: hsl(var(--risk-low));
+  }
+
+  .border-risk-medium {
+    border-color: hsl(var(--risk-medium));
+  }
+
+  .border-risk-high {
+    border-color: hsl(var(--risk-high));
+  }
+
+  .border-risk-critical {
+    border-color: hsl(var(--risk-critical));
+  }
+
+
+  /* -------------------------
+     STATUS COLORS
+     ------------------------- */
+
+  .text-status-active {
+    color: hsl(var(--status-active));
+  }
+
+  .text-status-inactive {
+    color: hsl(var(--status-inactive));
+  }
+
+  .bg-status-active {
+    background-color: hsl(var(--status-active));
+  }
+
+  .bg-status-inactive {
+    background-color: hsl(var(--status-inactive));
+  }
+
+
+  /* -------------------------
+     GRADIENT TEXT
+     ------------------------- */
+
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent;
+  }
+
+
+  /* -------------------------
+     GRID PATTERN
+     ------------------------- */
+
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(
+        hsl(var(--border) / 0.3) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        hsl(var(--border) / 0.3) 1px,
+        transparent 1px
+      );
+
+    background-size: 40px 40px;
+  }
+
+
+  /* -------------------------
+     FOCUS RING
+     ------------------------- */
+
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes pulse-critical {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px hsl(var(--primary) / 0.2);
+  }
+
+  50% {
+    box-shadow:
+      0 0 40px hsl(var(--primary) / 0.4);
+  }
+}
+
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+/* =========================================================
+   ANIMATION UTILITIES
+   ========================================================= */
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+
+/* =========================================================
+   MANTINE DROPDOWNS
+   ========================================================= */
+
+.mantine-Popover-dropdown,
+.mantine-DatePickerInput-dropdown,
+.mantine-Select-dropdown,
+.mantine-Combobox-dropdown {
+  z-index: 1000 !important;
+}

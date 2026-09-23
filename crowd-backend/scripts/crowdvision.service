@@ -1,0 +1,74 @@
+# CrowdVision systemd Service File
+#
+# Installation:
+#   1. Copy this file to /etc/systemd/system/crowdvision.service
+#   2. Create the crowdvision user: sudo useradd -r -s /bin/false crowdvision
+#   3. Set ownership: sudo chown -R crowdvision:crowdvision /opt/crowdvision
+#   4. Create log directory: sudo mkdir -p /var/log/crowdvision && sudo chown crowdvision:crowdvision /var/log/crowdvision
+#   5. Reload systemd: sudo systemctl daemon-reload
+#   6. Enable service: sudo systemctl enable crowdvision
+#   7. Start service: sudo systemctl start crowdvision
+#
+# Commands:
+#   sudo systemctl start crowdvision     # Start the service
+#   sudo systemctl stop crowdvision      # Stop the service
+#   sudo systemctl restart crowdvision   # Restart the service
+#   sudo systemctl status crowdvision    # Check status
+#   journalctl -u crowdvision -f         # View logs
+
+[Unit]
+Description=CrowdVision Crowd Analytics System
+Documentation=https://github.com/your-org/crowdvision
+After=network.target mongodb.service
+Wants=mongodb.service
+
+[Service]
+Type=simple
+User=crowdvision
+Group=crowdvision
+WorkingDirectory=/opt/crowdvision
+
+# Environment
+Environment="PATH=/opt/crowdvision/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
+# FIX: Redirect all libraries to write to /opt instead of /home
+Environment="ULTRALYTICS_CONFIG_DIR=/opt/crowdvision/data/ultralytics"
+Environment="ULTRALYTICS_ANALYTICS=false"
+Environment="TORCH_HOME=/opt/crowdvision/data/torch"
+Environment="HF_HOME=/opt/crowdvision/data/huggingface"
+Environment="MPLCONFIGDIR=/opt/crowdvision/data/matplotlib"
+
+EnvironmentFile=-/opt/crowdvision/.env
+EnvironmentFile=-/opt/crowdvision/config/production.env
+
+# Start command
+ExecStart=/opt/crowdvision/venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Graceful shutdown
+ExecStop=/bin/kill -SIGTERM $MAINPID
+TimeoutStopSec=30
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# Resource limits (adjust based on your hardware)
+MemoryMax=8G
+CPUQuota=400%
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+# We can revert ProtectHome=true now that we redirected everything, but keeping false is safer for debugging
+ProtectHome=false
+PrivateTmp=true
+ReadWritePaths=/opt/crowdvision/data /var/log/crowdvision
+
+# GPU access (required for CUDA)
+SupplementaryGroups=video render
+
+[Install]
+WantedBy=multi-user.target

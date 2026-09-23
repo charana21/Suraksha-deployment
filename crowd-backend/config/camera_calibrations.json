@@ -1,0 +1,318 @@
+{
+  "_metadata": {
+    "fob_width_m": 4,
+    "fob_length_m": 300,
+    "station": "Hyderabad Railway Station",
+    "version": "3.0.0",
+    "notes": "Simple visible_area_m2 calibration. Density = count / area. Update values when exact measurements available."
+  },
+
+  "_default_fob": {
+    "visible_area_m2": 150.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 40,
+    "lane_count": 0,
+    "notes": "Default: ~40m x 4m section"
+  },
+
+  "cam_pf1_fob_kzj": {
+    "visible_area_m2": 80.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 20.0,
+    "camera_type": "end_facing",
+    "lane_count": 0,
+    "notes": "HYD FOB - PF 1 end, facing KZJ direction, ~20m x 4m"
+  },
+
+  "cam_pf1_fob_hyb_end": {
+    "visible_area_m2": 120.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 30,
+    "camera_type": "end_facing",
+    "lane_count": 0,
+    "notes": "HYD FOB - PF 1 end, facing HYB direction, ~30m x 4m"
+  },
+
+  "cam_pf1_fob_pf10": {
+    "visible_area_m2": 200.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 50,
+    "camera_type": "long_corridor",
+    "lane_count": 0,
+    "notes": "HYD FOB - Long corridor view toward PF 10, ~50m x 4m"
+  },
+
+  "cam_middle_fob_4_5": {
+    "visible_area_m2": 160.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 40,
+    "camera_type": "middle_corridor",
+    "lane_count": 0,
+    "notes": "HYD FOB - Middle section zones 4 & 5, ~40m x 4m"
+  },
+
+  "cam_middle_fob_6_7": {
+    "visible_area_m2": 160.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 40,
+    "camera_type": "middle_corridor",
+    "lane_count": 0,
+    "notes": "HYD FOB - Middle section zones 6 & 7, ~40m x 4m"
+  },
+
+  "cam_pf10_fob_pf1": {
+    "visible_area_m2": 200.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 50,
+    "camera_type": "long_corridor",
+    "lane_count": 0,
+    "notes": "HYD FOB - Long corridor view toward PF 1, ~50m x 4m"
+  },
+
+  "cam_pf10_fob_steps": {
+    "visible_area_m2": 80.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 20,
+    "camera_type": "feature",
+    "lane_count": 0,
+    "notes": "HYD FOB - Steps area at PF 10, ~20m x 4m"
+  },
+
+  "cam_pf10_fob_vip": {
+    "visible_area_m2": 60.0,
+    "corridor_width_m": 3.0,
+    "coverage_length_m": 20,
+    "camera_type": "feature",
+    "lane_count": 0,
+    "notes": "HYD FOB - VIP entrance, smaller area ~20m x 3m"
+  },
+
+  "cam_pf1_fob_lift": {
+    "visible_area_m2": 60.0,
+    "corridor_width_m": 3.0,
+    "coverage_length_m": 20,
+    "camera_type": "feature",
+    "lane_count": 0,
+    "notes": "HYD FOB - Lift area at PF 1, smaller ~20m x 3m"
+  },
+
+  "cam_kzj_pf1_fob_kzj": {
+    "visible_area_m2": 120.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 30,
+    "camera_type": "end_facing",
+    "lane_count": 0,
+    "notes": "KZJ FOB - PF 1 end, facing KZJ direction, ~30m x 4m"
+  },
+
+  "cam_kzj_pf1_fob_pf10": {
+    "visible_area_m2": 200.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 50,
+    "camera_type": "long_corridor",
+    "lane_count": 0,
+    "notes": "KZJ FOB - Long corridor view toward PF 10, ~50m x 4m"
+  },
+
+  "cam_kzj_pf1_fob_hyb": {
+    "visible_area_m2": 120.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 30,
+    "camera_type": "end_facing",
+    "lane_count": 0,
+    "notes": "KZJ FOB - PF 1 end, facing HYB direction, ~30m x 4m"
+  },
+
+  "cam_kzj_fob_mid_4_5": {
+    "visible_area_m2": 160.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 40,
+    "camera_type": "middle_corridor",
+    "lane_count": 0,
+    "notes": "KZJ FOB - Middle section zones 4 & 5, ~40m x 4m"
+  },
+
+  "cam_kzj_fob_mid_8_9": {
+    "visible_area_m2": 160.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 40,
+    "camera_type": "middle_corridor",
+    "lane_count": 0,
+    "notes": "KZJ FOB - Middle section zones 8 & 9, ~40m x 4m"
+  },
+
+  "cam_kzj_fob_escalator": {
+    "visible_area_m2": 80.0,
+    "corridor_width_m": 4.0,
+    "coverage_length_m": 20,
+    "camera_type": "feature",
+    "lane_count": 0,
+    "notes": "KZJ FOB - Escalator at PF 10, ~20m x 4m"
+  },
+
+  "cam_mid_fob_pf1": {
+    "visible_area_m2": 100.0,
+    "corridor_width_m": 3.5,
+    "coverage_length_m": 28,
+    "camera_type": "end_facing",
+    "lane_count": 0,
+    "notes": "Middle FOB - PF 1 side, ~28m x 3.5m"
+  },
+
+  "cam_mid_fob_center": {
+    "visible_area_m2": 120.0,
+    "corridor_width_m": 3.5,
+    "coverage_length_m": 34,
+    "camera_type": "middle_corridor",
+    "lane_count": 0,
+    "notes": "Middle FOB - Center section, ~34m x 3.5m"
+  },
+
+  "cam_mid_fob_pf10": {
+    "visible_area_m2": 100.0,
+    "corridor_width_m": 3.5,
+    "coverage_length_m": 28,
+    "camera_type": "end_facing",
+    "lane_count": 0,
+    "notes": "Middle FOB - PF 10 side, ~28m x 3.5m"
+  },
+
+  "cam_hyb_pf1": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 1 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf2": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 2 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf3": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 3 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf4": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 4 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf5": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 5 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf6": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 6 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf7": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 7 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf8": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 8 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf9": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 9 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf10": {
+    "visible_area_m2": 500.0,
+    "corridor_width_m": 10.0,
+    "coverage_length_m": 50,
+    "camera_type": "platform",
+    "lane_count": 0,
+    "notes": "Platform 10 - wide platform view, ~50m x 10m"
+  },
+
+  "cam_hyb_pf1_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 1 - Start section" },
+  "cam_hyb_pf1_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 1 - Middle section" },
+  "cam_hyb_pf1_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 1 - End section" },
+
+  "cam_hyb_pf2_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 2 - Start section" },
+  "cam_hyb_pf2_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 2 - Middle section" },
+  "cam_hyb_pf2_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 2 - End section" },
+
+  "cam_hyb_pf3_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 3 - Start section" },
+  "cam_hyb_pf3_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 3 - Middle section" },
+  "cam_hyb_pf3_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 3 - End section" },
+
+  "cam_hyb_pf4_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 4 - Start section" },
+  "cam_hyb_pf4_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 4 - Middle section" },
+  "cam_hyb_pf4_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 4 - End section" },
+
+  "cam_hyb_pf5_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 5 - Start section" },
+  "cam_hyb_pf5_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 5 - Middle section" },
+  "cam_hyb_pf5_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 5 - End section" },
+
+  "cam_hyb_pf6_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 6 - Start section" },
+  "cam_hyb_pf6_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 6 - Middle section" },
+  "cam_hyb_pf6_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 6 - End section" },
+
+  "cam_hyb_pf7_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 7 - Start section" },
+  "cam_hyb_pf7_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 7 - Middle section" },
+  "cam_hyb_pf7_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 7 - End section" },
+
+  "cam_hyb_pf8_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 8 - Start section" },
+  "cam_hyb_pf8_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 8 - Middle section" },
+  "cam_hyb_pf8_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 8 - End section" },
+
+  "cam_hyb_pf9_a":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 9 - Start section" },
+  "cam_hyb_pf9_b":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 9 - Middle section" },
+  "cam_hyb_pf9_c":  { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 9 - End section" },
+
+  "cam_hyb_pf10_a": { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 10 - Start section" },
+  "cam_hyb_pf10_b": { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 10 - Middle section" },
+  "cam_hyb_pf10_c": { "visible_area_m2": 170.0, "corridor_width_m": 10.0, "coverage_length_m": 17, "camera_type": "platform", "lane_count": 0, "notes": "Platform 10 - End section" },
+
+  "cam_hyb_booking": {
+    "visible_area_m2": 200.0,
+    "corridor_width_m": 15.0,
+    "coverage_length_m": 13,
+    "camera_type": "indoor",
+    "lane_count": 0,
+    "notes": "Booking counter area - wide indoor view, ~13m x 15m"
+  }
+}

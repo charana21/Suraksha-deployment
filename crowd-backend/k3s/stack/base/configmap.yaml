@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowdvision-config
+data:
+  APP_ENV: "development"
+  LOG_LEVEL: "INFO"
+  LOG_FILE: ""
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  API_WORKERS: "4"
+  DEVICE: "cuda"
+  USE_GPU: "true"
+  USE_SHARED_MODEL_POOL: "true"
+  USE_BATCHED_INFERENCE: "true"
+  YOLO_MODEL_PATH: "yolov8m.pt"
+  PET_WEIGHTS_PATH: "/app/data/weights/SHA_model.pth"
+  UPLOAD_DIR: "data/uploads"
+  OUTPUT_DIR: "data/outputs"
+  HEATMAP_DIR: "data/heatmaps"
+  ANALYTICS_DIR: "data/analytics"
+  IMAGES_DIR: "data/images"
+  SAVE_HEATMAPS: "false"
+  MONGODB_DATABASE: "crowdvision_test"
+  auth_enabled: "false"
+  EXTRA_ALLOWED_ORIGINS: ""

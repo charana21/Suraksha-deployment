@@ -1,0 +1,64 @@
+services:
+
+  # -----------------------------
+  # Backend API
+  # -----------------------------
+  crowdanalytics-backend:
+    build: .
+    container_name: crowdanalytics-backend
+    restart: unless-stopped
+    ports:
+      - "81:81"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - rtsp-server
+    networks:
+      - rtsp-net
+
+  # -----------------------------
+  # RTSP Server
+  # -----------------------------
+  rtsp-server:
+    image: bluenviron/mediamtx:latest
+    container_name: rtsp-server
+    restart: unless-stopped
+    ports:
+      - "8554:8554"
+      - "8888:8888"
+      - "8889:8889"
+    networks:
+      - rtsp-net
+
+  # -----------------------------
+  # Video Publisher
+  # -----------------------------
+  ffmpeg-publisher:
+    image: linuxserver/ffmpeg:latest
+    container_name: ffmpeg-publisher
+    depends_on:
+      - rtsp-server
+    restart: unless-stopped
+    volumes:
+      - ./videos:/videos:ro
+    command: >
+      -fflags +genpts
+      -stream_loop -1
+      -re
+      -i /videos/test.mp4
+      -c:v libx264
+      -preset ultrafast
+      -tune zerolatency
+      -pix_fmt yuv420p
+      -g 15
+      -an
+      -f rtsp
+      rtsp://rtsp-server:8554/mystream
+    networks:
+      - rtsp-net
+
+networks:
+  rtsp-net:
+    driver: bridge

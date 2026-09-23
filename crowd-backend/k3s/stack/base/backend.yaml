@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crowdvision-backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: crowdvision-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: crowdvision-backend
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: backend
+          image: registry.example.com/crowdvision/crowd-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: crowdvision-config
+            - secretRef:
+                name: crowdvision-secrets
+          volumeMounts:
+            - name: application-data
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              cpu: "8"
+              memory: 16Gi
+          startupProbe:
+            httpGet:
+              path: /api/health/simple
+              port: http
+            failureThreshold: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health/simple
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: application-data
+          persistentVolumeClaim:
+            claimName: crowdvision-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crowdvision-backend
+spec:
+  selector:
+    app.kubernetes.io/name: crowdvision-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

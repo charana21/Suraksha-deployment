@@ -1,0 +1,16 @@
+# Gitleaks configuration file for crowd-backend
+title = "Gitleaks configuration"
+
+[allowlist]
+description = "Global allowlist for false positives and test data"
+paths = [
+    '''gitleaks-report\.json$''',
+    '''reports/''',
+    '''\.env\.template$''',
+    '''production\.env\.template$'''
+]
+regexes = [
+    '''EXAMPLE''',
+    '''YOUR_.*_KEY''',
+    '''<.*>'''
+]

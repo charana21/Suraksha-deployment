@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediamtx-config
+data:
+  mediamtx.yml: |
+    logLevel: info
+    logDestinations: [stdout]
+    rtspAddress: :8554
+    hlsAddress: :8888
+    webrtcAddress: :8889

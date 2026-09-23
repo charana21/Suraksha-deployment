@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crowdvision-backend
+spec:
+  template:
+    spec:
+      containers:
+        - name: backend
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowdvision-config
+data:
+  DEVICE: "cuda"
+  USE_GPU: "true"
+  USE_BATCHED_INFERENCE: "true"

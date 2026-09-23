@@ -1,0 +1,242 @@
+.pa-body {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pa-title-section {
+  text-align: left;
+}
+
+.pa-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pa-subtitle {
+  color: #9fb2c8;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.pa-status-banner {
+  padding: 12px 18px;
+  background: rgba(34, 197, 94, 0.07);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pa-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9fb2c8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.pa-zone-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pa-btn {
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+
+.pa-lang-flex {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pa-lang-btn {
+  border-radius: 20px;
+  padding: 6px 18px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+
+.pa-quick-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pa-quick-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px 11px;
+  color: #b8c7d9;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+
+.pa-quick-btn:hover {
+  background: rgba(37, 99, 235, 0.15);
+  color: #bfdbfe;
+}
+
+.pa-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #e2e8f0;
+  font-family: 'Outfit', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+
+.pa-phone-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.pa-phone-input-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.pa-phone-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: #b8c7d9;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.pa-broadcast-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+}
+
+.pa-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 640px) {
+  .pa-body {
+    padding: 0 10px;
+  }
+  .pa-zone-grid {
+    grid-template-columns: 1fr;
+  }
+  .pa-title {
+    font-size: 22px;
+  }
+}
+
+/* 2K / 4K Scaling */
+@media (min-width: 2500px) {
+  .pa-body {
+    padding: 0 160px;
+    gap: 32px;
+  }
+  .pa-title {
+    font-size: 42px;
+  }
+  .pa-subtitle {
+    font-size: 18px;
+  }
+  .pa-section-label {
+    font-size: 16px;
+    margin-bottom: 18px;
+  }
+  .pa-btn, .pa-lang-btn {
+    font-size: 18px;
+    padding: 16px 24px;
+  }
+  .pa-textarea {
+    font-size: 18px;
+    padding: 18px;
+  }
+  .pa-broadcast-btn {
+    font-size: 22px;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 3800px) {
+  .pa-body {
+    padding: 40px 320px;
+    gap: 48px;
+  }
+  .pa-title {
+    font-size: 64px;
+  }
+  .pa-subtitle {
+    font-size: 24px;
+  }
+  .pa-section-label {
+    font-size: 22px;
+    margin-bottom: 24px;
+  }
+  .pa-btn, .pa-lang-btn {
+    font-size: 24px;
+    padding: 24px 32px;
+  }
+  .pa-quick-btn {
+    font-size: 16px;
+    padding: 8px 16px;
+  }
+  .pa-textarea {
+    font-size: 24px;
+    padding: 24px;
+  }
+  .pa-broadcast-btn {
+    font-size: 32px;
+    padding: 28px;
+  }
+}

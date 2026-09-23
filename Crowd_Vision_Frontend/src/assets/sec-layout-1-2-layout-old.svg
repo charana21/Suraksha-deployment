@@ -1,0 +1,865 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="1856" viewBox="0 0 2100 1856">
+    <defs>
+        
+        <linearGradient id="bookingGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="entranceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#50C878;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3f9e61;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="platformGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#E3E8ED;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#EBF0F3;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="islandGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#E8EFF3;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#F2F5F7;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="fobGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#334155;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="fobOrangeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#f28f3b;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#d8751d;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="fobYellowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#f6b73c;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#d79d26;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="fobGreenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#50C878;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3f9e61;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="bulletGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#50C878;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3f9e61;stop-opacity:1" />
+        </linearGradient>
+        
+        
+        
+        
+        <linearGradient id="domeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="ptzGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f6b73c;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#d79d26;stop-opacity:1" />
+        </linearGradient>
+        
+        
+    </defs>
+    
+    
+    <rect width="2100" height="1856" fill="#ffffff" />
+    <rect x="30" y="30" width="2040" height="1796" fill="none" stroke="#e2e8f0" stroke-width="3" rx="12" />
+    
+    <g transform="translate(0,28)">
+    
+    <text x="1050" y="48" font-family="Arial, sans-serif" font-size="34" font-weight="bold" fill="#60a5fa" text-anchor="middle">SECUNDERABAD JUNCTION - CCTV SURVEILLANCE DIGITAL LAYOUT</text>
+        
+    
+    <text x="80" y="52" font-family="Arial, sans-serif" font-size="15" fill="#1e293b" font-weight="bold">← HYD END</text>
+    <text x="1888" y="52" font-family="Arial, sans-serif" font-size="15" fill="#1e293b" font-weight="bold">KZJ END →</text>
+    
+    
+    <rect x="680" y="74" width="740" height="34" fill="rgba(30, 41, 59, 0.95)" stroke="#3b82f6" stroke-width="2" rx="6" />
+    <text x="1050" y="97" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">ENTRANCE &amp; BOOKING OFFICES AREA</text>
+    
+    
+    
+    
+
+    
+    <rect x="114" y="165" width="180" height="95" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="204" y="196" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#111111" text-anchor="middle">Outward</text>
+    <text x="204" y="220" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#111111" text-anchor="middle">Parcel</text>
+    <text x="204" y="244" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#111111" text-anchor="middle">Office</text>
+
+    
+    <g transform="rotate(-90, 352, 184)">
+    <rect x="267" y="145" width="170" height="78" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="352" y="174" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#111111" text-anchor="middle">Gate 5</text>
+    <text x="352" y="196" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle">Booking Office</text>
+    </g>
+
+    
+    <g transform="rotate(-90, 485, 184)">
+    <rect x="400" y="145" width="170" height="78" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="485" y="174" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#111111" text-anchor="middle">Gate 4</text>
+    <text x="485" y="196" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle">ARR/DEP Office</text>
+    </g>
+
+    
+    <rect x="559" y="165" width="280" height="95" fill="rgba(100, 116, 139, 0.25)" stroke="#f6b73c" stroke-width="2" rx="6" stroke-dasharray="8,4" />
+    <text x="699" y="198" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000000" text-anchor="middle">North Block</text>
+    <text x="699" y="220" font-family="Arial, sans-serif" font-size="14" fill="#000000" text-anchor="middle">(Under Construction)</text>
+
+    
+    
+    
+    
+    
+
+    
+    
+    <rect x="1258" y="162" width="220" height="64" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="1368" y="188" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#111111" text-anchor="middle">Rethifile Booking</text>
+    <text x="1368" y="211" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#111111" text-anchor="middle">Office</text>
+
+    
+    <rect x="1258" y="232" width="220" height="28" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="6" />
+    <text x="1368" y="251" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#111111" text-anchor="middle">Rethifile Exit</text>
+
+    <!-- PRS Booking Office — static building marker (no camera tracking) -->
+    <rect x="1535" y="165" width="260" height="95" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="1665" y="198" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#111111" text-anchor="middle">PRS Booking</text>
+    <text x="1665" y="221" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#111111" text-anchor="middle">Office</text>
+
+    
+    
+    
+
+    <rect x="140" y="320" width="1700" height="90" fill="#7a8a9a" stroke="#475569" stroke-width="2" rx="8" />
+    <rect x="40" y="345" width="65" height="40" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="370" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">PF 1</text>
+    <line x1="160" y1="394" x2="1820" y2="394" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+
+    <rect x="140" y="500" width="1700" height="120" fill="#7a8a9a" stroke="#475569" stroke-width="2" rx="8" />
+    <rect x="40" y="515" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="538" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 2</text>
+    <rect x="40" y="575" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="598" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 3</text>
+    <line x1="160" y1="519" x2="1820" y2="519" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+    <line x1="160" y1="609" x2="1820" y2="609" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+
+    <rect x="140" y="680" width="1700" height="120" fill="#7a8a9a" stroke="#475569" stroke-width="2" rx="8" />
+    <rect x="40" y="695" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="718" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 4</text>
+    <rect x="40" y="755" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="778" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 5</text>
+    <line x1="160" y1="699" x2="1820" y2="699" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+    <line x1="160" y1="789" x2="1820" y2="789" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+
+    <rect x="140" y="860" width="1700" height="120" fill="#7a8a9a" stroke="#475569" stroke-width="2" rx="8" />
+    <rect x="40" y="875" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="898" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 6</text>
+    <rect x="40" y="935" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="958" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 7</text>
+    <line x1="160" y1="879" x2="1820" y2="879" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+    <line x1="160" y1="969" x2="1820" y2="969" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+
+    <rect x="140" y="1040" width="1700" height="120" fill="#7a8a9a" stroke="#475569" stroke-width="2" rx="8" />
+    <rect x="40" y="1055" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="1078" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 8</text>
+    <rect x="40" y="1115" width="65" height="35" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="1138" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">PF 9</text>
+    <line x1="160" y1="1059" x2="1820" y2="1059" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+    <line x1="160" y1="1149" x2="1820" y2="1149" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+
+    <rect x="140" y="1220" width="1700" height="90" fill="#7a8a9a" stroke="#475569" stroke-width="2" rx="8" />
+    <rect x="40" y="1245" width="65" height="40" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2" rx="8" />
+    <text x="72" y="1270" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">PF 10</text>
+    <line x1="160" y1="1226" x2="1820" y2="1226" stroke="#000000" stroke-width="6" stroke-dasharray="28,10" />
+
+    <rect x="300" y="330" width="110" height="980" fill="#d4dce6" stroke="#f28f3b" stroke-width="5" rx="10" />
+    <rect x="308" y="338" width="94" height="35" fill="#1e293b" stroke="#475569" stroke-width="1" rx="6" />
+    <text x="355" y="360" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">HYD Side FOB</text>
+
+    
+    <line x1="410" y1="333" x2="410" y2="353" stroke="#475569" stroke-width="1.5" />
+    <line x1="414" y1="337" x2="414" y2="357" stroke="#475569" stroke-width="1.5" />
+    <line x1="418" y1="341" x2="418" y2="361" stroke="#475569" stroke-width="1.5" />
+    <line x1="422" y1="345" x2="422" y2="365" stroke="#475569" stroke-width="1.5" />
+    <line x1="426" y1="349" x2="426" y2="369" stroke="#475569" stroke-width="1.5" />
+    <line x1="430" y1="353" x2="430" y2="373" stroke="#475569" stroke-width="1.5" />
+    <line x1="434" y1="357" x2="434" y2="377" stroke="#475569" stroke-width="1.5" />
+    <rect x="408" y="380" width="36" height="14" fill="#334155" rx="3" />
+    <text x="426" y="390" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 1</text>
+
+    
+    <line x1="410" y1="530" x2="410" y2="550" stroke="#475569" stroke-width="1.5" />
+    <line x1="414" y1="534" x2="414" y2="554" stroke="#475569" stroke-width="1.5" />
+    <line x1="418" y1="538" x2="418" y2="558" stroke="#475569" stroke-width="1.5" />
+    <line x1="422" y1="542" x2="422" y2="562" stroke="#475569" stroke-width="1.5" />
+    <line x1="426" y1="546" x2="426" y2="566" stroke="#475569" stroke-width="1.5" />
+    <line x1="430" y1="550" x2="430" y2="570" stroke="#475569" stroke-width="1.5" />
+    <line x1="434" y1="554" x2="434" y2="574" stroke="#475569" stroke-width="1.5" />
+    <rect x="408" y="577" width="36" height="14" fill="#334155" rx="3" />
+    <text x="426" y="587" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 2-3</text>
+
+    
+    <line x1="410" y1="710" x2="410" y2="730" stroke="#475569" stroke-width="1.5" />
+    <line x1="414" y1="714" x2="414" y2="734" stroke="#475569" stroke-width="1.5" />
+    <line x1="418" y1="718" x2="418" y2="738" stroke="#475569" stroke-width="1.5" />
+    <line x1="422" y1="722" x2="422" y2="742" stroke="#475569" stroke-width="1.5" />
+    <line x1="426" y1="726" x2="426" y2="746" stroke="#475569" stroke-width="1.5" />
+    <line x1="430" y1="730" x2="430" y2="750" stroke="#475569" stroke-width="1.5" />
+    <line x1="434" y1="734" x2="434" y2="754" stroke="#475569" stroke-width="1.5" />
+    <rect x="408" y="757" width="36" height="14" fill="#334155" rx="3" />
+    <text x="426" y="767" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 4-5</text>
+
+    
+    <line x1="410" y1="890" x2="410" y2="910" stroke="#475569" stroke-width="1.5" />
+    <line x1="414" y1="894" x2="414" y2="914" stroke="#475569" stroke-width="1.5" />
+    <line x1="418" y1="898" x2="418" y2="918" stroke="#475569" stroke-width="1.5" />
+    <line x1="422" y1="902" x2="422" y2="922" stroke="#475569" stroke-width="1.5" />
+    <line x1="426" y1="906" x2="426" y2="926" stroke="#475569" stroke-width="1.5" />
+    <line x1="430" y1="910" x2="430" y2="930" stroke="#475569" stroke-width="1.5" />
+    <line x1="434" y1="914" x2="434" y2="934" stroke="#475569" stroke-width="1.5" />
+    <rect x="408" y="937" width="36" height="14" fill="#334155" rx="3" />
+    <text x="426" y="947" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 6-7</text>
+
+    
+    <line x1="410" y1="1070" x2="410" y2="1090" stroke="#475569" stroke-width="1.5" />
+    <line x1="414" y1="1074" x2="414" y2="1094" stroke="#475569" stroke-width="1.5" />
+    <line x1="418" y1="1078" x2="418" y2="1098" stroke="#475569" stroke-width="1.5" />
+    <line x1="422" y1="1082" x2="422" y2="1102" stroke="#475569" stroke-width="1.5" />
+    <line x1="426" y1="1086" x2="426" y2="1106" stroke="#475569" stroke-width="1.5" />
+    <line x1="430" y1="1090" x2="430" y2="1110" stroke="#475569" stroke-width="1.5" />
+    <line x1="434" y1="1094" x2="434" y2="1114" stroke="#475569" stroke-width="1.5" />
+    <rect x="408" y="1117" width="36" height="14" fill="#334155" rx="3" />
+    <text x="426" y="1127" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 8-9</text>
+
+    
+    <line x1="410" y1="1195" x2="410" y2="1241" stroke="#475569" stroke-width="1.5" />
+    <line x1="414" y1="1199" x2="414" y2="1245" stroke="#475569" stroke-width="1.5" />
+    <line x1="418" y1="1203" x2="418" y2="1249" stroke="#475569" stroke-width="1.5" />
+    <line x1="422" y1="1207" x2="422" y2="1253" stroke="#475569" stroke-width="1.5" />
+    <line x1="426" y1="1211" x2="426" y2="1257" stroke="#475569" stroke-width="1.5" />
+    <line x1="430" y1="1215" x2="430" y2="1261" stroke="#475569" stroke-width="1.5" />
+    <line x1="434" y1="1219" x2="434" y2="1265" stroke="#475569" stroke-width="1.5" />
+    <rect x="408" y="1268" width="36" height="14" fill="#334155" rx="3" />
+    <text x="426" y="1278" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 10</text>
+
+    <rect x="1300" y="330" width="110" height="980" fill="#d4dce6" stroke="#f28f3b" stroke-width="5" rx="10" />
+    <rect x="1308" y="338" width="94" height="35" fill="#1e293b" stroke="#475569" stroke-width="1" rx="6" />
+    <text x="1355" y="360" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">KZJ Side New FOB</text>
+
+    
+    <line x1="1300" y1="333" x2="1300" y2="353" stroke="#475569" stroke-width="1.5" />
+    <line x1="1296" y1="337" x2="1296" y2="357" stroke="#475569" stroke-width="1.5" />
+    <line x1="1292" y1="341" x2="1292" y2="361" stroke="#475569" stroke-width="1.5" />
+    <line x1="1288" y1="345" x2="1288" y2="365" stroke="#475569" stroke-width="1.5" />
+    <line x1="1284" y1="349" x2="1284" y2="369" stroke="#475569" stroke-width="1.5" />
+    <line x1="1280" y1="353" x2="1280" y2="373" stroke="#475569" stroke-width="1.5" />
+    <line x1="1276" y1="357" x2="1276" y2="377" stroke="#475569" stroke-width="1.5" />
+    <rect x="1274" y="380" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1292" y="390" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 1</text>
+    
+
+    
+    <line x1="1300" y1="530" x2="1300" y2="550" stroke="#475569" stroke-width="1.5" />
+    <line x1="1296" y1="534" x2="1296" y2="554" stroke="#475569" stroke-width="1.5" />
+    <line x1="1292" y1="538" x2="1292" y2="558" stroke="#475569" stroke-width="1.5" />
+    <line x1="1288" y1="542" x2="1288" y2="562" stroke="#475569" stroke-width="1.5" />
+    <line x1="1284" y1="546" x2="1284" y2="566" stroke="#475569" stroke-width="1.5" />
+    <line x1="1280" y1="550" x2="1280" y2="570" stroke="#475569" stroke-width="1.5" />
+    <line x1="1276" y1="554" x2="1276" y2="574" stroke="#475569" stroke-width="1.5" />
+    <rect x="1274" y="577" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1292" y="587" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 2-3</text>
+    
+
+    
+    <line x1="1300" y1="710" x2="1300" y2="730" stroke="#475569" stroke-width="1.5" />
+    <line x1="1296" y1="714" x2="1296" y2="734" stroke="#475569" stroke-width="1.5" />
+    <line x1="1292" y1="718" x2="1292" y2="738" stroke="#475569" stroke-width="1.5" />
+    <line x1="1288" y1="722" x2="1288" y2="742" stroke="#475569" stroke-width="1.5" />
+    <line x1="1284" y1="726" x2="1284" y2="746" stroke="#475569" stroke-width="1.5" />
+    <line x1="1280" y1="730" x2="1280" y2="750" stroke="#475569" stroke-width="1.5" />
+    <line x1="1276" y1="734" x2="1276" y2="754" stroke="#475569" stroke-width="1.5" />
+    <rect x="1274" y="757" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1292" y="767" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 4-5</text>
+    
+
+    
+    <line x1="1300" y1="890" x2="1300" y2="910" stroke="#475569" stroke-width="1.5" />
+    <line x1="1296" y1="894" x2="1296" y2="914" stroke="#475569" stroke-width="1.5" />
+    <line x1="1292" y1="898" x2="1292" y2="918" stroke="#475569" stroke-width="1.5" />
+    <line x1="1288" y1="902" x2="1288" y2="922" stroke="#475569" stroke-width="1.5" />
+    <line x1="1284" y1="906" x2="1284" y2="926" stroke="#475569" stroke-width="1.5" />
+    <line x1="1280" y1="910" x2="1280" y2="930" stroke="#475569" stroke-width="1.5" />
+    <line x1="1276" y1="914" x2="1276" y2="934" stroke="#475569" stroke-width="1.5" />
+    <rect x="1274" y="937" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1292" y="947" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 6-7</text>
+    
+
+    
+    <line x1="1300" y1="1070" x2="1300" y2="1090" stroke="#475569" stroke-width="1.5" />
+    <line x1="1296" y1="1074" x2="1296" y2="1094" stroke="#475569" stroke-width="1.5" />
+    <line x1="1292" y1="1078" x2="1292" y2="1098" stroke="#475569" stroke-width="1.5" />
+    <line x1="1288" y1="1082" x2="1288" y2="1102" stroke="#475569" stroke-width="1.5" />
+    <line x1="1284" y1="1086" x2="1284" y2="1106" stroke="#475569" stroke-width="1.5" />
+    <line x1="1280" y1="1090" x2="1280" y2="1110" stroke="#475569" stroke-width="1.5" />
+    <line x1="1276" y1="1094" x2="1276" y2="1114" stroke="#475569" stroke-width="1.5" />
+    <rect x="1274" y="1117" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1292" y="1127" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 8-9</text>
+    
+
+    
+    <line x1="1300" y1="1195" x2="1300" y2="1241" stroke="#475569" stroke-width="1.5" />
+    <line x1="1296" y1="1199" x2="1296" y2="1245" stroke="#475569" stroke-width="1.5" />
+    <line x1="1292" y1="1203" x2="1292" y2="1249" stroke="#475569" stroke-width="1.5" />
+    <line x1="1288" y1="1207" x2="1288" y2="1253" stroke="#475569" stroke-width="1.5" />
+    <line x1="1284" y1="1211" x2="1284" y2="1257" stroke="#475569" stroke-width="1.5" />
+    <line x1="1280" y1="1215" x2="1280" y2="1261" stroke="#475569" stroke-width="1.5" />
+    <line x1="1276" y1="1219" x2="1276" y2="1265" stroke="#475569" stroke-width="1.5" />
+    <rect x="1274" y="1268" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1292" y="1278" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 10</text>
+    
+
+    <rect x="1600" y="330" width="110" height="980" fill="#d4dce6" stroke="#f28f3b" stroke-width="5" rx="10" />
+    <rect x="1608" y="338" width="94" height="35" fill="#1e293b" stroke="#475569" stroke-width="1" rx="6" />
+    <text x="1655" y="360" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">KZJ Side FOB</text>
+
+    
+    <line x1="1600" y1="333" x2="1600" y2="353" stroke="#475569" stroke-width="1.5" />
+    <line x1="1596" y1="337" x2="1596" y2="357" stroke="#475569" stroke-width="1.5" />
+    <line x1="1592" y1="341" x2="1592" y2="361" stroke="#475569" stroke-width="1.5" />
+    <line x1="1588" y1="345" x2="1588" y2="365" stroke="#475569" stroke-width="1.5" />
+    <line x1="1584" y1="349" x2="1584" y2="369" stroke="#475569" stroke-width="1.5" />
+    <line x1="1580" y1="353" x2="1580" y2="373" stroke="#475569" stroke-width="1.5" />
+    <line x1="1576" y1="357" x2="1576" y2="377" stroke="#475569" stroke-width="1.5" />
+    <rect x="1574" y="380" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1592" y="390" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 1</text>
+
+    
+    <line x1="1600" y1="530" x2="1600" y2="550" stroke="#475569" stroke-width="1.5" />
+    <line x1="1596" y1="534" x2="1596" y2="554" stroke="#475569" stroke-width="1.5" />
+    <line x1="1592" y1="538" x2="1592" y2="558" stroke="#475569" stroke-width="1.5" />
+    <line x1="1588" y1="542" x2="1588" y2="562" stroke="#475569" stroke-width="1.5" />
+    <line x1="1584" y1="546" x2="1584" y2="566" stroke="#475569" stroke-width="1.5" />
+    <line x1="1580" y1="550" x2="1580" y2="570" stroke="#475569" stroke-width="1.5" />
+    <line x1="1576" y1="554" x2="1576" y2="574" stroke="#475569" stroke-width="1.5" />
+    <rect x="1574" y="577" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1592" y="587" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 2-3</text>
+
+    
+    <line x1="1600" y1="710" x2="1600" y2="730" stroke="#475569" stroke-width="1.5" />
+    <line x1="1596" y1="714" x2="1596" y2="734" stroke="#475569" stroke-width="1.5" />
+    <line x1="1592" y1="718" x2="1592" y2="738" stroke="#475569" stroke-width="1.5" />
+    <line x1="1588" y1="722" x2="1588" y2="742" stroke="#475569" stroke-width="1.5" />
+    <line x1="1584" y1="726" x2="1584" y2="746" stroke="#475569" stroke-width="1.5" />
+    <line x1="1580" y1="730" x2="1580" y2="750" stroke="#475569" stroke-width="1.5" />
+    <line x1="1576" y1="734" x2="1576" y2="754" stroke="#475569" stroke-width="1.5" />
+    <rect x="1574" y="757" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1592" y="767" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 4-5</text>
+
+    
+    <line x1="1600" y1="890" x2="1600" y2="910" stroke="#475569" stroke-width="1.5" />
+    <line x1="1596" y1="894" x2="1596" y2="914" stroke="#475569" stroke-width="1.5" />
+    <line x1="1592" y1="898" x2="1592" y2="918" stroke="#475569" stroke-width="1.5" />
+    <line x1="1588" y1="902" x2="1588" y2="922" stroke="#475569" stroke-width="1.5" />
+    <line x1="1584" y1="906" x2="1584" y2="926" stroke="#475569" stroke-width="1.5" />
+    <line x1="1580" y1="910" x2="1580" y2="930" stroke="#475569" stroke-width="1.5" />
+    <line x1="1576" y1="914" x2="1576" y2="934" stroke="#475569" stroke-width="1.5" />
+    <rect x="1574" y="937" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1592" y="947" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 6-7</text>
+
+    
+    <line x1="1600" y1="1070" x2="1600" y2="1090" stroke="#475569" stroke-width="1.5" />
+    <line x1="1596" y1="1074" x2="1596" y2="1094" stroke="#475569" stroke-width="1.5" />
+    <line x1="1592" y1="1078" x2="1592" y2="1098" stroke="#475569" stroke-width="1.5" />
+    <line x1="1588" y1="1082" x2="1588" y2="1102" stroke="#475569" stroke-width="1.5" />
+    <line x1="1584" y1="1086" x2="1584" y2="1106" stroke="#475569" stroke-width="1.5" />
+    <line x1="1580" y1="1090" x2="1580" y2="1110" stroke="#475569" stroke-width="1.5" />
+    <line x1="1576" y1="1094" x2="1576" y2="1114" stroke="#475569" stroke-width="1.5" />
+    <rect x="1574" y="1117" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1592" y="1127" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 8-9</text>
+
+    
+    <line x1="1600" y1="1195" x2="1600" y2="1241" stroke="#475569" stroke-width="1.5" />
+    <line x1="1596" y1="1199" x2="1596" y2="1245" stroke="#475569" stroke-width="1.5" />
+    <line x1="1592" y1="1203" x2="1592" y2="1249" stroke="#475569" stroke-width="1.5" />
+    <line x1="1588" y1="1207" x2="1588" y2="1253" stroke="#475569" stroke-width="1.5" />
+    <line x1="1584" y1="1211" x2="1584" y2="1257" stroke="#475569" stroke-width="1.5" />
+    <line x1="1580" y1="1215" x2="1580" y2="1261" stroke="#475569" stroke-width="1.5" />
+    <line x1="1576" y1="1219" x2="1576" y2="1265" stroke="#475569" stroke-width="1.5" />
+    <rect x="1574" y="1268" width="36" height="14" fill="#334155" rx="3" />
+    <text x="1592" y="1278" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">PF 10</text>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+    <!-- Shift bottom block by 80px down -->
+    <g transform="translate(0, 80)">
+    <rect x="380" y="1325" width="150" height="90" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="10" />
+    <text x="467" y="1350" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#111111" text-anchor="middle">VIP Saloon</text>
+    <text x="467" y="1374" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#111111" text-anchor="middle">Siding</text>
+    
+    
+
+    
+    <g transform="rotate(-90, 600, 1400)">
+    <rect x="515" y="1361" width="170" height="78" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="600" y="1390" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#111111" text-anchor="middle">VIP Entry</text>
+    <text x="600" y="1412" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle">Gate</text>
+    </g>
+
+    
+    <g transform="rotate(-90, 700, 1400)">
+    <rect x="615" y="1361" width="170" height="78" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="8" />
+    <text x="700" y="1390" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#111111" text-anchor="middle">ATE-6 OUTSIDE</text>
+    <text x="700" y="1412" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle">ENTRANCE</text>
+    </g>
+
+    
+
+
+    
+    <rect x="908" y="1320" width="320" height="170" fill="rgba(100, 116, 139, 0.25)" stroke="#f6b73c" stroke-width="2" rx="8" stroke-dasharray="8,4" />
+    <text x="1068" y="1348" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1e293b" text-anchor="middle">South Block</text>
+    <text x="1068" y="1366" font-family="Arial, sans-serif" font-size="13" fill="#1e293b" text-anchor="middle">(Under Construction)</text>
+    
+    <rect x="930" y="1384" width="52" height="24" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1" rx="4" />
+    <text x="956" y="1400" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#111827" text-anchor="middle">W/H</text>
+    <rect x="990" y="1384" width="52" height="24" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1" rx="4" />
+    <text x="1016" y="1400" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#111827" text-anchor="middle">W/H</text>
+    
+    <rect x="1092" y="1378" width="120" height="50" fill="#f0f0f0" stroke="#000000" stroke-width="2" rx="6" />
+    <text x="1152" y="1394" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#111111" text-anchor="middle">PF10</text>
+    <text x="1152" y="1408" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#111111" text-anchor="middle">Booking Office</text>
+    
+    
+    
+    <rect x="930" y="1418" width="110" height="60" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1" rx="4" />
+    <text x="986" y="1434" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#111827" text-anchor="middle">CCTV</text>
+
+    
+
+
+    
+    <rect x="1550" y="1320" width="170" height="78" fill="rgba(15,23,42,0.9)" stroke="#334155" stroke-width="2" rx="8" />
+    <text x="1635" y="1354" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">Basement Parking</text>
+    <text x="1635" y="1376" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle">near Gate No. 8</text>
+
+    
+    <rect x="820" y="1500" width="878" height="55" fill="#e5e7eb" stroke="none" rx="8" />
+    <line x1="820" y1="1506" x2="1698" y2="1506" stroke="#9ca3af" stroke-width="2" />
+    <line x1="820" y1="1548" x2="1698" y2="1548" stroke="#9ca3af" stroke-width="2" />
+    <line x1="832" y1="1526" x2="1686" y2="1526" stroke="#6b7280" stroke-width="3" stroke-dasharray="10,6" />
+    <text x="1259" y="1520" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#111827" text-anchor="middle">Boiguda Entrance – PF10 Entry/Exit</text>
+    </g>
+
+    
+    <rect x="50" y="1660" width="2000" height="108" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="2" rx="8" />
+    <text x="1050" y="1690" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1d4ed8" text-anchor="middle">LEGEND</text>
+    
+    
+    
+    
+    <circle cx="250" cy="1727" r="12" fill="#50C878" stroke="#475569" stroke-width="2" />
+    <text x="278" y="1734" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Safe</text>
+    
+    <circle cx="520" cy="1727" r="12" fill="#f6b73c" stroke="#475569" stroke-width="2" />
+    <text x="548" y="1734" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Moderate</text>
+    
+    <circle cx="800" cy="1727" r="12" fill="#f28f3b" stroke="#475569" stroke-width="2" />
+    <text x="828" y="1734" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Crowded</text>
+    
+    <circle cx="1080" cy="1727" r="12" fill="#e2584f" stroke="#475569" stroke-width="2" />
+    <text x="1108" y="1734" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Critical</text>
+    
+    
+    <rect x="1340" y="1705" width="64" height="42" fill="#ffffff" stroke="#f28f3b" stroke-width="4" rx="8" />
+    <text x="1425" y="1734" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">FOB Bridge</text>
+    
+    <rect x="1620" y="1705" width="64" height="42" fill="#4b5563" stroke="#111827" stroke-width="4" rx="8" />
+    <text x="1705" y="1734" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Platforms</text>
+    </g>
+<g id="camera-boxes">
+  <rect id="cam_hyb_pf1" x="1112.0" y="365.0" width="106" height="56" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_hyb_pf2" x="1434.5" y="551.0" width="141" height="74" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_hyb_pf4" x="1094.5" y="731.0" width="141" height="74" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_middle_fob_4_5" x="314.0" y="660.0" width="82" height="200" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_hyb_pf8" x="974.5" y="1091.0" width="141" height="74" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_hyb_pf10" x="1452.0" y="1265.0" width="106" height="56" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_pf1_fob_kzj" x="314.0" y="401" width="82" height="247" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_pf1_fob_hyb_end" x="314.0" y="1068" width="82" height="270" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_kzj_pf1_fob_kzj" x="1614.0" y="401" width="82" height="247" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_kzj_pf1_fob_pf10" x="1614.0" y="1068" width="82" height="270" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_hyb_booking" x="880" y="165" width="260" height="95" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="7" />
+  <rect id="cam_hyb_booking_gate6" x="748" y="1428" width="150" height="78" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="7" />
+  <rect id="cam_hyb_booking_gate8" x="1386" y="1415" width="78" height="110" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="7" />
+  <!-- Gate 4 Booking Office camera -->
+  <rect id="cam_hyb_booking_gate4a" x="446" y="127" width="78" height="170" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="7" />
+  <!-- PF-1 right side HYD FOB camera — inherits cam_hyb_pf1_a (HYD FOB MID) stream -->
+  <rect id="cam_hyb_pf1_a" x="448" y="365" width="100" height="56" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <!-- KZJ Side New FOB camera ─ aligned with PF2-3 area -->
+  <rect id="cam_mid_fob_pf1" x="1307.0" y="395.0" width="92" height="260" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+  <rect id="cam_mid_fob_center" x="1307.0" y="860.0" width="92" height="120" fill="transparent" stroke="#d1d5db" stroke-width="2" rx="5" />
+</g>
+<g id="camera-labels" font-family="Arial, sans-serif" font-size="7.5" font-weight="bold" fill="#ffffff" text-anchor="middle" pointer-events="none" stroke="#111827" stroke-width="0.7" paint-order="stroke">
+  <text x="1165" y="389">
+    <tspan x="1165" dy="0">PF-1 NEAR KZJ</tspan>
+    <tspan x="1165" dy="10">FOB FC GATE 2</tspan>
+  </text>
+
+  <text x="1505" y="584">
+    <tspan x="1505" dy="0">PF-2 KZJ FOB</tspan>
+    <tspan x="1505" dy="10">FC RRI</tspan>
+  </text>
+  <text x="1165" y="764">
+    <tspan x="1165" dy="0">PF 4&amp;5 MIDDLE</tspan>
+    <tspan x="1165" dy="10">PTZ</tspan>
+  </text>
+  <text x="1165" y="944">
+    <tspan x="1165" dy="0">PF 6N NEAR</tspan>
+    <tspan x="1165" dy="10">MID FOB</tspan>
+  </text>
+  <text x="1325" y="389">
+    <tspan x="1325" dy="0">KZJ SIDE NEW FOB</tspan>
+    <tspan x="1325" dy="10">FC PF10</tspan>
+  </text>
+  <text x="1353" y="910">
+    <tspan x="1353" dy="0">MID FOB</tspan>
+    <tspan x="1353" dy="10">FC PF-10</tspan>
+  </text>
+  <text x="355" y="760" font-size="6.7">
+    <tspan x="355" dy="0">HYD FOB MIDDLE</tspan>
+    <tspan x="355" dy="9">FC 4&amp;5</tspan>
+  </text>
+  <text x="1045" y="1124">
+    <tspan x="1165" dy="0">PF 8 MIDDLE</tspan>
+    <tspan x="1165" dy="10">FC KZJ</tspan>
+  </text>
+  <text x="1505" y="1289">
+    <tspan x="1505" dy="0">PF10 OPP GATE-8</tspan>
+    <tspan x="1505" dy="10">FC KZJ FOB</tspan>
+  </text>
+  <text x="355" y="524" font-size="6.7">
+    <tspan x="355" dy="0">HYD FOB FC</tspan>
+    <tspan x="355" dy="9">PF10</tspan>
+  </text>
+  <text x="355" y="1203" font-size="6.7">
+    <tspan x="355" dy="0">HYD FOB FC</tspan>
+    <tspan x="355" dy="9">PF1</tspan>
+  </text>
+  <text x="1655" y="524" font-size="6.7">
+    <tspan x="1655" dy="0">KZJ FOB FC</tspan>
+    <tspan x="1655" dy="9">PF10</tspan>
+  </text>
+  <text x="1655" y="1203" font-size="6.7">
+    <tspan x="1655" dy="0">KZJ FOB FC</tspan>
+    <tspan x="1655" dy="9">PF1</tspan>
+  </text>
+  <text x="888" y="198">
+    <tspan x="888" dy="0">GATE 2A</tspan>
+    <tspan x="888" dy="10">BOOKING</tspan>
+    <tspan x="888" dy="10">OFFICE</tspan>
+  </text>
+  <text x="823" y="1382">
+    <tspan x="823" dy="0">GATE 6</tspan>
+    <tspan x="823" dy="10">BOOKING OFFICE</tspan>
+  </text>
+  <text x="487" y="196" font-size="6.7">
+    <tspan x="487" dy="0">GATE 4</tspan>
+    <tspan x="487" dy="9">BOOKING</tspan>
+    <tspan x="487" dy="9">OFFICE</tspan>
+  </text>
+  <text x="498" y="378" font-size="6.7">
+    <tspan x="498" dy="0">PF1 HYD FOB</tspan>
+    <tspan x="498" dy="9">RIGHT SIDE</tspan>
+  </text>
+
+  <!-- === Outside-box labels (dark text on station background) === -->
+  
+</g>
+
+<!-- Static outside-box labels — placed in a SEPARATE group so they survive live-mode #camera-labels removal -->
+<g id="static-labels" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" pointer-events="none">
+
+  <!-- Gate 2A Booking Counter — below cam_hyb_booking (box bottom y=260, center x=1010) -->
+  <text x="1010" y="298" font-size="18" fill="#1e293b">GATE 2A BOOKING COUNTER</text>
+
+  <!-- Gate 4 Booking Office — vertical label on left side of cam_hyb_booking_gate4a (left x=446, center y=212) -->
+  <text x="428" y="212" font-size="14" fill="#1e293b"
+        transform="rotate(-90, 428, 212)">GATE 4 BOOKING OFFICE</text>
+
+  <!-- Gate 6 Booking Office — below cam_hyb_booking_gate6 (box bottom y=1426, center x=823) -->
+  <text x="823" y="1534" font-size="14" fill="#1e293b">GATE-6 OUTSIDE</text>
+  <text x="823" y="1550" font-size="14" fill="#1e293b">ENTRANCE</text>
+
+  <!-- Gate 8 Outside -->
+  <text x="1425" y="1545" font-size="14" fill="#1e293b">GATE 8 OUTSIDE</text>
+
+</g>
+
+<!-- Geo-referenced platform edge polygons (lat/lon transformed into SVG x,y) -->
+<g id="geo-platform-overlays" fill="none" stroke="#ef4444" stroke-width="4" opacity="0.9" style="display:none">
+  <polygon id="geo-pf1" points="439.18,797.56 523.43,881.81 1853.71,586.19 1761.33,667.49" />
+  <polygon id="geo-pf2-3" points="80.00,1011.14 135.43,1029.62 1761.33,641.62 1816.76,660.10" />
+  <polygon id="geo-pf4-5" points="109.56,1122.00 161.30,1140.48 1779.81,689.66 1835.24,704.44" />
+  <polygon id="geo-pf6-7" points="116.95,1133.09 172.38,1151.56 1964.57,704.44 2020.00,722.91" />
+  <polygon id="geo-pf8-9" points="560.38,1125.70 615.81,1140.48 1798.29,826.38 1742.86,807.90" />
+  <polygon id="geo-pf10" points="346.80,1228.79 357.14,1269.81 1714.77,860.75 1948.31,889.94" />
+</g>
+</svg>

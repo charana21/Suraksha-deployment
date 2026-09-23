@@ -1,0 +1,54 @@
+[Unit]
+Description=CrowdVision Backend Service
+After=network.target
+ 
+[Service]
+Type=simple
+User=crowdvision
+Group=crowdvision
+ 
+# Updated backend location
+WorkingDirectory=/opt/crowdvision/crowd-backend
+ 
+# Environment
+Environment="PATH=/opt/crowdvision/crowd-backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
+ 
+# Writable runtime directories
+Environment="HOME=/opt/crowdvision/crowd-backend/data"
+Environment="TORCH_HOME=/opt/crowdvision/crowd-backend/data/torch"
+Environment="XDG_CACHE_HOME=/opt/crowdvision/crowd-backend/data/.cache"
+Environment="YOLO_CONFIG_DIR=/opt/crowdvision/crowd-backend/data/ultralytics"
+Environment="ULTRALYTICS_ANALYTICS=false"
+ 
+# Load env variables
+EnvironmentFile=-/opt/crowdvision/crowd-backend/.env
+#EnvironmentFile=-/opt/crowdvision/crowd-backend/config/production.env
+ 
+# Start command
+ExecStart=/opt/crowdvision/crowd-backend/venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+ 
+# Graceful shutdown
+ExecStop=/bin/kill -SIGTERM $MAINPID
+TimeoutStopSec=30
+ 
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+ 
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+PrivateTmp=true
+ 
+# Writable paths
+ReadWritePaths=/opt/crowdvision/crowd-backend /var/log/crowdvision
+# GPU access
+SupplementaryGroups=video render
+ 
+[Install]
+WantedBy=multi-user.target
