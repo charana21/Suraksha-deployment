@@ -19,8 +19,8 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: backend
-          image: registry.example.com/crowdvision/crowd-backend:latest
-          imagePullPolicy: IfNotPresent
+          image: crowdvision-backend:local
+          imagePullPolicy: Never
           ports:
             - name: http
               containerPort: 80

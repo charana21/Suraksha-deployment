@@ -10,7 +10,7 @@ API manifests in this directory. These files are intentionally packaged under
 
 These manifests deploy the backend and an internal MediaMTX service. They assume:
 
-- the image is available as `registry.example.com/crowdvision/crowd-backend:latest`;
+- the locally imported image `crowdvision-backend:local` is available in K3s containerd;
 - the K3s cluster has an NVIDIA GPU node labeled `crowdvision/gpu=true`;
 - the NVIDIA Container Toolkit and K3s GPU runtime are configured;
 - MongoDB is reachable at the URI in `secret.yaml`; and
@@ -31,6 +31,13 @@ kubectl -n crowdvision create secret tls crowdvision-tls \
    `rtsp://mediamtx:8554/cam_01`, or use the external camera URLs directly.
 
 ## Deploy
+
+Build and import the backend image on the K3s node before applying the manifests:
+
+```bash
+docker build -t crowdvision-backend:local crowd-backend/
+docker save crowdvision-backend:local | sudo k3s ctr images import -
+```
 
 ```bash
 kubectl apply -k k3s/

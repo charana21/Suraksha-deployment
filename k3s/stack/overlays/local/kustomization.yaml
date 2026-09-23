@@ -11,3 +11,12 @@ images:
   - name: registry.example.com/crowdvision/crowd-frontend
     newName: crowdvision-frontend
     newTag: local
+
+patches:
+  - target:
+      kind: Deployment
+      name: crowdvision-backend
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
