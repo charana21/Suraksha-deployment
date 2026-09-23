@@ -8,28 +8,24 @@ default `VITE_API_URL=/api` so it always uses the current workstation address.
 
 ## Local K3s test
 
-Install K3s, then build and import both images into its containerd image store:
+Install K3s, then run the local deployment script from the repository root:
 
 ```bash
-cd /path/to/Crowd_Vision_Frontend
-docker build -t crowdvision-frontend:local .
-docker save crowdvision-frontend:local | sudo k3s ctr images import -
-
-cd /path/to/crowd-backend
-docker build -t crowdvision-backend:local .
-docker save crowdvision-backend:local | sudo k3s ctr images import -
+./k3s/stack/deploy-local.sh
 ```
 
-Create the non-committed secret file and deploy the local overlay:
+The script reads `crowd-backend/.env` into the Kubernetes Secret and uses
+`Crowd_Vision_Frontend/.env` for the frontend's build-time `VITE_*` values. These
+files must remain uncommitted. It builds and imports both local images into the
+K3s containerd image store, then applies the local overlay.
+
+For a manual deployment, create the non-committed secret from the backend env:
 
 ```bash
-cd /path/to/crowd-backend/k3s/stack
-cp secrets.example.env secrets.env
-# Put the test MongoDB URI from the backend environment in `MONGODB_URI`.
 kubectl create namespace crowdvision --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n crowdvision create secret generic crowdvision-secrets \
-  --from-env-file=secrets.env --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -k overlays/local
+  --from-env-file=crowd-backend/.env --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -k k3s/stack/overlays/local
 ```
 
 Copy `yolov8m.pt` and `SHA_model.pth` to the `crowdvision-data` volume before
