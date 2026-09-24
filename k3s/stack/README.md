@@ -28,6 +28,12 @@ kubectl -n crowdvision create secret generic crowdvision-secrets \
 kubectl apply -k k3s/stack/overlays/local
 ```
 
+Forward the backend separately on port `3006` while testing the frontend:
+
+```bash
+kubectl -n crowdvision port-forward svc/crowdvision-backend 3006:80
+```
+
 Copy `yolov8m.pt` and `SHA_model.pth` to the `crowdvision-data` volume before
 starting a camera stream. Test the web application at `http://<k3s-node-ip>/`.
 
