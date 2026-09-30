@@ -193,7 +193,7 @@ async def health_check(request: Request):
     inference_status = await _get_inference_status(request, settings, issues)
 
     system_status = {
-        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "cpu_percent": psutil.cpu_percent(interval=None),
         "memory_percent": psutil.virtual_memory().percent,
         "disk_percent": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:\\").percent
     }

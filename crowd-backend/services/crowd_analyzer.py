@@ -123,6 +123,12 @@ class CrowdAnalyzer:
         self._zone_roi_mask = None
         self._zone_roi_mask_key = None
 
+        # DIS Optical Flow (10x faster than Farneback on CPU, drops CPU spikes)
+        try:
+            self._dis_flow = cv2.DISOpticalFlow_create(cv2.DISOPTICAL_FLOW_PRESET_FAST)
+        except Exception:
+            self._dis_flow = None
+
     def _get_flow_roi_mask(
         self,
         flow_shape: Tuple[int, int],
@@ -765,12 +771,16 @@ class CrowdAnalyzer:
             return np.zeros((small_h, small_w, 2)), 0.0, np.zeros((small_h, small_w))
 
         # Calculate flow on full frame (masking inputs would create boundary artifacts)
-        flow = cv2.calcOpticalFlowFarneback(
-            self.prev_gray, small_gray, None,
-            pyr_scale=0.5, levels=3, winsize=15,
-            iterations=3, poly_n=5, poly_sigma=1.2,
-            flags=0
-        )
+        # DIS Optical Flow is ~10x faster than Farneback on CPU
+        if self._dis_flow is not None:
+            flow = self._dis_flow.calc(self.prev_gray, small_gray, None)
+        else:
+            flow = cv2.calcOpticalFlowFarneback(
+                self.prev_gray, small_gray, None,
+                pyr_scale=0.5, levels=3, winsize=15,
+                iterations=3, poly_n=5, poly_sigma=1.2,
+                flags=0
+            )
 
         # ROI masking: zero out flow vectors outside the ROI polygon.
         # This ensures trains, wind, lighting changes outside the monitored

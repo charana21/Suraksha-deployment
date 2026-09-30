@@ -31,9 +31,9 @@ coverage.xml
 .idea/
 *.swp
 *.swo
-*~
-data/uploads/
-data/weights/
 platform_occupation_summary_CORRECTED.csv
 credentials.json
 .env*
+
+# Runtime data (mounted via PVC in k8s / bind-mounted in docker-compose, not needed in the image)
+data/

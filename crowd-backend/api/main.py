@@ -2,6 +2,7 @@
 FastAPI main application
 """
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
@@ -229,12 +230,32 @@ app.include_router(user_login.router, prefix="/api")
     # Removed webhooks.router
 
 
+@app.get("/api/docs", include_in_schema=False)
+async def api_docs():
+    """Redirect /api/docs to /docs for Swagger UI"""
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/api/openapi.json", include_in_schema=False)
+async def api_openapi():
+    """Redirect /api/openapi.json to /openapi.json"""
+    return RedirectResponse(url="/openapi.json")
+
+
+@app.get("/api/redoc", include_in_schema=False)
+async def api_redoc():
+    """Redirect /api/redoc to /redoc for ReDoc"""
+    return RedirectResponse(url="/redoc")
+
+
 @app.get("/")
 async def root():
     return {
         "status": "online",
         "service": "CrowdVision API v1.0.0",
         "endpoints": {
+            "docs": "/docs",
+            "api_docs": "/api/docs",
             "master_auth": {
                 "login": "POST /api/master/login",
                 "users": "GET/POST/PUT/DELETE /api/master/users/*",

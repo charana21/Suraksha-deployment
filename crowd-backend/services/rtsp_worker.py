@@ -850,7 +850,7 @@ class RTSPWorker:
         self.state.update_status("stopped")
         logger.info(f"[RTSP Worker {self.stream_id}] Main loop ended")
 
-    MAX_CONSECUTIVE_FRAME_ERRORS = 50  # Roughly 2-3 seconds of bad frames before restart
+    MAX_CONSECUTIVE_FRAME_ERRORS = 450  # ~15-18 seconds of bad frames before restart to allow keyframe/GOP recovery
 
     def _open_capture(self):
         """Configure OpenCV for RTSP and open the stream. Raises if the stream can't be opened."""
@@ -859,24 +859,32 @@ class RTSPWorker:
         # probesize;1000000: allow 1MB of data for format detection
         # fflags;+discardcorrupt: skip corrupt frames instead of failing
         # flags;low_delay: minimize latency after initial detection
+        # buffer_size;4194304: 4MB socket buffer to avoid packet drops on 2K/1080p cameras
+        # max_delay;500000: limit maximum buffering delay to 0.5s
+        # reorder_queue_size;100: reorder out-of-order packets before discarding
         os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = (
-            'rtsp_transport;tcp|analyzeduration;2000000|probesize;1000000|fflags;+discardcorrupt|flags;low_delay'
+            'rtsp_transport;tcp|analyzeduration;2000000|probesize;1000000|fflags;+discardcorrupt|flags;low_delay|buffer_size;4194304|max_delay;500000|reorder_queue_size;100'
         )
 
-        print(f"[RTSP Worker {self.stream_id}] Using optimized TCP transport options")
-        logger.info(f"[RTSP Worker {self.stream_id}] Using optimized TCP transport options")
-        cap = cv2.VideoCapture(self.rtsp_url, cv2.CAP_FFMPEG)
+        rtsp_url = self.rtsp_url
+        # If running in k8s and stream points to localhost:8554, resolve to internal mediamtx service
+        if "localhost:8554" in rtsp_url or "127.0.0.1:8554" in rtsp_url:
+            rtsp_url = rtsp_url.replace("localhost:8554", "mediamtx:8554").replace("127.0.0.1:8554", "mediamtx:8554")
 
-        # Small buffer for low latency while allowing keyframe detection
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+        print(f"[RTSP Worker {self.stream_id}] Using optimized TCP transport options ({rtsp_url})")
+        logger.info(f"[RTSP Worker {self.stream_id}] Using optimized TCP transport options")
+        cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+
+        # Buffer for low latency while allowing keyframe detection
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 5)
 
         if not cap.isOpened():
-            error_msg = f"Failed to open RTSP stream: {self.rtsp_url}"
+            error_msg = f"Failed to open RTSP stream: {rtsp_url}"
             logger.error(f"[RTSP Worker {self.stream_id}] {error_msg}")
             logger.error(f"[RTSP Worker {self.stream_id}] Troubleshooting:")
             logger.error(f"[RTSP Worker {self.stream_id}]   - Check URL is correct")
             logger.error(f"[RTSP Worker {self.stream_id}]   - Verify stream is publishing (docker logs rtsp-server)")
-            logger.error(f"[RTSP Worker {self.stream_id}]   - Test with: ffplay {self.rtsp_url}")
+            logger.error(f"[RTSP Worker {self.stream_id}]   - Test with: ffplay {rtsp_url}")
             raise Exception(error_msg)
 
         stream_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
@@ -896,7 +904,7 @@ class RTSPWorker:
     def _handle_bad_frame(self, consecutive_errors: int) -> int:
         """Track a failed frame read; raises once the stream looks unstable."""
         consecutive_errors += 1
-        if consecutive_errors % 10 == 0:
+        if consecutive_errors % 50 == 0:
             print(
                 f"[RTSP Worker {self.stream_id}] WARNING: Partial stream failure "
                 f"(bad frame {consecutive_errors}/{self.MAX_CONSECUTIVE_FRAME_ERRORS})"
@@ -906,8 +914,8 @@ class RTSPWorker:
             logger.error(f"[RTSP Worker {self.stream_id}] Too many consecutive bad frames. Reconnecting...")
             raise Exception("Stream unstable - forced reconnect")
 
-        # Sleep briefly to avoid CPU spin loop during packet loss
-        time.sleep(0.01)
+        # Sleep briefly (5ms) to avoid CPU spin loop while keeping socket buffer drained
+        time.sleep(0.005)
         return consecutive_errors
 
     def _maybe_refresh_camera_config(self):
@@ -1121,6 +1129,16 @@ class RTSPWorker:
         try:
             # Frame capture and processing loop
             while not self._stop_event.is_set():
+                # For intermediate frames, cap.grab() is ~5x faster than cap.read()
+                # as it demuxes without full BGR pixel decoding and memory allocation
+                if frame_skip > 1 and (frame_counter % frame_skip != 0):
+                    if not cap.grab():
+                        consecutive_errors = self._handle_bad_frame(consecutive_errors)
+                        continue
+                    consecutive_errors = 0
+                    frame_counter += 1
+                    continue
+
                 ret, frame = cap.read()
 
                 if not ret or frame is None:
@@ -1133,10 +1151,6 @@ class RTSPWorker:
 
                 # Capture timestamp immediately when frame is read
                 frame_timestamp = datetime.now(UTC)
-
-                # Skip frames if target FPS is set
-                if frame_counter % frame_skip != 0:
-                    continue
 
                 try:
                     last_process_time = self._process_frame(frame, frame_timestamp, last_process_time)
