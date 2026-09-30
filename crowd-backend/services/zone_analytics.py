@@ -162,61 +162,143 @@ def get_camera_latest_analytics(camera_id: str) -> Optional[Dict]:
     return None
 
 
+# Preserve last-known valid metrics for up to 30 seconds when frames are delayed
+CAMERA_METRICS_CACHE_TTL = 30.0
+_last_known_camera_metrics: Dict[str, Dict[str, Any]] = {}
+
+
+def _parse_timestamp_to_epoch(ts: Any) -> Optional[float]:
+    """Parse various timestamp representations into a unix epoch float."""
+    if ts is None:
+        return None
+    if isinstance(ts, (int, float)):
+        return float(ts)
+    if isinstance(ts, datetime):
+        return ts.timestamp()
+    if isinstance(ts, str):
+        try:
+            return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            return None
+    return None
+
+
 def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
-    """Pull one camera's latest analytics (or zeroed defaults) plus its SVG detail entry."""
+    """Pull one camera's latest analytics (or preserved last-known valid count for up to 30s) plus its SVG detail entry."""
     camera_id = camera.get("camera_id")
     svg_region_id = camera.get("svg_region_id", camera_id)
     analytics = get_camera_latest_analytics(camera_id)
+    now = datetime.now(UTC).timestamp()
 
-    if not analytics:
-        return {
-            "has_analytics": False,
-            "latency": None,
-            "detail": {
-                "camera_id": camera_id,
-                "svg_region_id": svg_region_id,
-                "people_count": 0,
-                "density_avg": 0.0,
-                "density_level": "LOW",
-                "motion_intensity": 0.0,
-                "motion_level": "STATIC",
-                "risk_score": 0.0,
-                "risk_level": "LOW",
-            },
-        }
+    if analytics:
+        zone_data = analytics.get("zones", {}).get("full_frame", {})
+        pc = zone_data.get("people_count", analytics.get("people_count", 0))
+        da = zone_data.get("density_estimate", analytics.get("density_avg", 0.0))
+        dl = zone_data.get("density_level", analytics.get("density_level", "LOW"))
+        mi = zone_data.get("avg_motion", analytics.get("motion_intensity", 0.0))
+        ml = zone_data.get("motion_level", analytics.get("motion_level", "STATIC"))
+        rs = zone_data.get("risk_score", analytics.get("risk_score", 0.0))
+        rl = zone_data.get("risk_level", analytics.get("risk_level", "LOW"))
 
-    zone_data = analytics.get("zones", {}).get("full_frame", {})
-    pc = zone_data.get("people_count", 0)
-    da = zone_data.get("density_estimate", 0.0)
-    dl = zone_data.get("density_level", "LOW")
-    mi = zone_data.get("avg_motion", 0.0)
-    ml = zone_data.get("motion_level", "STATIC")
-    rs = zone_data.get("risk_score", 0.0)
-    rl = zone_data.get("risk_level", "LOW")
+        ts = analytics.get("timestamp")
+        epoch_ts = _parse_timestamp_to_epoch(ts)
+        latency = max(0.0, now - epoch_ts) if epoch_ts is not None else None
 
-    ts = analytics.get("timestamp")
-    latency = max(0, datetime.now(UTC).timestamp() - ts) if ts else None
+        # Check if the analytics are within the 30-second TTL window
+        if latency is None or latency <= CAMERA_METRICS_CACHE_TTL:
+            metric_data = {
+                "people_count": pc,
+                "density_avg": da,
+                "density_level": dl,
+                "motion_intensity": mi,
+                "motion_level": ml,
+                "risk_score": rs,
+                "risk_level": rl,
+                "timestamp": epoch_ts or now,
+            }
+            if camera_id:
+                _last_known_camera_metrics[camera_id] = metric_data
 
+            return {
+                "has_analytics": True,
+                "people_count": pc,
+                "density_avg": da,
+                "density_level": dl,
+                "motion_intensity": mi,
+                "motion_level": ml,
+                "risk_score": rs,
+                "risk_level": rl,
+                "latency": latency,
+                "detail": {
+                    "camera_id": camera_id,
+                    "svg_region_id": svg_region_id,
+                    "people_count": pc,
+                    "density_avg": round(da, 2),
+                    "density_level": dl,
+                    "motion_intensity": round(mi, 4),
+                    "motion_level": ml,
+                    "risk_score": round(rs, 1),
+                    "risk_level": rl,
+                },
+            }
+
+    # If no fresh analytics or frame is delayed, fall back to preserved last-known valid count
+    if camera_id and camera_id in _last_known_camera_metrics:
+        cached = _last_known_camera_metrics[camera_id]
+        cached_ts = cached.get("timestamp", 0.0)
+        cache_age = max(0.0, now - cached_ts)
+        if cache_age <= CAMERA_METRICS_CACHE_TTL:
+            pc = cached["people_count"]
+            da = cached["density_avg"]
+            dl = cached["density_level"]
+            mi = cached["motion_intensity"]
+            ml = cached["motion_level"]
+            rs = cached["risk_score"]
+            rl = cached["risk_level"]
+            return {
+                "has_analytics": True,
+                "people_count": pc,
+                "density_avg": da,
+                "density_level": dl,
+                "motion_intensity": mi,
+                "motion_level": ml,
+                "risk_score": rs,
+                "risk_level": rl,
+                "latency": cache_age,
+                "detail": {
+                    "camera_id": camera_id,
+                    "svg_region_id": svg_region_id,
+                    "people_count": pc,
+                    "density_avg": round(da, 2),
+                    "density_level": dl,
+                    "motion_intensity": round(mi, 4),
+                    "motion_level": ml,
+                    "risk_score": round(rs, 1),
+                    "risk_level": rl,
+                },
+            }
+
+    # Frame is delayed > 30s or never had analytics: reset to defaults
     return {
-        "has_analytics": True,
-        "people_count": pc,
-        "density_avg": da,
-        "density_level": dl,
-        "motion_intensity": mi,
-        "motion_level": ml,
-        "risk_score": rs,
-        "risk_level": rl,
-        "latency": latency,
+        "has_analytics": False,
+        "latency": None,
+        "people_count": 0,
+        "density_avg": 0.0,
+        "density_level": "LOW",
+        "motion_intensity": 0.0,
+        "motion_level": "STATIC",
+        "risk_score": 0.0,
+        "risk_level": "LOW",
         "detail": {
             "camera_id": camera_id,
             "svg_region_id": svg_region_id,
-            "people_count": pc,
-            "density_avg": round(da, 2),
-            "density_level": dl,
-            "motion_intensity": round(mi, 4),
-            "motion_level": ml,
-            "risk_score": round(rs, 1),
-            "risk_level": rl,
+            "people_count": 0,
+            "density_avg": 0.0,
+            "density_level": "LOW",
+            "motion_intensity": 0.0,
+            "motion_level": "STATIC",
+            "risk_score": 0.0,
+            "risk_level": "LOW",
         },
     }
 

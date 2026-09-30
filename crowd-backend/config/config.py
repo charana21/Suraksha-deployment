@@ -100,8 +100,8 @@ class Settings(BaseSettings):
 
     # === PET INFERENCE INTERVAL ===
     # Run PET every Nth frame per camera; intermediate frames use YOLO-only + cached PET data.
-    # Reduces GPU load from 15×300ms=4.5s/s to 5×300ms=1.5s/s for 15 cameras.
-    pet_inference_interval: int = 3  # 1 = every frame (no skip), 3 = PET every 3rd frame
+    # Reduces GPU load to 8 inferences/sec for 40 cameras (every 5th frame), which 1 GPU can comfortably handle.
+    pet_inference_interval: int = 5  # 1 = every frame (no skip), 5 = PET every 5th frame
 
     # === UNIFIED RISK SCORE THRESHOLDS (0-100) ===
     # Single set of thresholds for all cameras -- no per-camera variation
@@ -203,10 +203,10 @@ class Settings(BaseSettings):
     # Batched GPU Inference Configuration (Production-grade)
     # Now actually used! RTSPWorker creates CrowdAnalyzer with use_batched_inference=True
     use_batched_inference: bool = True  # Enable centralized GPU batching
-    batch_yolo_size: int = 16  # Max frames per YOLO batch (sized for 15+ cameras)
+    batch_yolo_size: int = 40  # Max frames per YOLO batch (processes all 40 cameras in a single YOLO GPU pass)
     batch_timeout_ms: float = 200.0  # Accumulate bigger batches (15 cams @ 1fps → frame every ~67ms)
-    inference_queue_size: int = 50  # Queue size for 20+ cameras
-    inference_per_camera_limit: int = 2  # Allow 2 frames per camera in queue
+    inference_queue_size: int = 160  # Queue size for 40 cameras (gives 4 seconds of buffer for 40 cameras)
+    inference_per_camera_limit: int = 4  # Allow 4 frames per camera in queue (stops false-positive camera drops)
     inference_timeout_ms: float = 120000.0  # 120s default — CPU inference can take 30-60s per frame
 
     # MongoDB Configuration

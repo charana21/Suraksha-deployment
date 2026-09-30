@@ -1133,13 +1133,12 @@ class RTSPWorker:
         try:
             # Frame capture and processing loop
             while not self._stop_event.is_set():
-                ret, frame = cap.read()
-
-                if not ret or frame is None:
+                # Grab frame packet from stream without decoding (avoids CPU decode bottleneck)
+                if not cap.grab():
                     consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
                     continue
 
-                # Reset error counter on successful frame
+                # Reset error counter on successful frame grab
                 consecutive_errors = 0
                 last_good_frame_time = time.time()
                 successful_frames += 1
@@ -1150,8 +1149,14 @@ class RTSPWorker:
 
                 frame_counter += 1
 
-                # Skip intermediate frames to achieve target FPS
+                # Skip intermediate frames to achieve target FPS (avoids expensive CPU decoding)
                 if frame_skip > 1 and (frame_counter % frame_skip != 0):
+                    continue
+
+                # Decode only frames that will actually be processed
+                ret, frame = cap.retrieve()
+                if not ret or frame is None:
+                    consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
                     continue
 
                 # Capture timestamp immediately when frame is read
