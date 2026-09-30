@@ -187,14 +187,15 @@ class RTSPWorker:
         # Circuit breaker for resilient reconnection
         self.circuit_breaker = CircuitBreaker(
             name=f"rtsp_{stream_id}",
-            failure_threshold=3,       # 3 consecutive failures → OPEN
-            recovery_timeout=30.0      # Wait 30s before testing recovery
+            failure_threshold=5,       # 5 consecutive failures → OPEN
+            recovery_timeout=15.0      # Wait 15s before testing recovery
         )
         self.backoff = ExponentialBackoff(
-            base_delay=2.0,
-            max_delay=60.0,
+            base_delay=1.0,
+            max_delay=15.0,
             jitter=0.5
         )
+        self.reconnect_attempt = 0
 
         # Thread control
         self._thread: Optional[threading.Thread] = None
@@ -809,23 +810,23 @@ class RTSPWorker:
             return
 
         # Main reconnection loop with circuit breaker
-        reconnect_attempt = 0
+        self.reconnect_attempt = 0
         while not self._stop_event.is_set():
             # Fast-fail if circuit is OPEN (stream known to be down)
             if not self.circuit_breaker.is_available():
-                delay = self.backoff.get_delay(reconnect_attempt)
+                delay = min(15.0, self.backoff.get_delay(self.reconnect_attempt))
                 print(f"[RTSP Worker {self.stream_id}] Circuit OPEN, waiting {delay:.1f}s before retry")
                 logger.warning(f"[RTSP Worker {self.stream_id}] Circuit OPEN, waiting {delay:.1f}s before retry")
                 self.state.update_status("circuit_open")
                 self._stop_event.wait(delay)
-                reconnect_attempt += 1
+                self.reconnect_attempt += 1
                 continue
 
             try:
                 self._connect_and_process()
                 # Success - record it and reset attempt counter
                 self.circuit_breaker.record_success()
-                reconnect_attempt = 0
+                self.reconnect_attempt = 0
 
             except Exception as e:
                 error_msg = f"Connection error: {e}"
@@ -834,23 +835,20 @@ class RTSPWorker:
 
                 # Record failure in circuit breaker
                 self.circuit_breaker.record_failure()
-                reconnect_attempt += 1
+                self.reconnect_attempt += 1
 
-                # Check if we should give up completely
+                # Track connection attempts for metrics/status
                 attempts = self.state.increment_connection_attempts()
-                if attempts >= self.reconnect_attempts:
-                    logger.info(f"[RTSP Worker {self.stream_id}] Max reconnection attempts ({self.reconnect_attempts}) reached, giving up")
-                    break
 
-                # Exponential backoff with jitter
-                delay = self.backoff.get_delay(reconnect_attempt)
-                logger.info(f"[RTSP Worker {self.stream_id}] Reconnecting in {delay:.1f}s (attempt {attempts}/{self.reconnect_attempts}, circuit: {self.circuit_breaker.state.value})")
+                # Exponential backoff with jitter, capped at 15s to avoid long blackouts
+                delay = min(15.0, self.backoff.get_delay(self.reconnect_attempt))
+                logger.info(f"[RTSP Worker {self.stream_id}] Reconnecting in {delay:.1f}s (attempt {attempts}, circuit: {self.circuit_breaker.state.value})")
                 self._stop_event.wait(delay)
 
         self.state.update_status("stopped")
         logger.info(f"[RTSP Worker {self.stream_id}] Main loop ended")
 
-    MAX_CONSECUTIVE_FRAME_ERRORS = 450  # ~15-18 seconds of bad frames before restart to allow keyframe/GOP recovery
+    MAX_NO_FRAME_SECONDS = 15.0  # Force reconnect if no valid frames arrive within 15 seconds
 
     def _open_capture(self):
         """Configure OpenCV for RTSP and open the stream. Raises if the stream can't be opened."""
@@ -863,7 +861,7 @@ class RTSPWorker:
         # max_delay;500000: limit maximum buffering delay to 0.5s
         # reorder_queue_size;100: reorder out-of-order packets before discarding
         os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = (
-            'rtsp_transport;tcp|analyzeduration;2000000|probesize;1000000|fflags;+discardcorrupt|flags;low_delay|buffer_size;4194304|max_delay;500000|reorder_queue_size;100'
+            'rtsp_transport;tcp|analyzeduration;2000000|probesize;1000000|fflags;+discardcorrupt|buffer_size;4194304|reorder_queue_size;100'
         )
 
         rtsp_url = self.rtsp_url
@@ -901,18 +899,22 @@ class RTSPWorker:
             print(f"[RTSP Worker {self.stream_id}] Processing every {frame_skip} frame(s) to achieve ~{self.target_fps}fps")
         return frame_skip
 
-    def _handle_bad_frame(self, consecutive_errors: int) -> int:
-        """Track a failed frame read; raises once the stream looks unstable."""
+    def _handle_bad_frame(self, consecutive_errors: int, last_good_frame_time: float) -> int:
+        """Track a failed frame read; raises once the stream has stalled for too long."""
         consecutive_errors += 1
+        elapsed = time.time() - last_good_frame_time
         if consecutive_errors % 50 == 0:
             print(
-                f"[RTSP Worker {self.stream_id}] WARNING: Partial stream failure "
-                f"(bad frame {consecutive_errors}/{self.MAX_CONSECUTIVE_FRAME_ERRORS})"
+                f"[RTSP Worker {self.stream_id}] WARNING: Stream frame skip/corrupt "
+                f"({consecutive_errors} bad reads, {elapsed:.1f}s without good frame)"
             )
 
-        if consecutive_errors >= self.MAX_CONSECUTIVE_FRAME_ERRORS:
-            logger.error(f"[RTSP Worker {self.stream_id}] Too many consecutive bad frames. Reconnecting...")
-            raise Exception("Stream unstable - forced reconnect")
+        if elapsed >= self.MAX_NO_FRAME_SECONDS:
+            logger.error(
+                f"[RTSP Worker {self.stream_id}] Stream stall: no valid frames for "
+                f"{elapsed:.1f}s (>{self.MAX_NO_FRAME_SECONDS}s). Reconnecting..."
+            )
+            raise Exception(f"Stream stall: no valid frames for {elapsed:.1f}s - forced reconnect")
 
         # Sleep briefly (5ms) to avoid CPU spin loop while keeping socket buffer drained
         time.sleep(0.005)
@@ -1125,29 +1127,32 @@ class RTSPWorker:
         frame_counter = 0
         consecutive_errors = 0
         last_process_time = time.time()
+        last_good_frame_time = time.time()
+        successful_frames = 0
 
         try:
             # Frame capture and processing loop
             while not self._stop_event.is_set():
-                # For intermediate frames, cap.grab() is ~5x faster than cap.read()
-                # as it demuxes without full BGR pixel decoding and memory allocation
-                if frame_skip > 1 and (frame_counter % frame_skip != 0):
-                    if not cap.grab():
-                        consecutive_errors = self._handle_bad_frame(consecutive_errors)
-                        continue
-                    consecutive_errors = 0
-                    frame_counter += 1
-                    continue
-
                 ret, frame = cap.read()
 
                 if not ret or frame is None:
-                    consecutive_errors = self._handle_bad_frame(consecutive_errors)
+                    consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
                     continue
 
                 # Reset error counter on successful frame
                 consecutive_errors = 0
+                last_good_frame_time = time.time()
+                successful_frames += 1
+                if successful_frames == 10:
+                    self.reconnect_attempt = 0
+                    self.state.reset_connection_attempts()
+                    self.circuit_breaker.record_success()
+
                 frame_counter += 1
+
+                # Skip intermediate frames to achieve target FPS
+                if frame_skip > 1 and (frame_counter % frame_skip != 0):
+                    continue
 
                 # Capture timestamp immediately when frame is read
                 frame_timestamp = datetime.now(UTC)
