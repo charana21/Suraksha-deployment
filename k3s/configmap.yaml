@@ -14,7 +14,7 @@ data:
   USE_SHARED_MODEL_POOL: "true"
   USE_BATCHED_INFERENCE: "true"
   YOLO_MODEL_PATH: "/app/data/weights/yolov8m.pt"
-  PET_WEIGHTS_PATH: "/app/data/weights/SHA_model.pth"
+  PET_WEIGHTS_PATH: "/app/data/weights/SHB_model.pth"
   UPLOAD_DIR: "/app/data/uploads"
   OUTPUT_DIR: "/app/data/outputs"
   HEATMAP_DIR: "/app/data/heatmaps"

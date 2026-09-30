@@ -95,7 +95,7 @@ def calibrate_fused_count(
         try:
             pet_value = int(pet_count)
             if pet_value > 0:
-                anchor = pet_value
+                anchor = max(raw, pet_value)
         except (TypeError, ValueError):
             pass
 

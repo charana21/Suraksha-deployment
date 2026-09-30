@@ -382,15 +382,25 @@ def _fuse_sparse_regime(
 def _apply_regime_fusion(
     regime: str, yolo_count: int, pet_count: int, pet_avg_conf: float, pet_conf_std: float,
     is_hallucination: bool, weights: Tuple[float, float, float, float],
+    settings: Optional[object] = None,
 ) -> Tuple[int, str]:
     w_sparse, w_low, w_medium, w_high = weights
     if regime == "HIGH":
-        return _fuse_high_regime(yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, w_high)
-    if regime == "MEDIUM":
-        return _fuse_medium_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_medium)
-    if regime == "LOW":
-        return _fuse_low_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_low)
-    return _fuse_sparse_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_sparse)
+        final, rule = _fuse_high_regime(yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, w_high)
+    elif regime == "MEDIUM":
+        final, rule = _fuse_medium_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_medium)
+    elif regime == "LOW":
+        final, rule = _fuse_low_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_low)
+    else:
+        final, rule = _fuse_sparse_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_sparse)
+
+    # In SPARSE, LOW, and MEDIUM regimes, prevent lower PET estimates from penalizing confirmed YOLO detections
+    yolo_floor_enabled = bool(getattr(settings, 'fusion_yolo_floor_enabled', True)) if settings else True
+    if yolo_floor_enabled and regime in ("SPARSE", "LOW", "MEDIUM") and yolo_count > pet_count and final < yolo_count:
+        final = yolo_count
+        rule = f"{rule} | YOLO_FLOOR({yolo_count})"
+
+    return final, rule
 
 
 def compute_fusion(
@@ -443,7 +453,7 @@ def compute_fusion(
 
     # Step 3: Apply regime-specific fusion
     final, rule = _apply_regime_fusion(
-        regime, yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, weights
+        regime, yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, weights, settings
     )
 
     # Ensure non-negative before calibration

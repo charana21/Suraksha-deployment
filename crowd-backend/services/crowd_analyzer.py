@@ -1105,7 +1105,8 @@ class CrowdAnalyzer:
 
         # Initialize smoother for the single zone
         if zone_id not in self.smoothers:
-            self.smoothers[zone_id] = TemporalSmoother(alpha=0.3)
+            alpha = float(getattr(self.settings, 'temporal_smoother_alpha', 0.6))
+            self.smoothers[zone_id] = TemporalSmoother(alpha=alpha)
 
         smoother = self.smoothers[zone_id]
 

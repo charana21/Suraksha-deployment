@@ -111,12 +111,14 @@ def validate_model_weights(base_path: str) -> Tuple[bool, List[str]]:
 
     # Check for PET model
     pet_paths = [
+        os.path.join(base_path, "data", "weights", "SHB_model.pth"),
         os.path.join(base_path, "data", "weights", "SHA_model.pth"),
+        os.path.join(base_path, "weights", "SHB_model.pth"),
         os.path.join(base_path, "weights", "SHA_model.pth"),
     ]
     pet_found = any(os.path.exists(p) for p in pet_paths)
     if not pet_found:
-        warnings.append("PET model (SHA_model.pth) not found in data/weights/")
+        warnings.append("PET model (SHB_model.pth / SHA_model.pth) not found in data/weights/")
 
     # Print warnings
     for warning in warnings:

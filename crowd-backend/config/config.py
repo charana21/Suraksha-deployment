@@ -139,7 +139,11 @@ class Settings(BaseSettings):
     roi_cache_enabled: bool = True  # Cache ROI contour/masks to reduce per-frame polygon overhead.
 
     # PET Configuration
-    pet_weights_path: Optional[str] = get_resource_path("data/weights/SHA_model.pth")
+    pet_weights_path: Optional[str] = (
+        get_resource_path("data/weights/SHB_model.pth")
+        if os.path.exists(get_resource_path("data/weights/SHB_model.pth"))
+        else get_resource_path("data/weights/SHA_model.pth")
+    )
     pet_conf_threshold: float = 0.5
     pet_nms_distance: float = 6.0
     pet_max_height_sparse: int = 1280
@@ -147,6 +151,8 @@ class Settings(BaseSettings):
     pet_max_height_high: int = 896
     pet_max_height_default: int = 1024
     pet_use_adaptive_fusion: bool = True  # If false, use PET_DIRECT legacy count path (no YOLO blend)
+    fusion_yolo_floor_enabled: bool = True  # In sparse/low/medium regimes, prevent under-predicting PET from dragging down YOLO count
+    temporal_smoother_alpha: float = 0.6  # Responsive EMA alpha for real-time crowd dynamics
 
     # Regime-Based Fusion Configuration
     # Density Regime Thresholds (based on max of YOLO/PET count)
