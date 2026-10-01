@@ -70,23 +70,31 @@ export interface BackendCamera {
   camera_id: string;
   name: string;
   rtsp_url: string;
-  fob_type: 'HYD' | 'KZJ';
-  zone_id: string;
+  fob_type?: 'HYD' | 'KZJ' | string | null;
+  zone_id?: string;
+  location?: string;
   status: 'active' | 'inactive' | 'error';
   is_active: boolean;
-  runtime_status?: 'running' | 'connecting' | 'error' | 'stopped'; // From status endpoint
+  runtime_status?: 'running' | 'connecting' | 'reconnecting' | 'error' | 'stopped' | 'inactive' | 'unknown';
+  shard_id?: number;
+  is_local_worker?: boolean;
+  live_frame_age_ms?: number | null;
 }
 
 export interface CameraListResponse {
   status: string;
+  count?: number;
   cameras: BackendCamera[];
 }
 
 export interface CameraStatusResponse {
   camera_id: string;
-  runtime_status: 'running' | 'connecting' | 'error' | 'stopped';
+  runtime_status: 'running' | 'connecting' | 'reconnecting' | 'error' | 'stopped' | 'inactive' | 'unknown';
   fps?: number;
   message?: string;
+  shard_id?: number;
+  is_local_worker?: boolean;
+  live_frame_age_ms?: number | null;
 }
 
 export interface MultipleStreamResult {
@@ -281,11 +289,16 @@ class RTSPApiService {
 
   // --- NEW CAMERA MANAGEMENT API ---
 
-  async listCameras(fobType?: string): Promise<CameraListResponse> {
+  async listCameras(options?: string | { status?: string; fobType?: string }): Promise<CameraListResponse> {
     const params = new URLSearchParams();
-    if (fobType) params.append('fob_type', fobType);
+    if (typeof options === 'string') {
+      params.append('fob_type', options);
+    } else if (options) {
+      if (options.status) params.append('status', options.status);
+      if (options.fobType) params.append('fob_type', options.fobType);
+    }
     
-    const queryString = fobType ? `?${params.toString()}` : '';
+    const queryString = params.toString() ? `?${params.toString()}` : '';
     const response = await fetch(`${this.baseUrl}/cameras${queryString}`);
 
     if (!response.ok) {

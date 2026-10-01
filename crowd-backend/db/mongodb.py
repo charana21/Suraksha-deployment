@@ -119,7 +119,7 @@ async def connect_to_mongo(settings):
                     settings.mongodb_test_uri,
                     maxPoolSize=settings.mongodb_max_pool_size,
                     connectTimeoutMS=settings.mongodb_connect_timeout_ms,
-                    serverSelectionTimeoutMS=3000
+                    serverSelectionTimeoutMS=10000
                 )
                 MongoDB.test_database = MongoDB.test_client[settings.mongodb_test_database]
                 await MongoDB.test_client.admin.command('ping')

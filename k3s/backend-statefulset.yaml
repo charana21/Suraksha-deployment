@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: crowdvision-backend
+  labels:
+    app.kubernetes.io/name: crowdvision-backend
+spec:
+  serviceName: crowdvision-backend-headless
+  replicas: 2
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: crowdvision-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: crowdvision-backend
+    spec:
+      runtimeClassName: nvidia
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: backend
+          image: crowdvision-backend:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: CAMERA_SHARD_COUNT
+              value: "2"
+            - name: HEADLESS_SERVICE_NAME
+              value: "crowdvision-backend-headless"
+            - name: HEADLESS_SERVICE_PORT
+              value: "8000"
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: "compute,utility,video"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          envFrom:
+            - configMapRef:
+                name: crowdvision-config
+            - secretRef:
+                name: crowdvision-secrets
+          volumeMounts:
+            - name: application-data
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: 16Gi
+              nvidia.com/gpu: "1"
+          startupProbe:
+            httpGet:
+              path: /api/health/simple
+              port: http
+            failureThreshold: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health/simple
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health/simple
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: application-data
+          persistentVolumeClaim:
+            claimName: crowdvision-data

@@ -154,7 +154,7 @@ async function main() {
     }
 
     console.log("Connecting to MongoDB...");
-    const client = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
+    const client = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
 
     try {
         await client.connect();

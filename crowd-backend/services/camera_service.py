@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
+import time
 import aiofiles
 from db.mongodb import MongoDB
 logger = logging.getLogger(__name__)
@@ -208,13 +209,25 @@ class CameraService:
             raise
 
 
+    _camera_cache: Dict[str, tuple] = {}
+
     @staticmethod
     async def get_camera(camera_id: str) -> Optional[Dict]:
-        """Get camera by ID"""
+        """Get camera by ID (with 30s in-memory cache)"""
+        now = time.time()
+        if hasattr(CameraService, "_camera_cache") and camera_id in CameraService._camera_cache:
+            cache_ts, cached_doc = CameraService._camera_cache[camera_id]
+            if now - cache_ts < 30.0:
+                return cached_doc
+
         if MongoDB.database is None:
             return None
         doc = await MongoDB.database.cameras.find_one({"camera_id": camera_id})
-        return CameraService._serialize_camera(doc)
+        serialized = CameraService._serialize_camera(doc)
+        if not hasattr(CameraService, "_camera_cache"):
+            CameraService._camera_cache = {}
+        CameraService._camera_cache[camera_id] = (now, serialized)
+        return serialized
 
 
     @staticmethod
@@ -235,7 +248,8 @@ class CameraService:
     async def list_cameras(
         status: Optional[str] = None,
         location: Optional[str] = None,
-        fob_type: Optional[str] = None
+        fob_type: Optional[str] = None,
+        limit: int = 500
     ) -> List[Dict]:
         """List cameras with optional filters"""
         if MongoDB.database is None:
@@ -250,7 +264,7 @@ class CameraService:
             query["fob_type"] = fob_type
 
         cursor = MongoDB.database.cameras.find(query)
-        cameras = await cursor.to_list(length=100)
+        cameras = await cursor.to_list(length=limit)
         return [CameraService._serialize_camera(c) for c in cameras]
 
 

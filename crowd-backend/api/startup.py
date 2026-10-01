@@ -13,6 +13,7 @@ from services.live_refresh_toggle_service import LiveTrainRefreshToggleService
 from services.live_train_service import LiveTrainService
 from models.model_wrapper import SharedModelPool
 from services.batched_inference import BatchedInferenceService
+from services.sharding import is_camera_owned_by_current_pod, get_camera_shard
 from utils.logging_config import get_logger
 
 logger = get_logger("crowdvision.main")
@@ -198,6 +199,12 @@ async def start_active_cameras(settings, rtsp_manager):
 
             if settings.debug_single_stream and debug_target and camera.get("rtsp_url") != debug_target:
                 logger.debug(f"Skipping {camera['name']} - debug mode active")
+                continue
+
+            camera_id = camera.get("camera_id")
+            if camera_id and not is_camera_owned_by_current_pod(camera_id):
+                shard_id = get_camera_shard(camera_id)
+                logger.info(f"Skipping camera {camera_id} - assigned to shard {shard_id} (not this pod)")
                 continue
 
             try:

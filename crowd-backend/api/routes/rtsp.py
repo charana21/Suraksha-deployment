@@ -7,15 +7,25 @@ Provides REST API for managing multiple RTSP streams:
 - Get status of streams
 - List all streams
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 import cv2
 import numpy as np
 import logging
+import os
+import aiohttp
 from services.rtsp_manager import get_rtsp_manager
 from services.camera_service import CameraService
+from services.sharding import (
+    is_camera_owned_by_current_pod,
+    get_camera_shard,
+    get_owning_pod_host,
+    get_pod_host_for_shard,
+    get_shard_count,
+    get_current_shard_index,
+)
 from utils.visualization import visualize_heatmap_only
 from api.security import require_admin, require_viewer, require_authorized
 import uuid
@@ -237,7 +247,7 @@ async def stop_all_rtsp_streams():
     dependencies=[require_authorized],
     responses={404: {"description": STREAM_NOT_FOUND_DESC}},
 )
-async def get_stream_status(stream_id: str):
+async def get_stream_status(stream_id: str, request: Request = None):
     """
     Get detailed status of a specific RTSP stream
 
@@ -251,23 +261,86 @@ async def get_stream_status(stream_id: str):
 
     state = manager.get_stream_state(stream_id)
 
-    if state is None:
-        raise HTTPException(status_code=404, detail=f"Stream {stream_id} not found")
+    if state is not None:
+        return JSONResponse(state)
 
-    return JSONResponse(state)
+    # If stream is not running locally, check if it belongs to another shard
+    if not is_camera_owned_by_current_pod(stream_id):
+        # Prevent forwarding loops
+        if request and request.headers.get("X-Internal-Forwarded"):
+            raise HTTPException(status_code=404, detail=f"Stream {stream_id} not found")
+
+        target_host = get_owning_pod_host(stream_id)
+        target_url = f"http://{target_host}/api/rtsp/status/{stream_id}"
+        timeout = aiohttp.ClientTimeout(total=4.0)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return JSONResponse(data)
+                    elif resp.status == 404:
+                        raise HTTPException(status_code=404, detail=f"Stream {stream_id} not found")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"[RTSPRouting] Failed forwarding stream status for {stream_id} to {target_host}: {e}")
+
+    raise HTTPException(status_code=404, detail=f"Stream {stream_id} not found")
 
 
 @router.get("/rtsp/list", dependencies=[require_authorized])
-async def list_rtsp_streams():
+async def list_rtsp_streams(request: Request = None):
     """
     List all RTSP streams with their status
 
-    Returns list of all active streams with key metrics
+    Returns list of all active streams with key metrics across shards
     """
     manager = get_rtsp_manager()
 
     streams = manager.get_all_streams()
     counts = manager.get_stream_count()
+
+    # If this request came internally from another pod, return only local streams to avoid recursion
+    if request and request.headers.get("X-Internal-Forwarded"):
+        return JSONResponse({
+            'summary': counts,
+            'streams': streams
+        })
+
+    # Otherwise aggregate from peer shards if multi-shard deployment
+    shard_count = get_shard_count()
+    current_shard = get_current_shard_index()
+
+    if shard_count > 1:
+        aggregated_streams = list(streams)
+        timeout = aiohttp.ClientTimeout(total=3.0)
+        for shard_idx in range(shard_count):
+            if shard_idx == current_shard:
+                continue
+            peer_host = get_pod_host_for_shard(shard_idx)
+            peer_url = f"http://{peer_host}/api/rtsp/list"
+            try:
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    async with session.get(peer_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                        if resp.status == 200:
+                            peer_data = await resp.json()
+                            aggregated_streams.extend(peer_data.get('streams', []))
+            except Exception as e:
+                logger.warning(f"[RTSPAggregation] Failed to aggregate streams from {peer_host}: {e}")
+
+        # Recalculate summary counts across all streams
+        total_counts = {
+            'total': len(aggregated_streams),
+            'running': sum(1 for s in aggregated_streams if s.get('status') == 'running'),
+            'error': sum(1 for s in aggregated_streams if s.get('status') == 'error'),
+            'connecting': sum(1 for s in aggregated_streams if s.get('status') == 'connecting'),
+            'stopped': sum(1 for s in aggregated_streams if s.get('status') == 'stopped')
+        }
+        return JSONResponse({
+            'summary': total_counts,
+            'streams': aggregated_streams
+        })
 
     return JSONResponse({
         'summary': counts,
@@ -369,7 +442,7 @@ async def get_stream_frame(stream_id: str, heatmap: bool = False):
     dependencies=[require_admin],
     responses={404: {"description": STREAM_NOT_FOUND_DESC}},
 )
-async def get_live_stream(stream_id: str):
+async def get_live_stream(stream_id: str, request: Request = None):
     """
     Get live video stream as MJPEG without any processing
 
@@ -388,9 +461,38 @@ async def get_live_stream(stream_id: str):
     """
     manager = get_rtsp_manager()
 
-    # Check if stream exists
+    # Check if stream exists locally
     state = manager.get_stream_state(stream_id)
     if state is None:
+        # Check if owned by another pod
+        if not is_camera_owned_by_current_pod(stream_id):
+            if request and request.headers.get("X-Internal-Forwarded"):
+                raise HTTPException(status_code=404, detail=f"Stream {stream_id} not found")
+            target_host = get_owning_pod_host(stream_id)
+            target_url = f"http://{target_host}/api/rtsp/live/{stream_id}"
+
+            async def forward_remote_stream():
+                timeout = aiohttp.ClientTimeout(total=None, connect=5.0)
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    try:
+                        async with session.get(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                            if resp.status != 200:
+                                return
+                            async for chunk in resp.content.iter_any():
+                                yield chunk
+                    except Exception as e:
+                        logger.warning(f"[RTSPLiveRouting] Internal stream forwarding error for {stream_id}: {e}")
+
+            return StreamingResponse(
+                forward_remote_stream(),
+                media_type='multipart/x-mixed-replace; boundary=frame',
+                headers={
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'X-Live-Routing': 'internal-forwarded',
+                }
+            )
         raise HTTPException(status_code=404, detail=f"Stream {stream_id} not found")
 
     # Get worker

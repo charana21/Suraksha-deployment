@@ -288,25 +288,22 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId, enableWebSocket, pollInterval]);
 
-  // Fallback polling when WebSocket is not connected
+  // Reconcile against shared REST analytics even while the WebSocket is connected.
   useEffect(() => {
-    if (!isConnected && enableWebSocket) {
-      // Start polling as fallback
-      const intervalId = setInterval(fetchAnalytics, pollInterval);
-      pollIntervalRef.current = intervalId;
-    } else if (pollIntervalRef.current && isConnected) {
-      // Stop polling when WebSocket is connected
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
+    if (!enableWebSocket) {
+      return;
     }
 
+    const intervalId = setInterval(fetchAnalytics, pollInterval);
+    pollIntervalRef.current = intervalId;
+
     return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
+      clearInterval(intervalId);
+      if (pollIntervalRef.current === intervalId) {
         pollIntervalRef.current = null;
       }
     };
-  }, [isConnected, enableWebSocket, pollInterval, updateZones]);
+  }, [enableWebSocket, pollInterval, fetchAnalytics]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

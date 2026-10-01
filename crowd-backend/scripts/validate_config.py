@@ -161,7 +161,7 @@ def validate_mongodb() -> Tuple[bool, List[str]]:
 
         # Try to connect
         uri = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
-        client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        client = MongoClient(uri, serverSelectionTimeoutMS=10000)
 
         # Ping the server
         client.admin.command("ping")

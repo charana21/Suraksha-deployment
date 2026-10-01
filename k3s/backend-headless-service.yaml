@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: crowdvision-backend-headless
+  labels:
+    app.kubernetes.io/name: crowdvision-backend
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: crowdvision-backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000

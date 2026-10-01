@@ -42,16 +42,24 @@ function CameraCard({
         setEditForm({ name: camera.name, rtspUrl: camera.rtspUrl }); // Reset
     };
 
-    const status = camera.runtimeStatus || (camera.status === 'active' ? 'stopped' : 'error');
+    const rawStatus = camera.runtimeStatus || (camera.status === 'active' ? 'connecting' : 'stopped');
+    const isRunning = rawStatus === 'running';
+    const isConnecting = rawStatus === 'connecting' || rawStatus === 'reconnecting';
+    const isStopped = rawStatus === 'stopped';
+    const isError = rawStatus === 'error';
+
+    // Mask credentials in RTSP URL if present
+    const maskedRtspUrl = camera.rtspUrl ? camera.rtspUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') : '';
 
     return (
         <div className="group relative bg-[#0F141E] border border-white/5 rounded-2xl overflow-hidden transition-all duration-500 hover:border-primary/20 hover:shadow-2xl">
             {/* Status Header Bar */}
             <div className={cn(
                 "h-1 w-full",
-                status === 'running' && "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]",
+                isRunning && "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]",
+                isConnecting && "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]",
                 isProcessing && "bg-yellow-500",
-                (status === 'stopped' || status === 'error') && "bg-red-500"
+                (isStopped || isError) && "bg-red-500"
             )} />
 
             <div className="p-6">
@@ -89,7 +97,7 @@ function CameraCard({
                             <div className="flex items-center gap-4">
                                 <div className={cn(
                                     "w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-500",
-                                    status === 'running' ? "bg-emerald-500/10 text-emerald-500" : "bg-card/5 text-foreground/40"
+                                    isRunning ? "bg-emerald-500/10 text-emerald-500" : isConnecting ? "bg-amber-500/10 text-amber-500" : "bg-card/5 text-foreground/40"
                                 )}>
                                     <Video className="w-6 h-6" />
                                 </div>
@@ -112,33 +120,40 @@ function CameraCard({
                                 <div className="flex items-center gap-2.5">
                                     <div className={cn(
                                         "w-2.5 h-2.5 rounded-full",
-                                        status === 'running' && "bg-emerald-500 animate-pulse",
+                                        isRunning && "bg-emerald-500 animate-pulse",
+                                        isConnecting && "bg-amber-500 animate-pulse",
                                         isProcessing && "bg-yellow-500 animate-spin",
-                                        (status === 'stopped' || status === 'error') && "bg-red-500"
+                                        (isStopped || isError) && "bg-red-500"
                                     )} />
                                     <span className={cn(
                                         "text-xs font-black uppercase tracking-widest",
-                                        status === 'running' && "text-emerald-500",
+                                        isRunning && "text-emerald-500",
+                                        isConnecting && "text-amber-500",
                                         isProcessing && "text-yellow-500",
-                                        (status === 'stopped' || status === 'error') && "text-red-500"
+                                        (isStopped || isError) && "text-red-500"
                                     )}>
-                                        {isProcessing ? 'PROCESSING' : status === 'running' ? 'RUNNING' : 'STOPPED'}
+                                        {isProcessing ? 'PROCESSING' : isRunning ? 'RUNNING' : isConnecting ? (rawStatus === 'reconnecting' ? 'RECONNECTING' : 'CONNECTING') : 'STOPPED'}
                                     </span>
                                 </div>
+                                {camera.shardId !== undefined && (
+                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-muted-foreground">
+                                        Shard {camera.shardId}
+                                    </span>
+                                )}
                             </div>
 
-                            <div className="text-xs text-muted-foreground truncate font-mono bg-background/20 p-2 rounded border border-white/5" title={camera.rtspUrl}>
-                                {camera.rtspUrl}
+                            <div className="text-xs text-muted-foreground truncate font-mono bg-background/20 p-2 rounded border border-white/5" title={maskedRtspUrl}>
+                                {maskedRtspUrl}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="grid grid-cols-2 gap-3 mt-6">
                                 <Button
                                     onClick={() => onStart(camera.id, camera.name)}
-                                    disabled={status === 'running' || isProcessing}
+                                    disabled={isRunning || isConnecting || isProcessing}
                                     className={cn(
                                         "rounded-xl font-bold uppercase tracking-widest text-[10px] h-11",
-                                        status === 'running' ? "bg-card/5 border border-white/5" : "bg-emerald-500 hover:bg-emerald-600 text-foreground"
+                                        isRunning || isConnecting ? "bg-card/5 border border-white/5" : "bg-emerald-500 hover:bg-emerald-600 text-foreground"
                                     )}
                                 >
                                     <Play className="w-3 h-3 mr-2 fill-current" />
@@ -146,11 +161,11 @@ function CameraCard({
                                 </Button>
                                 <Button
                                     onClick={() => onStop(camera.id, camera.name)}
-                                    disabled={status !== 'running' || isProcessing}
+                                    disabled={(!isRunning && !isConnecting) || isProcessing}
                                     variant="secondary"
                                     className={cn(
                                         "rounded-xl font-bold uppercase tracking-widest text-[10px] h-11 border border-white/5",
-                                        status !== 'running' ? "bg-card/5" : "bg-card/10 hover:bg-card/20 text-foreground"
+                                        (!isRunning && !isConnecting) ? "bg-card/5" : "bg-card/10 hover:bg-card/20 text-foreground"
                                     )}
                                 >
                                     <Square className="w-3 h-3 mr-2 fill-current" />
@@ -202,6 +217,7 @@ export default function Cameras() {
 
   const hyderabadCameras = cameras.filter(c => c.fobType === 'HYD');
   const kazipetCameras = cameras.filter(c => c.fobType === 'KZJ');
+  const platformBookingCameras = cameras.filter(c => c.fobType !== 'HYD' && c.fobType !== 'KZJ');
 
   const EmptyState = () => (
     <div className="py-20 bg-[#0F141E] border border-dashed border-white/10 rounded-3xl text-center">
@@ -221,7 +237,7 @@ export default function Cameras() {
           <div>
             <h1 className="text-3xl font-black text-foreground tracking-tight">Cameras</h1>
             <p className="text-sm text-foreground/40 mt-1">
-              Manage live CCTV streams for HYD and KZJ FOBs
+              Manage live CCTV streams across Secunderabad Station ({cameras.length} active)
             </p>
           </div>
            {error && (
@@ -232,29 +248,58 @@ export default function Cameras() {
            )}
         </div>
 
-        <Tabs defaultValue="HYD" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-card/5 p-1 rounded-xl">
-            <TabsTrigger 
-                value="HYD" 
+        <Tabs defaultValue="ALL" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-8 bg-card/5 p-1 rounded-xl">
+            <TabsTrigger
+                value="ALL"
                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-bold tracking-wide"
             >
-                HYDERABAD SIDE (HYD)
+                ALL CAMERAS ({cameras.length})
             </TabsTrigger>
-            <TabsTrigger 
-                value="KZJ" 
+            <TabsTrigger
+                value="HYD"
                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-bold tracking-wide"
             >
-                KAZIPET SIDE (KZJ)
+                HYDERABAD SIDE ({hyderabadCameras.length})
+            </TabsTrigger>
+            <TabsTrigger
+                value="KZJ"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-bold tracking-wide"
+            >
+                KAZIPET SIDE ({kazipetCameras.length})
+            </TabsTrigger>
+            <TabsTrigger
+                value="PLATFORM_BOOKING"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-bold tracking-wide"
+            >
+                PLATFORM / BOOKING ({platformBookingCameras.length})
             </TabsTrigger>
           </TabsList>
           
+          <TabsContent value="ALL" className="mt-0">
+             {cameras.length === 0 ? <EmptyState /> : (
+                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     {cameras.map(camera => (
+                                 <CameraCard
+                                     key={camera.id}
+                                     camera={camera}
+                            isProcessing={localProcessing[camera.id] || false}
+                            onStart={handleStart}
+                            onStop={handleStop}
+                            onUpdate={updateCamera}
+                         />
+                     ))}
+                 </div>
+             )}
+          </TabsContent>
+
           <TabsContent value="HYD" className="mt-0">
              {hyderabadCameras.length === 0 ? <EmptyState /> : (
                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                      {hyderabadCameras.map(camera => (
-                         <CameraCard 
-                            key={camera.id} 
-                            camera={camera} 
+                                 <CameraCard
+                                     key={camera.id}
+                                     camera={camera}
                             isProcessing={localProcessing[camera.id] || false}
                             onStart={handleStart}
                             onStop={handleStop}
@@ -269,9 +314,26 @@ export default function Cameras() {
             {kazipetCameras.length === 0 ? <EmptyState /> : (
                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                      {kazipetCameras.map(camera => (
-                         <CameraCard 
-                            key={camera.id} 
-                            camera={camera} 
+                         <CameraCard
+                            key={camera.id}
+                            camera={camera}
+                            isProcessing={localProcessing[camera.id] || false}
+                            onStart={handleStart}
+                            onStop={handleStop}
+                            onUpdate={updateCamera}
+                         />
+                     ))}
+                 </div>
+             )}
+          </TabsContent>
+
+          <TabsContent value="PLATFORM_BOOKING" className="mt-0">
+            {platformBookingCameras.length === 0 ? <EmptyState /> : (
+                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     {platformBookingCameras.map(camera => (
+                         <CameraCard
+                            key={camera.id}
+                            camera={camera}
                             isProcessing={localProcessing[camera.id] || false}
                             onStart={handleStart}
                             onStop={handleStop}

@@ -13,7 +13,7 @@ import threading
 import time
 import queue
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from collections import deque
 import numpy as np
 import uuid
@@ -27,25 +27,73 @@ from utils.visualization import visualize_heatmap_only
 from utils.circuit_breaker import CircuitBreaker, ExponentialBackoff
 import os
 
+import re
+
 logger = logging.getLogger(__name__)
 
 
+def sanitize_rtsp_url(text: str) -> str:
+    """Sanitize RTSP URLs in strings to prevent credential exposure in logs or responses."""
+    if not text:
+        return ""
+    # Strip user:password from rtsp://user:password@host...
+    return re.sub(r'rtsp://([^:]+):([^@]+)@', r'rtsp://***:***@', str(text))
+
+
 class RTSPWorkerState:
-    """Thread-safe state for RTSP worker"""
+    """Thread-safe state for RTSP worker with comprehensive health metrics"""
 
     def __init__(self):
         self._lock = threading.Lock()
         self._status = "initializing"
+        self._connected = False
         self._frame_count = 0
         self._fps = 0.0
         self._error = None
+        self._last_error = None
         self._last_analysis = None
         self._connection_attempts = 0
+        self._last_frame_time = 0.0
+        self._last_successful_frame = 0.0
+        self._consecutive_failures = 0
+        self._reconnect_count = 0
+        self._read_errors_total = 0
 
     def update_status(self, status: str, error: Optional[str] = None):
         with self._lock:
             self._status = status
             self._error = error
+            if error:
+                self._last_error = error
+            if status == "running":
+                self._connected = True
+            elif status in ("stopped", "error", "connecting", "reconnecting", "circuit_open"):
+                self._connected = False
+
+    def record_frame_success(self, frame_time: float):
+        with self._lock:
+            self._connected = True
+            self._last_frame_time = frame_time
+            self._last_successful_frame = frame_time
+            self._consecutive_failures = 0
+            self._error = None
+
+    def record_frame_error(self):
+        with self._lock:
+            self._consecutive_failures += 1
+            self._read_errors_total += 1
+
+    def record_disconnect(self, error: Optional[str] = None):
+        with self._lock:
+            self._connected = False
+            self._reconnect_count += 1
+            if error:
+                self._last_error = error
+                self._error = error
+
+    def is_connected(self) -> bool:
+        with self._lock:
+            return self._connected
 
     def increment_frame(self):
         with self._lock:
@@ -82,14 +130,20 @@ class RTSPWorkerState:
                     'density_max': self._last_analysis.get('density_max'),
                     'motion_intensity': self._last_analysis.get('motion_intensity'),
                     'zones': self._last_analysis.get('zones', {})
-                    # Note: density_map and detections (numpy arrays) are excluded
                 }
 
             return {
                 'status': self._status,
+                'connected': self._connected,
                 'frame_count': self._frame_count,
                 'fps': self._fps,
                 'error': self._error,
+                'last_error': self._last_error,
+                'last_frame_time': self._last_frame_time,
+                'last_successful_frame': self._last_successful_frame,
+                'consecutive_failures': self._consecutive_failures,
+                'reconnect_count': self._reconnect_count,
+                'read_errors_total': self._read_errors_total,
                 'last_analysis': serializable_analysis,
                 'connection_attempts': self._connection_attempts
             }
@@ -199,13 +253,20 @@ class RTSPWorker:
 
         # Thread control
         self._thread: Optional[threading.Thread] = None
+        self._ai_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
         self._running = False
 
         # State management
         self.state = RTSPWorkerState()
 
-        # Frame buffer (thread-safe queue)
+        # Decoupled Latest Raw Frame Store (non-destructive, thread-safe)
+        self._latest_raw_frame: Optional[np.ndarray] = None
+        self._latest_capture_timestamp: float = 0.0
+        self._frame_lock = threading.Lock()
+        self._new_frame_event = threading.Event()
+
+        # Frame buffer (thread-safe queue, preserved for legacy compatibility)
         self.frame_buffer = queue.Queue(maxsize=frame_buffer_size)
 
         # Analytics
@@ -251,7 +312,7 @@ class RTSPWorker:
         logger.info(f"[RTSP Worker {stream_id}] Heatmaps will be saved to: {self.settings.heatmap_dir}")
         logger.info(f"[RTSP Worker {stream_id}] Analytics will be saved to: {self.analytics_file}")
         logger.info(f"[RTSP Worker {stream_id}] Heatmap max width: {self.settings.heatmap_max_width}px (format: {self.settings.heatmap_format})")
-        logger.info(f"[RTSP Worker {stream_id}] Initialized with RTSP URL: {self.rtsp_url}")
+        logger.info(f"[RTSP Worker {stream_id}] Initialized successfully for camera {self.camera_id}")
 
         self._needs_density_map = (
             self.settings.enable_density_map_generation
@@ -285,6 +346,10 @@ class RTSPWorker:
         # print(f"[RTSP Worker {self.stream_id}] Stopping...")
         logger.info(f"[RTSP Worker {self.stream_id}] Stopping...")
         self._stop_event.set()
+        self._new_frame_event.set()
+
+        if self._ai_thread and self._ai_thread.is_alive():
+            self._ai_thread.join(timeout=3.0)
 
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=5.0)
@@ -333,11 +398,42 @@ class RTSPWorker:
         return state
 
     def get_latest_frame(self) -> Optional[np.ndarray]:
-        """Get latest frame from buffer (non-blocking)"""
+        """Get latest frame from raw buffer (non-blocking, non-destructive).
+
+        Returns a copy of the newest frame so multiple concurrent viewers
+        can consume the live stream without emptying the buffer.
+        """
+        with self._frame_lock:
+            if self._latest_raw_frame is not None:
+                return self._latest_raw_frame.copy()
+
+        # Fallback to legacy queue if raw capture has not yet populated
         try:
-            return self.frame_buffer.get_nowait()
-        except queue.Empty:
+            return self.frame_buffer.queue[-1].copy() if self.frame_buffer.qsize() > 0 else None
+        except Exception:
             return None
+
+    def get_latest_frame_with_metadata(self) -> Tuple[Optional[np.ndarray], float, float]:
+        """Get latest raw frame with capture timestamp and frame age in ms (non-destructive).
+
+        Returns:
+            (frame_copy, capture_timestamp, frame_age_ms)
+        """
+        with self._frame_lock:
+            if self._latest_raw_frame is None:
+                return None, 0.0, 0.0
+            frame = self._latest_raw_frame.copy()
+            cap_ts = self._latest_capture_timestamp
+
+        now = time.time()
+        frame_age_ms = max(0.0, (now - cap_ts) * 1000.0)
+        return frame, cap_ts, frame_age_ms
+
+    def wait_for_new_frame(self, timeout: float = 0.04) -> bool:
+        """Wait for capture thread to produce a new frame (event-driven)."""
+        ret = self._new_frame_event.wait(timeout=timeout)
+        self._new_frame_event.clear()
+        return ret
 
     def get_latest_analysis(self) -> Optional[Dict]:
         """Get latest analysis result (thread-safe)"""
@@ -802,6 +898,15 @@ class RTSPWorker:
                 logger.info(f"[RTSP Worker {self.stream_id}] GPU Memory - Allocated: {gpu_allocated:.2f} MB, Reserved: {gpu_reserved:.2f} MB")
 
             logger.info(f"[RTSP Worker {self.stream_id}] Analyzer initialized successfully")
+
+            # Start independent AI sampling loop in dedicated thread
+            self._ai_thread = threading.Thread(
+                target=self._ai_loop,
+                name=f"RTSPAI-{self.stream_id}",
+                daemon=True
+            )
+            self._ai_thread.start()
+            logger.info(f"[RTSP Worker {self.stream_id}] Started independent AI sampling thread")
         except Exception as e:
             error_msg = f"Failed to initialize analyzer: {e}"
             logger.error(f"[RTSP Worker {self.stream_id}] {error_msg}")
@@ -809,15 +914,21 @@ class RTSPWorker:
             self._running = False
             return
 
-        # Main reconnection loop with circuit breaker
+        # Main reconnection loop with circuit breaker and exponential backoff
         self.reconnect_attempt = 0
+        pod_name = os.getenv("POD_NAME") or os.getenv("HOSTNAME", "backend")
+        from services.sharding import get_camera_shard
+        shard_id = get_camera_shard(self.camera_id)
+
         while not self._stop_event.is_set():
             # Fast-fail if circuit is OPEN (stream known to be down)
             if not self.circuit_breaker.is_available():
-                delay = min(15.0, self.backoff.get_delay(self.reconnect_attempt))
-                print(f"[RTSP Worker {self.stream_id}] Circuit OPEN, waiting {delay:.1f}s before retry")
-                logger.warning(f"[RTSP Worker {self.stream_id}] Circuit OPEN, waiting {delay:.1f}s before retry")
-                self.state.update_status("circuit_open")
+                delay = min(30.0, max(2.0, self.backoff.get_delay(self.reconnect_attempt)))
+                logger.warning(
+                    f"[Lifecycle] Camera {self.camera_id} (shard={shard_id}, pod={pod_name}) "
+                    f"circuit OPEN, waiting {delay:.1f}s before retry"
+                )
+                self.state.update_status("reconnecting", "Circuit breaker OPEN")
                 self._stop_event.wait(delay)
                 self.reconnect_attempt += 1
                 continue
@@ -827,11 +938,12 @@ class RTSPWorker:
                 # Success - record it and reset attempt counter
                 self.circuit_breaker.record_success()
                 self.reconnect_attempt = 0
+                logger.info(f"[Lifecycle] Camera {self.camera_id} (shard={shard_id}, pod={pod_name}) recovered")
 
             except Exception as e:
-                error_msg = f"Connection error: {e}"
-                logger.error(f"[RTSP Worker {self.stream_id}] {error_msg}")
-                self.state.update_status("error", error_msg)
+                clean_err = sanitize_rtsp_url(str(e))
+                self.state.record_disconnect(clean_err)
+                self.state.update_status("reconnecting", clean_err)
 
                 # Record failure in circuit breaker
                 self.circuit_breaker.record_failure()
@@ -840,28 +952,24 @@ class RTSPWorker:
                 # Track connection attempts for metrics/status
                 attempts = self.state.increment_connection_attempts()
 
-                # Exponential backoff with jitter, capped at 15s to avoid long blackouts
-                delay = min(15.0, self.backoff.get_delay(self.reconnect_attempt))
-                logger.info(f"[RTSP Worker {self.stream_id}] Reconnecting in {delay:.1f}s (attempt {attempts}, circuit: {self.circuit_breaker.state.value})")
+                # Exponential backoff (2s up to 30s)
+                delay = min(30.0, max(2.0, self.backoff.get_delay(self.reconnect_attempt)))
+                logger.warning(
+                    f"[Lifecycle] Camera {self.camera_id} (shard={shard_id}, pod={pod_name}, "
+                    f"reconnects={self.state._reconnect_count}, failures={self.state._consecutive_failures}) "
+                    f"disconnected: {clean_err}. Reconnecting in {delay:.1f}s (attempt {attempts})"
+                )
                 self._stop_event.wait(delay)
 
         self.state.update_status("stopped")
-        logger.info(f"[RTSP Worker {self.stream_id}] Main loop ended")
+        logger.info(f"[Lifecycle] Camera {self.camera_id} (shard={shard_id}, pod={pod_name}) worker stopped")
 
     MAX_NO_FRAME_SECONDS = 15.0  # Force reconnect if no valid frames arrive within 15 seconds
 
     def _open_capture(self):
         """Configure OpenCV for RTSP and open the stream. Raises if the stream can't be opened."""
-        # rtsp_transport;tcp: Force TCP to avoid UDP packet loss
-        # analyzeduration;2000000: allow 2s to find keyframes/SPS/PPS headers
-        # probesize;1000000: allow 1MB of data for format detection
-        # fflags;+discardcorrupt: skip corrupt frames instead of failing
-        # flags;low_delay: minimize latency after initial detection
-        # buffer_size;4194304: 4MB socket buffer to avoid packet drops on 2K/1080p cameras
-        # max_delay;500000: limit maximum buffering delay to 0.5s
-        # reorder_queue_size;100: reorder out-of-order packets before discarding
         os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = (
-            'rtsp_transport;tcp|analyzeduration;2000000|probesize;1000000|fflags;+discardcorrupt|buffer_size;4194304|reorder_queue_size;100'
+            'rtsp_transport;tcp|analyzeduration;2000000|probesize;1000000|fflags;+discardcorrupt|buffer_size;1024000|reorder_queue_size;0'
         )
 
         rtsp_url = self.rtsp_url
@@ -869,26 +977,23 @@ class RTSPWorker:
         if "localhost:8554" in rtsp_url or "127.0.0.1:8554" in rtsp_url:
             rtsp_url = rtsp_url.replace("localhost:8554", "mediamtx:8554").replace("127.0.0.1:8554", "mediamtx:8554")
 
-        print(f"[RTSP Worker {self.stream_id}] Using optimized TCP transport options ({rtsp_url})")
-        logger.info(f"[RTSP Worker {self.stream_id}] Using optimized TCP transport options")
+        logger.info(f"[Lifecycle] Camera {self.camera_id} opening RTSP capture via TCP")
         cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
 
-        # Buffer for low latency while allowing keyframe detection
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 5)
+        # Buffer size 1 for minimum latency
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
         if not cap.isOpened():
-            error_msg = f"Failed to open RTSP stream: {rtsp_url}"
-            logger.error(f"[RTSP Worker {self.stream_id}] {error_msg}")
-            logger.error(f"[RTSP Worker {self.stream_id}] Troubleshooting:")
-            logger.error(f"[RTSP Worker {self.stream_id}]   - Check URL is correct")
-            logger.error(f"[RTSP Worker {self.stream_id}]   - Verify stream is publishing (docker logs rtsp-server)")
-            logger.error(f"[RTSP Worker {self.stream_id}]   - Test with: ffplay {rtsp_url}")
+            cap.release()
+            clean_url = sanitize_rtsp_url(rtsp_url)
+            error_msg = f"Failed to open RTSP stream: {clean_url}"
+            logger.error(f"[Lifecycle] Camera {self.camera_id} {error_msg}")
             raise Exception(error_msg)
 
         stream_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        print(f"[RTSP Worker {self.stream_id}] Connected: {width}x{height} @ {stream_fps}fps")
+        logger.info(f"[Lifecycle] Camera {self.camera_id} stream opened: {width}x{height} @ {stream_fps}fps")
 
         return cap, stream_fps
 
@@ -896,25 +1001,23 @@ class RTSPWorker:
         frame_skip = 1
         if self.target_fps and self.target_fps < stream_fps:
             frame_skip = max(1, int(stream_fps / self.target_fps))
-            print(f"[RTSP Worker {self.stream_id}] Processing every {frame_skip} frame(s) to achieve ~{self.target_fps}fps")
         return frame_skip
 
     def _handle_bad_frame(self, consecutive_errors: int, last_good_frame_time: float) -> int:
         """Track a failed frame read; raises once the stream has stalled for too long."""
         consecutive_errors += 1
+        self.state.record_frame_error()
         elapsed = time.time() - last_good_frame_time
         if consecutive_errors % 50 == 0:
-            print(
-                f"[RTSP Worker {self.stream_id}] WARNING: Stream frame skip/corrupt "
+            logger.warning(
+                f"[Lifecycle] Camera {self.camera_id} frame read failure "
                 f"({consecutive_errors} bad reads, {elapsed:.1f}s without good frame)"
             )
 
         if elapsed >= self.MAX_NO_FRAME_SECONDS:
-            logger.error(
-                f"[RTSP Worker {self.stream_id}] Stream stall: no valid frames for "
-                f"{elapsed:.1f}s (>{self.MAX_NO_FRAME_SECONDS}s). Reconnecting..."
-            )
-            raise Exception(f"Stream stall: no valid frames for {elapsed:.1f}s - forced reconnect")
+            clean_err = f"Stream stall: no valid frames for {elapsed:.1f}s - forced reconnect"
+            logger.error(f"[Lifecycle] Camera {self.camera_id} disconnected: {clean_err}")
+            raise Exception(clean_err)
 
         # Sleep briefly (5ms) to avoid CPU spin loop while keeping socket buffer drained
         time.sleep(0.005)
@@ -1069,7 +1172,10 @@ class RTSPWorker:
                 self.frame_buffer.get_nowait()
             except queue.Empty:
                 pass
-            self.frame_buffer.put_nowait(frame.copy())
+            try:
+                self.frame_buffer.put_nowait(frame.copy())
+            except queue.Full:
+                pass
 
     def _update_fps_and_progress(self, start_time: float, last_process_time: float, result: Dict) -> float:
         """Update the rolling FPS estimate and periodically log a progress report."""
@@ -1112,9 +1218,12 @@ class RTSPWorker:
         return self._update_fps_and_progress(start_time, last_process_time, result)
 
     def _connect_and_process(self):
-        """Connect to RTSP stream and process frames"""
+        """Connect to RTSP stream and continuously capture frames independently of AI."""
         self.state.update_status("connecting")
-        print(f"[RTSP Worker {self.stream_id}] Connecting to {self.rtsp_url}...")
+        pod_name = os.getenv("POD_NAME") or os.getenv("HOSTNAME", "backend")
+        from services.sharding import get_camera_shard
+        shard_id = get_camera_shard(self.camera_id)
+        logger.info(f"[Lifecycle] Camera {self.camera_id} (shard={shard_id}, pod={pod_name}) connecting...")
 
         cap, stream_fps = self._open_capture()
 
@@ -1122,64 +1231,82 @@ class RTSPWorker:
         self.state.reset_connection_attempts()
         self.circuit_breaker.record_success()  # Mark successful connection
 
-        frame_skip = self._calculate_frame_skip(stream_fps)
-
-        frame_counter = 0
         consecutive_errors = 0
-        last_process_time = time.time()
         last_good_frame_time = time.time()
         successful_frames = 0
 
         try:
-            # Frame capture and processing loop
+            # Continuous frame capture loop (runs at full camera stream FPS, never waits for AI)
             while not self._stop_event.is_set():
-                # Grab frame packet from stream without decoding (avoids CPU decode bottleneck)
-                if not cap.grab():
-                    consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
-                    continue
-
-                # Reset error counter on successful frame grab
-                consecutive_errors = 0
-                last_good_frame_time = time.time()
-                successful_frames += 1
-                if successful_frames == 10:
-                    self.reconnect_attempt = 0
-                    self.state.reset_connection_attempts()
-                    self.circuit_breaker.record_success()
-
-                frame_counter += 1
-
-                # Skip intermediate frames to achieve target FPS (avoids expensive CPU decoding)
-                if frame_skip > 1 and (frame_counter % frame_skip != 0):
-                    continue
-
-                # Decode only frames that will actually be processed
-                ret, frame = cap.retrieve()
+                ret, frame = cap.read()
                 if not ret or frame is None:
                     consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
                     continue
 
-                # Capture timestamp immediately when frame is read
-                frame_timestamp = datetime.now(UTC)
+                now_ts = time.time()
+                consecutive_errors = 0
+                last_good_frame_time = now_ts
+                successful_frames += 1
+                self.state.record_frame_success(now_ts)
 
-                try:
-                    last_process_time = self._process_frame(frame, frame_timestamp, last_process_time)
-                except TimeoutError:
-                    # Inference timeout - log clearly so user knows results aren't reaching frontend
-                    logger.warning(
-                        f"[RTSP Worker {self.stream_id}] Inference timeout after "
-                        f"{self.settings.inference_timeout_ms/1000:.0f}s, skipping frame {frame_counter}. "
-                        f"If running on CPU, increase INFERENCE_TIMEOUT_MS (current: {self.settings.inference_timeout_ms}ms)"
-                    )
-                    continue
-                except Exception:
-                    logger.exception(f"[RTSP Worker {self.stream_id}] Frame processing error")
-                    # Continue processing next frame
-                    continue
+                if successful_frames == 1:
+                    logger.info(f"[Lifecycle] Camera {self.camera_id} (shard={shard_id}, pod={pod_name}) connected")
+                elif successful_frames == 10:
+                    self.reconnect_attempt = 0
+                    self.state.reset_connection_attempts()
+                    self.circuit_breaker.record_success()
+
+                # Atomically update newest raw frame and capture timestamp (non-blocking)
+                with self._frame_lock:
+                    self._latest_raw_frame = frame
+                    self._latest_capture_timestamp = now_ts
+
+                # Signal any live stream or AI threads waiting for fresh frames
+                self._new_frame_event.set()
+
+                # Keep legacy frame buffer updated for backward compatibility
+                self._update_frame_buffer(frame)
 
         finally:
             cap.release()
-            logger.info(f"[RTSP Worker {self.stream_id}] Released video capture")
+            self.state.update_status("reconnecting")
+            logger.info(f"[Lifecycle] Camera {self.camera_id} capture connection released")
+
+    def _ai_loop(self):
+        """Independent AI inference loop - samples freshest frame at target_fps without backlog."""
+        target_fps = float(self.target_fps) if self.target_fps and self.target_fps > 0 else 1.0
+        frame_interval = 1.0 / target_fps
+        logger.info(f"[RTSP Worker {self.stream_id}] AI sampling loop started (target: {target_fps} FPS, interval: {frame_interval:.2f}s)")
+
+        last_process_time = time.time()
+
+        # Wait briefly for capture thread to start producing frames
+        self._new_frame_event.wait(timeout=5.0)
+
+        while not self._stop_event.is_set():
+            loop_start = time.time()
+
+            # Sample newest available raw frame (non-destructive peek)
+            frame, cap_ts, frame_age_ms = self.get_latest_frame_with_metadata()
+
+            if frame is not None and cap_ts > 0:
+                frame_timestamp = datetime.fromtimestamp(cap_ts, tz=UTC)
+                try:
+                    last_process_time = self._process_frame(frame, frame_timestamp, last_process_time)
+                except TimeoutError:
+                    logger.warning(
+                        f"[RTSP Worker {self.stream_id}] Inference timeout after "
+                        f"{self.settings.inference_timeout_ms/1000:.0f}s, skipping frame."
+                    )
+                except Exception:
+                    logger.exception(f"[RTSP Worker {self.stream_id}] Frame processing error in AI loop")
+
+            # Maintain configured target_fps cadence (e.g. 1.0s for 1 FPS)
+            elapsed = time.time() - loop_start
+            sleep_time = max(0.01, frame_interval - elapsed)
+            self._stop_event.wait(sleep_time)
+
+        logger.info(f"[RTSP Worker {self.stream_id}] AI sampling loop ended")
 
     def _heatmap_saver_worker(self):
         """Background thread for saving heatmaps without blocking main loop"""

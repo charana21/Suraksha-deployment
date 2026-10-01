@@ -149,17 +149,19 @@ class CrowdCountingModelWrapper:
             self.settings = None
 
         cuda_available = torch.cuda.is_available()
-        if device == "cuda" and use_gpu and cuda_available:
-            self.device = torch.device("cuda")
-            logger.info(f"[INFO] Using GPU: {torch.cuda.get_device_name(0)}")
-        elif device == "cuda" and not cuda_available:
+        is_cuda_requested = str(device).startswith("cuda")
+        if is_cuda_requested and use_gpu and cuda_available:
+            self.device = torch.device(device)
+            dev_idx = self.device.index if self.device.index is not None else 0
+            logger.info(f"[INFO] Using GPU: {torch.cuda.get_device_name(dev_idx)}")
+        elif is_cuda_requested and not cuda_available:
             logger.warning("[WARNING] CUDA requested but not available. Falling back to CPU.")
             logger.warning(
                 "[WARNING] Install CUDA PyTorch: "
                 "pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118"
             )
             self.device = torch.device("cpu")
-        elif device == "cuda" and not use_gpu:
+        elif is_cuda_requested and not use_gpu:
             logger.info("[INFO] GPU available but use_gpu=False in config. Using CPU.")
             self.device = torch.device("cpu")
         else:
@@ -168,10 +170,11 @@ class CrowdCountingModelWrapper:
 
         logger.info(f"[INFO] PyTorch version: {torch.__version__}")
         logger.info(f"[INFO] CUDA available: {cuda_available}")
-        if cuda_available:
+        if cuda_available and self.device.type == "cuda":
+            dev_idx = self.device.index if self.device.index is not None else 0
             logger.info(f"[INFO] CUDA version: {torch.version.cuda}")
-            logger.info(f"[INFO] GPU device: {torch.cuda.get_device_name(0)}")
-            total_mem_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
+            logger.info(f"[INFO] GPU device: {torch.cuda.get_device_name(dev_idx)}")
+            total_mem_gb = torch.cuda.get_device_properties(dev_idx).total_memory / 1024**3
             logger.info(f"[INFO] GPU memory: {total_mem_gb:.2f} GB")
         logger.info(f"[INFO] Using device: {self.device}")
 

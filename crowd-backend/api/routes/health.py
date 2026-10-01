@@ -2,14 +2,16 @@
 Health check endpoints for production monitoring
 """
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 import torch
 from datetime import datetime
 import os
+import time
 import psutil
 from config.config import get_settings
 from db.mongodb import get_database
 from utils.logging_config import get_logger
+from services.sharding import get_camera_shard
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -372,3 +374,55 @@ async def inference_health_check(request: Request):
         "metrics": metrics,
         "slas": slas
     })
+
+
+@router.get("/metrics", response_class=PlainTextResponse, tags=["Health"])
+async def get_prometheus_metrics(request: Request):
+    """
+    Expose Prometheus metrics for cameras and system health.
+    Labels: camera_id, pod, shard
+    """
+    lines = []
+    pod = os.getenv("POD_NAME") or os.getenv("HOSTNAME", "backend")
+
+    lines.append("# HELP camera_connected Whether the camera RTSP stream is currently connected (1=connected, 0=disconnected)")
+    lines.append("# TYPE camera_connected gauge")
+
+    lines.append("# HELP camera_last_frame_age_seconds Seconds since last valid frame")
+    lines.append("# TYPE camera_last_frame_age_seconds gauge")
+
+    lines.append("# HELP camera_fps Current FPS of the camera stream")
+    lines.append("# TYPE camera_fps gauge")
+
+    lines.append("# HELP camera_reconnect_total Total reconnect attempts")
+    lines.append("# TYPE camera_reconnect_total counter")
+
+    lines.append("# HELP camera_read_errors_total Total frame read errors")
+    lines.append("# TYPE camera_read_errors_total counter")
+
+    rtsp_manager = getattr(request.app.state, "rtsp_manager", None)
+    if rtsp_manager is not None:
+        with rtsp_manager._lock:
+            streams = list(rtsp_manager._streams.items())
+
+        now = time.time()
+        for cam_id, worker in streams:
+            shard = get_camera_shard(cam_id)
+            state = worker.state.get_snapshot()
+            connected = 1 if state.get("connected") else (1 if state.get("status") == "running" else 0)
+            fps = float(state.get("fps", 0.0))
+            reconnects = int(state.get("reconnect_count", state.get("connection_attempts", 0)))
+            errors = int(state.get("read_errors_total", 0))
+
+            last_ts = float(state.get("last_frame_time", 0.0))
+            age = (now - last_ts) if last_ts > 0 else -1.0
+
+            lbl = f'camera_id="{cam_id}",pod="{pod}",shard="{shard}"'
+            lines.append(f"camera_connected{{{lbl}}} {connected}")
+            if age >= 0:
+                lines.append(f"camera_last_frame_age_seconds{{{lbl}}} {age:.2f}")
+            lines.append(f"camera_fps{{{lbl}}} {fps:.2f}")
+            lines.append(f"camera_reconnect_total{{{lbl}}} {reconnects}")
+            lines.append(f"camera_read_errors_total{{{lbl}}} {errors}")
+
+    return "\n".join(lines) + "\n"

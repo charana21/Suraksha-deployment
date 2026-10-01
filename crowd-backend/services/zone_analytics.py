@@ -13,10 +13,15 @@ Aggregation Rules:
 - risk_level = MAX(camera_risk_levels)
 - motion_intensity = MAX(camera_motion_intensities)
 """
+import asyncio
+import logging
+import time
 from typing import Dict, List, Optional, Any
 from datetime import UTC, datetime
 from db.mongodb import get_database
 from config.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 # Risk level ordering for MAX comparison
 RISK_LEVEL_ORDER = {
@@ -162,9 +167,35 @@ def get_camera_latest_analytics(camera_id: str) -> Optional[Dict]:
     return None
 
 
-# Preserve last-known valid metrics for up to 30 seconds when frames are delayed
+# Preserve last-known valid metrics for up to configured TTL (default 30s) when frames are delayed
 CAMERA_METRICS_CACHE_TTL = 30.0
 _last_known_camera_metrics: Dict[str, Dict[str, Any]] = {}
+_remote_doc_cache: Dict[str, tuple] = {}
+
+
+async def get_remote_camera_latest_analytics(camera_id: str) -> Optional[Dict]:
+    """Fetch the most recent analytics record for a camera from MongoDB with in-memory caching."""
+    now = time.time()
+    if camera_id in _remote_doc_cache:
+        cache_time, doc = _remote_doc_cache[camera_id]
+        if now - cache_time < 5.0:
+            return doc
+
+    db = get_database()
+    if db is None:
+        return _remote_doc_cache.get(camera_id, (0, None))[1]
+    try:
+        doc = await db.analytics.find_one(
+            {"camera_id": camera_id},
+            sort=[("timestamp", -1)]
+        )
+        _remote_doc_cache[camera_id] = (now, doc)
+        return doc
+    except Exception as e:
+        logger.warning(f"Error fetching remote analytics for camera {camera_id}: {e}")
+        if camera_id in _remote_doc_cache:
+            return _remote_doc_cache[camera_id][1]
+        return None
 
 
 def _parse_timestamp_to_epoch(ts: Any) -> Optional[float]:
@@ -183,12 +214,23 @@ def _parse_timestamp_to_epoch(ts: Any) -> Optional[float]:
     return None
 
 
-def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
-    """Pull one camera's latest analytics (or preserved last-known valid count for up to 30s) plus its SVG detail entry."""
+def _extract_camera_metrics(
+    camera: Dict,
+    analytics: Optional[Dict] = None,
+    allow_local_analytics: bool = True,
+) -> Dict[str, Any]:
+    """
+    Pull one camera's latest analytics (or preserved last-known valid count for up to TTL) plus its SVG detail entry.
+    Tags each camera with explicit status: CURRENT, STALE, DISCONNECTED, or NO_DATA.
+    """
     camera_id = camera.get("camera_id")
     svg_region_id = camera.get("svg_region_id", camera_id)
-    analytics = get_camera_latest_analytics(camera_id)
+    if analytics is None and camera_id and allow_local_analytics:
+        analytics = get_camera_latest_analytics(camera_id)
+
     now = datetime.now(UTC).timestamp()
+    settings = get_settings()
+    cache_ttl = float(getattr(settings, "zone_analytics_cache_ttl", CAMERA_METRICS_CACHE_TTL))
 
     if analytics:
         zone_data = analytics.get("zones", {}).get("full_frame", {})
@@ -204,8 +246,14 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
         epoch_ts = _parse_timestamp_to_epoch(ts)
         latency = max(0.0, now - epoch_ts) if epoch_ts is not None else None
 
-        # Check if the analytics are within the 30-second TTL window
-        if latency is None or latency <= CAMERA_METRICS_CACHE_TTL:
+        if latency is None or latency <= cache_ttl:
+            status = "CURRENT"
+        elif latency <= cache_ttl * 2:
+            status = "STALE"
+        else:
+            status = "DISCONNECTED"
+
+        if status in ("CURRENT", "STALE"):
             metric_data = {
                 "people_count": pc,
                 "density_avg": da,
@@ -221,6 +269,7 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
 
             return {
                 "has_analytics": True,
+                "status": status,
                 "people_count": pc,
                 "density_avg": da,
                 "density_level": dl,
@@ -232,6 +281,7 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
                 "detail": {
                     "camera_id": camera_id,
                     "svg_region_id": svg_region_id,
+                    "status": status,
                     "people_count": pc,
                     "density_avg": round(da, 2),
                     "density_level": dl,
@@ -242,12 +292,12 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
                 },
             }
 
-    # If no fresh analytics or frame is delayed, fall back to preserved last-known valid count
+    # If no fresh analytics or frame is delayed/disconnected, fall back to preserved last-known valid count
     if camera_id and camera_id in _last_known_camera_metrics:
         cached = _last_known_camera_metrics[camera_id]
         cached_ts = cached.get("timestamp", 0.0)
         cache_age = max(0.0, now - cached_ts)
-        if cache_age <= CAMERA_METRICS_CACHE_TTL:
+        if cache_age <= cache_ttl:
             pc = cached["people_count"]
             da = cached["density_avg"]
             dl = cached["density_level"]
@@ -257,6 +307,7 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
             rl = cached["risk_level"]
             return {
                 "has_analytics": True,
+                "status": "STALE",
                 "people_count": pc,
                 "density_avg": da,
                 "density_level": dl,
@@ -268,6 +319,7 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
                 "detail": {
                     "camera_id": camera_id,
                     "svg_region_id": svg_region_id,
+                    "status": "STALE",
                     "people_count": pc,
                     "density_avg": round(da, 2),
                     "density_level": dl,
@@ -278,9 +330,12 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
                 },
             }
 
-    # Frame is delayed > 30s or never had analytics: reset to defaults
+    final_status = "DISCONNECTED" if (analytics and latency is not None and latency > cache_ttl * 2) else "NO_DATA"
+
+    # Frame is delayed > TTL or never had analytics: reset to defaults
     return {
         "has_analytics": False,
+        "status": final_status,
         "latency": None,
         "people_count": 0,
         "density_avg": 0.0,
@@ -292,6 +347,7 @@ def _extract_camera_metrics(camera: Dict) -> Dict[str, Any]:
         "detail": {
             "camera_id": camera_id,
             "svg_region_id": svg_region_id,
+            "status": final_status,
             "people_count": 0,
             "density_avg": 0.0,
             "density_level": "LOW",
@@ -335,12 +391,13 @@ def _build_aggregate_metrics(
     }
 
 
-def aggregate_camera_analytics(cameras: List[Dict]) -> Dict[str, Any]:
+def aggregate_camera_analytics(cameras: List[Dict], analytics_map: Optional[Dict[str, Dict]] = None) -> Dict[str, Any]:
     """
     Aggregate analytics from multiple cameras
 
     Args:
         cameras: List of camera documents
+        analytics_map: Optional pre-fetched map of camera_id -> analytics document
 
     Returns:
         Aggregated analytics dict
@@ -356,7 +413,13 @@ def aggregate_camera_analytics(cameras: List[Dict]) -> Dict[str, Any]:
     camera_details = []
 
     for camera in cameras:
-        metrics = _extract_camera_metrics(camera)
+        cid = camera.get("camera_id")
+        cam_analytics = analytics_map.get(cid) if analytics_map is not None and cid else None
+        metrics = _extract_camera_metrics(
+            camera,
+            analytics=cam_analytics,
+            allow_local_analytics=analytics_map is None,
+        )
         camera_details.append(metrics["detail"])
 
         if metrics["has_analytics"]:
@@ -400,6 +463,25 @@ async def get_zone_analytics(station_id: Optional[str] = None) -> Dict[str, Any]
     # Get cameras grouped by zone
     cameras_by_zone = await get_cameras_by_zone()
 
+    # Read every camera from shared storage so each backend replica returns the same aggregate.
+    camera_ids = set()
+    for zone in zones:
+        for cam in cameras_by_zone.get(zone.get("zone_id"), []):
+            cid = cam.get("camera_id")
+            if cid:
+                camera_ids.add(cid)
+
+    analytics_map = {}
+    if camera_ids:
+        camera_ids = sorted(camera_ids)
+        docs = await asyncio.gather(
+            *(get_remote_camera_latest_analytics(cid) for cid in camera_ids),
+            return_exceptions=True,
+        )
+        for cid, doc in zip(camera_ids, docs):
+            if doc and isinstance(doc, dict):
+                analytics_map[cid] = doc
+
     # Build response
     zone_analytics = []
 
@@ -408,7 +490,7 @@ async def get_zone_analytics(station_id: Optional[str] = None) -> Dict[str, Any]
         cameras = cameras_by_zone.get(zone_id, [])
 
         # Aggregate camera analytics
-        aggregated = aggregate_camera_analytics(cameras)
+        aggregated = aggregate_camera_analytics(cameras, analytics_map=analytics_map)
 
         zone_analytics.append({
             "zone_id": zone_id,
@@ -580,8 +662,21 @@ async def get_single_zone_analytics(zone_id: str) -> Optional[Dict[str, Any]]:
     # Get cameras for this zone
     cameras = await get_cameras_for_zone(zone_id)
 
+    # Check for cameras hosted on another shard/pod
+    from services.rtsp_manager import get_rtsp_manager
+    rtsp_mgr = get_rtsp_manager()
+    local_cids = {s.get("camera_id") for s in rtsp_mgr.get_all_streams() if s.get("camera_id")}
+
+    remote_cids = [c.get("camera_id") for c in cameras if c.get("camera_id") and c.get("camera_id") not in local_cids]
+    analytics_map = {}
+    if remote_cids:
+        docs = await asyncio.gather(*(get_remote_camera_latest_analytics(cid) for cid in remote_cids), return_exceptions=True)
+        for cid, doc in zip(remote_cids, docs):
+            if doc and isinstance(doc, dict):
+                analytics_map[cid] = doc
+
     # Aggregate analytics
-    aggregated = aggregate_camera_analytics(cameras)
+    aggregated = aggregate_camera_analytics(cameras, analytics_map=analytics_map)
 
     return {
         "zone_id": zone_id,

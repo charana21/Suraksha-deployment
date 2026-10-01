@@ -101,7 +101,7 @@ class Settings(BaseSettings):
     # === PET INFERENCE INTERVAL ===
     # Run PET every Nth frame per camera; intermediate frames use YOLO-only + cached PET data.
     # Reduces GPU load to 8 inferences/sec for 40 cameras (every 5th frame), which 1 GPU can comfortably handle.
-    pet_inference_interval: int = 5  # 1 = every frame (no skip), 5 = PET every 5th frame
+    pet_inference_interval: int = 3  # 1 = every frame (no skip), 3 = PET every 3rd frame (production baseline)
 
     # === UNIFIED RISK SCORE THRESHOLDS (0-100) ===
     # Single set of thresholds for all cameras -- no per-camera variation
@@ -203,10 +203,10 @@ class Settings(BaseSettings):
     # Batched GPU Inference Configuration (Production-grade)
     # Now actually used! RTSPWorker creates CrowdAnalyzer with use_batched_inference=True
     use_batched_inference: bool = True  # Enable centralized GPU batching
-    batch_yolo_size: int = 40  # Max frames per YOLO batch (processes all 40 cameras in a single YOLO GPU pass)
-    batch_timeout_ms: float = 200.0  # Accumulate bigger batches (15 cams @ 1fps → frame every ~67ms)
-    inference_queue_size: int = 160  # Queue size for 40 cameras (gives 4 seconds of buffer for 40 cameras)
-    inference_per_camera_limit: int = 4  # Allow 4 frames per camera in queue (stops false-positive camera drops)
+    batch_yolo_size: int = 16  # Production baseline
+    batch_timeout_ms: float = 200.0  # Accumulate bigger batches
+    inference_queue_size: int = 100  # Production baseline
+    inference_per_camera_limit: int = 2  # Production baseline
     inference_timeout_ms: float = 120000.0  # 120s default — CPU inference can take 30-60s per frame
 
     # MongoDB Configuration
@@ -365,6 +365,20 @@ class Settings(BaseSettings):
     # Station Configuration
     station_code: str = "SC"  # Secunderabad (already exists but included here for clarity)
     station_name: str = "Secunderabad Junction"  # Full station name
+
+    # Camera Sharding & Multi-Pod Scaling
+    camera_shard_count: int = 1  # Total number of pod shards
+    camera_shard_index: Optional[int] = None  # None = auto-detect from HOSTNAME ordinal, or integer 0, 1...
+    headless_service_name: str = "crowdvision-backend-headless"
+    headless_service_port: int = 8000
+    internal_forward_timeout: float = 5.0
+
+    # Live Streaming Cadence & Telemetry
+    live_stream_max_fps: int = 25  # Max FPS for live stream generator (replaces artificial 1s sleep)
+    enable_live_frame_telemetry: bool = True
+
+    # Zone Analytics State & TTL
+    zone_analytics_cache_ttl: float = 30.0  # Max seconds to preserve last-known camera metrics before declaring NO_DATA
 
     # Security & Authentication (JWT only for local railway station deployment)
     auth_enabled: bool = True  # Set to True in production

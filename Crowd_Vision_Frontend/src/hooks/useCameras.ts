@@ -18,16 +18,25 @@ export function useCameras(options: UseCamerasOptions = {}) {
 
   // Convert backend camera object to Frontend Camera interface
   const mapBackendCamera = useCallback((bCam: BackendCamera): Camera => {
+    let loc = bCam.location;
+    if (!loc || loc === 'Unknown') {
+      if (bCam.fob_type === 'HYD') loc = 'Hyderabad Side';
+      else if (bCam.fob_type === 'KZJ') loc = 'Kazipet Side';
+      else loc = 'Platform / Booking';
+    }
     return {
       id: bCam.camera_id,
-      name: bCam.name, // DIRECT MAPPING - Fixes "name not used" issue
+      name: bCam.name,
       rtspUrl: bCam.rtsp_url,
       fobType: bCam.fob_type,
       zoneId: bCam.zone_id,
       status: bCam.status,
       isActive: bCam.is_active,
-      location: bCam.fob_type === 'HYD' ? 'Hyderabad Side' : 'Kazipet Side',
+      location: loc,
       runtimeStatus: bCam.runtime_status,
+      shardId: bCam.shard_id,
+      isLocalWorker: bCam.is_local_worker,
+      liveFrameAgeMs: bCam.live_frame_age_ms,
     } as Camera;
   }, []);
 
@@ -39,32 +48,36 @@ export function useCameras(options: UseCamerasOptions = {}) {
     isFetchingRef.current = true;
 
     try {
-      const response = await rtspApi.listCameras();
-      
-      // We might need to fetch runtime status for each active camera if the list endpoint doesn't return it
-      // For now, let's assume list returns the base config. 
-      // The prompt says: "Poll GET /api/cameras/{id}/status ... to get authoritative runtime status"
-      // So we might need a secondary step or the UI component does it.
-      // For the list, we map what we have.
+      // Query active cameras so all 20 active cameras are fetched
+      const response = await rtspApi.listCameras({ status: 'active' });
       
       const mappedCameras = await Promise.all(response.cameras.map(async (c) => {
-        // Option: we could parallel fetch status here if list doesn't have it, 
-        // but maybe better to let the UI component poll for active ones or do it here if list is small.
-        // Let's rely on what list returns for now + basic mapping.
-        
         let runtimeStatus = c.runtime_status;
-        // If the camera is marked as 'active' (configured), we might want to know its stream status.
-        // Doing this for ALL cameras every 5s might be heavy if there are many. 
-        // But for < 20 cameras it's fine.
-        if (includeRuntimeStatus && c.is_active && !runtimeStatus) {
-             try {
-               const statusRes = await rtspApi.getCameraRuntimeStatus(c.camera_id);
-               runtimeStatus = statusRes.runtime_status;
-             } catch (e) {
-             }
+        let isLocalWorker = c.is_local_worker;
+        let liveFrameAgeMs = c.live_frame_age_ms;
+        let shardId = c.shard_id;
+
+        if (includeRuntimeStatus && c.status === 'active') {
+          try {
+            const statusRes = await rtspApi.getCameraRuntimeStatus(c.camera_id);
+            if (statusRes.runtime_status) {
+              runtimeStatus = statusRes.runtime_status;
+            }
+            if (statusRes.shard_id !== undefined) shardId = statusRes.shard_id;
+            if (statusRes.is_local_worker !== undefined) isLocalWorker = statusRes.is_local_worker;
+            if (statusRes.live_frame_age_ms !== undefined) liveFrameAgeMs = statusRes.live_frame_age_ms;
+          } catch (e) {
+            // Keep existing status on transient poll error
+          }
         }
         
-        return mapBackendCamera({ ...c, runtime_status: runtimeStatus });
+        return mapBackendCamera({
+          ...c,
+          runtime_status: runtimeStatus,
+          is_local_worker: isLocalWorker,
+          live_frame_age_ms: liveFrameAgeMs,
+          shard_id: shardId
+        });
       }));
 
       setCameras(mappedCameras);

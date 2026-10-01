@@ -31,7 +31,7 @@ CAMERA_SUBSTREAMS = {
 
 def update_cameras():
     settings = get_settings()
-    client = pymongo.MongoClient(settings.mongodb_uri, serverSelectionTimeoutMS=5000)
+    client = pymongo.MongoClient(settings.mongodb_uri, serverSelectionTimeoutMS=10000)
     db = client[settings.mongodb_database]
 
     print(f"Updating camera sub-streams in database: {db.name}")

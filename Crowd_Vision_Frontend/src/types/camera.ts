@@ -2,13 +2,16 @@ export interface Camera {
   id: string; // camera_id (Immutable ID)
   name: string; // Editable Name
   rtspUrl: string; // Editable Stream URL
-  fobType: 'HYD' | 'KZJ'; // HYD or KZJ
+  fobType?: 'HYD' | 'KZJ' | string | null; // HYD, KZJ, or null for platform/booking
   zoneId: string; // Linked Zone ID
-  status: 'active' | 'inactive' | 'error'; // Backend config status (or runtime status?) - The user prompt says status: "active" | "inactive" | "error"
+  status: 'active' | 'inactive' | 'error'; // Backend config status
   isActive: boolean; // Boolean flag
 
-  // Frontend/Runtime specific (optional, populated from status/runtime check)
-  runtimeStatus?: 'running' | 'connecting' | 'error' | 'stopped';
+  // Frontend/Runtime specific (populated from status/runtime check)
+  runtimeStatus?: 'running' | 'connecting' | 'reconnecting' | 'error' | 'stopped' | 'inactive' | 'unknown';
+  shardId?: number;
+  isLocalWorker?: boolean;
+  liveFrameAgeMs?: number | null;
   location?: string; // Kept for backward compat if needed, or mapped from fobType
   createdAt?: Date; // Kept for backward compat
 }

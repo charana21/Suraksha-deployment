@@ -4,15 +4,27 @@ Provides CRUD operations for camera metadata and stream control
 """
 import asyncio
 import os
+from typing import Optional, List, Dict, Any, Union
 import cv2
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import Response, StreamingResponse
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import Response, StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+import time
+import logging
+import aiohttp
+from config.config import get_settings
 from services.camera_service import CameraService
 from services.rtsp_manager import get_rtsp_manager
 from services.websocket_manager import get_connection_manager
+from services.sharding import (
+    is_camera_owned_by_current_pod,
+    get_camera_shard,
+    get_owning_pod_host,
+    get_current_shard_index,
+)
 from api.security import require_admin, require_viewer
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -288,13 +300,28 @@ async def delete_camera(camera_id: str):
         500: {"description": "Failed to start stream"},
     },
 )
-async def start_camera_stream(camera_id: str):
+async def start_camera_stream(camera_id: str, request: Request = None):
     """
     Start the RTSP stream for this camera
     """
     camera = await CameraService.get_camera(camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
+
+    # If this pod does not own the camera, forward start to owning pod
+    if not is_camera_owned_by_current_pod(camera_id):
+        if request and request.headers.get("X-Internal-Forwarded"):
+            raise HTTPException(status_code=500, detail="Forwarding loop detected for start stream")
+        target_host = get_owning_pod_host(camera_id)
+        target_url = f"http://{target_host}/api/cameras/{camera_id}/start"
+        timeout = aiohttp.ClientTimeout(total=10.0)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                    data = await resp.json()
+                    return JSONResponse(status_code=resp.status, content=data)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed forwarding start command to {target_host}: {e}")
 
     rtsp_manager = get_rtsp_manager()
 
@@ -350,13 +377,28 @@ async def start_camera_stream(camera_id: str):
     dependencies=[require_admin],
     responses={404: {"description": CAMERA_NOT_FOUND_DESC}},
 )
-async def stop_camera_stream(camera_id: str):
+async def stop_camera_stream(camera_id: str, request: Request = None):
     """
     Stop the RTSP stream for this camera
     """
     camera = await CameraService.get_camera(camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
+
+    # If this pod does not own the camera, forward stop to owning pod
+    if not is_camera_owned_by_current_pod(camera_id):
+        if request and request.headers.get("X-Internal-Forwarded"):
+            raise HTTPException(status_code=500, detail="Forwarding loop detected for stop stream")
+        target_host = get_owning_pod_host(camera_id)
+        target_url = f"http://{target_host}/api/cameras/{camera_id}/stop"
+        timeout = aiohttp.ClientTimeout(total=10.0)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                    data = await resp.json()
+                    return JSONResponse(status_code=resp.status, content=data)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed forwarding stop command to {target_host}: {e}")
 
     rtsp_manager = get_rtsp_manager()
 
@@ -451,7 +493,21 @@ async def get_camera_snapshot(camera_id: str):
     if not camera:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
 
-    # Fast path: reuse the already-connected stream's latest cached frame
+    # Shard ownership check for snapshot
+    if not is_camera_owned_by_current_pod(camera_id):
+        target_host = get_owning_pod_host(camera_id)
+        target_url = f"http://{target_host}/api/cameras/{camera_id}/snapshot"
+        try:
+            timeout = aiohttp.ClientTimeout(total=SNAPSHOT_CAPTURE_TIMEOUT_SECONDS)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(target_url) as resp:
+                    if resp.status == 200:
+                        content = await resp.read()
+                        return Response(content=content, media_type="image/jpeg")
+        except Exception as e:
+            logger.warning(f"[SnapshotRouting] Error fetching snapshot from {target_host}: {e}")
+
+    # Fast path: reuse the already-connected stream's latest raw frame
     rtsp_manager = get_rtsp_manager()
     with rtsp_manager._lock:
         worker = rtsp_manager._streams.get(camera_id)
@@ -495,33 +551,56 @@ async def get_camera_snapshot(camera_id: str):
     tags=["Cameras"],
     dependencies=[require_viewer],
     responses={
-        404: {"description": "Camera not found"},
-        503: {"description": "No active stream for camera"},
-    },
-)
-@router.get(
-    "/cameras/{camera_id}/live",
-    tags=["Cameras"],
-    dependencies=[require_viewer],
-    responses={
         404: {"description": CAMERA_NOT_FOUND_DESC},
         503: {"description": "No active stream for camera; start it first"},
     },
 )
 async def get_camera_live_feed(camera_id: str):
     """
-    Continuous live view of the camera as an MJPEG stream, throttled to 1 frame/second.
+    Continuous low-latency live view of the camera as an MJPEG stream.
 
-    Requires the camera's RTSP stream to already be running (via /cameras/{camera_id}/start
-    or /rtsp/start). Each second, pulls whatever frame is currently cached by the stream
-    worker and pushes it to the client, replacing the previous one.
+    Streams the newest raw camera frame from the continuous capture thread,
+    completely independent of AI inference. Non-destructive so multiple
+    viewers can watch concurrently.
 
-    Usage: <img src="/api/cameras/{camera_id}/live" />
+    If this camera belongs to another shard, internally forwards the stream
+    from the owning pod transparently to the browser.
     """
     camera = await CameraService.get_camera(camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
 
+    # Shard ownership check: if not owned by this pod, internally forward
+    if not is_camera_owned_by_current_pod(camera_id):
+        target_host = get_owning_pod_host(camera_id)
+        target_url = f"http://{target_host}/api/cameras/{camera_id}/live"
+        logger.info(f"[LiveRouting] Forwarding live stream for {camera_id} to owning pod at {target_host}")
+
+        async def forward_remote_stream():
+            timeout = aiohttp.ClientTimeout(total=None, connect=5.0)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                try:
+                    async with session.get(target_url) as resp:
+                        if resp.status != 200:
+                            logger.warning(f"[LiveRouting] Owning pod returned status {resp.status} for {camera_id}")
+                            return
+                        async for chunk in resp.content.iter_any():
+                            yield chunk
+                except Exception as e:
+                    logger.warning(f"[LiveRouting] Internal stream forwarding error for {camera_id}: {e}")
+
+        return StreamingResponse(
+            forward_remote_stream(),
+            media_type='multipart/x-mixed-replace; boundary=frame',
+            headers={
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Live-Routing': 'internal-forwarded',
+            }
+        )
+
+    # Local owner path: Stream directly from local RTSP worker's latest raw frame
     rtsp_manager = get_rtsp_manager()
     with rtsp_manager._lock:
         worker = rtsp_manager._streams.get(camera_id)
@@ -529,19 +608,30 @@ async def get_camera_live_feed(camera_id: str):
     if worker is None:
         raise HTTPException(status_code=503, detail=f"No active stream for camera {camera_id}; start it first")
 
-    def generate_frames():
-        import time
+    async def generate_frames():
+        settings = get_settings()
+        max_fps = int(getattr(settings, "live_stream_max_fps", 25))
+        frame_interval = 1.0 / max(1, max_fps)
 
         while True:
-            frame = worker.get_latest_frame()
+            # Wait for capture thread to signal a new frame (or timeout at max FPS cadence)
+            await asyncio.to_thread(worker.wait_for_new_frame, frame_interval)
+
+            frame, cap_ts, frame_age_ms = worker.get_latest_frame_with_metadata()
 
             if frame is not None:
-                success, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                # Fast JPEG encoding for low latency & minimal CPU
+                success, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
                 if success:
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-
-            time.sleep(1)  # 1 frame per second
+                    stream_ts = time.time()
+                    header = (
+                        f"--frame\r\n"
+                        f"Content-Type: image/jpeg\r\n"
+                        f"X-Capture-Timestamp: {cap_ts:.3f}\r\n"
+                        f"X-Stream-Timestamp: {stream_ts:.3f}\r\n"
+                        f"X-Frame-Age-Ms: {frame_age_ms:.1f}\r\n\r\n"
+                    ).encode('ascii')
+                    yield header + buffer.tobytes() + b'\r\n'
 
     return StreamingResponse(
         generate_frames(),
@@ -549,7 +639,8 @@ async def get_camera_live_feed(camera_id: str):
         headers={
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
-            'Connection': 'keep-alive'
+            'Connection': 'keep-alive',
+            'X-Live-Routing': 'local',
         }
     )
 
@@ -566,14 +657,84 @@ async def get_camera_live_feed(camera_id: str):
     dependencies=[require_viewer],
     responses={404: {"description": CAMERA_NOT_FOUND_DESC}},
 )
-async def get_camera_status(camera_id: str):
+async def get_camera_status(camera_id: str, request: Request = None):
     """
-    Get real-time camera status (checking both DB and Runtime)
+    Get real-time camera status (checking both DB and Runtime).
+    If camera belongs to another shard, forwards to owning pod.
     """
     camera = await CameraService.get_camera(camera_id)
     if not camera:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
 
+    owned = is_camera_owned_by_current_pod(camera_id)
+    shard_id = get_camera_shard(camera_id)
+
+    # Shard ownership check: if not owned by this pod, internally forward to owner
+    if not owned:
+        # Prevent forwarding loops
+        if request and request.headers.get("X-Internal-Forwarded"):
+            logger.warning(f"[StatusRouting] Forwarding loop detected for camera {camera_id}")
+            return {
+                "status": "success",
+                "camera_id": camera["camera_id"],
+                "name": camera["name"],
+                "db_status": camera.get("status"),
+                "runtime_status": "unknown",
+                "is_active": camera.get("is_active", False),
+                "shard_id": shard_id,
+                "is_local_worker": False,
+                "live_frame_age_ms": None,
+                "last_seen_at": camera.get("last_seen_at"),
+                "fob_type": camera.get("fob_type"),
+                "zone_id": camera.get("zone_id"),
+                "error": "Forwarding loop detected"
+            }
+
+        target_host = get_owning_pod_host(camera_id)
+        target_url = f"http://{target_host}/api/cameras/{camera_id}/status"
+        timeout = aiohttp.ClientTimeout(total=4.0)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return data
+                    else:
+                        logger.warning(f"[StatusRouting] Owning pod {target_host} returned HTTP {resp.status} for {camera_id}")
+                        return {
+                            "status": "success",
+                            "camera_id": camera["camera_id"],
+                            "name": camera["name"],
+                            "db_status": camera.get("status"),
+                            "runtime_status": "unknown",
+                            "is_active": camera.get("is_active", False),
+                            "shard_id": shard_id,
+                            "is_local_worker": False,
+                            "live_frame_age_ms": None,
+                            "last_seen_at": camera.get("last_seen_at"),
+                            "fob_type": camera.get("fob_type"),
+                            "zone_id": camera.get("zone_id"),
+                            "error": f"Owning pod returned status {resp.status}"
+                        }
+        except Exception as e:
+            logger.warning(f"[StatusRouting] Failed forwarding status request for {camera_id} to {target_host}: {e}")
+            return {
+                "status": "success",
+                "camera_id": camera["camera_id"],
+                "name": camera["name"],
+                "db_status": camera.get("status"),
+                "runtime_status": "unknown",
+                "is_active": camera.get("is_active", False),
+                "shard_id": shard_id,
+                "is_local_worker": False,
+                "live_frame_age_ms": None,
+                "last_seen_at": camera.get("last_seen_at"),
+                "fob_type": camera.get("fob_type"),
+                "zone_id": camera.get("zone_id"),
+                "error": f"Owning pod unreachable: {str(e)}"
+            }
+
+    # This pod OWNS the camera: read local RTSP state
     rtsp_manager = get_rtsp_manager()
     stream_state = rtsp_manager.get_stream_state(camera_id) # Using camera_id as stream_id
 
@@ -581,11 +742,12 @@ async def get_camera_status(camera_id: str):
     real_status = "inactive"
     if stream_state:
         real_status = stream_state.get("status", "unknown")
-    
-    # Check if DB mismatch
-    if camera.get("status") != real_status and stream_state:
-         # Optional: Auto-correct DB? No, let's just return truth
-         pass
+
+    with rtsp_manager._lock:
+        worker = rtsp_manager._streams.get(camera_id)
+    live_frame_age_ms = None
+    if worker:
+        _, _, live_frame_age_ms = worker.get_latest_frame_with_metadata()
 
     return {
         "status": "success",
@@ -594,6 +756,9 @@ async def get_camera_status(camera_id: str):
         "db_status": camera.get("status"),
         "runtime_status": real_status,
         "is_active": camera.get("is_active", False),
+        "shard_id": shard_id,
+        "is_local_worker": True,
+        "live_frame_age_ms": round(live_frame_age_ms, 1) if live_frame_age_ms is not None else None,
         "last_seen_at": camera.get("last_seen_at"),
         "fob_type": camera.get("fob_type"),
         "zone_id": camera.get("zone_id")
