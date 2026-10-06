@@ -17,13 +17,14 @@ spec:
         app.kubernetes.io/name: crowdvision-backend
     spec:
       terminationGracePeriodSeconds: 60
+      runtimeClassName: nvidia
       containers:
         - name: backend
           image: crowdvision-backend:local
           imagePullPolicy: Never
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8000
           envFrom:
             - configMapRef:
                 name: crowdvision-config
@@ -34,10 +35,10 @@ spec:
               mountPath: /app/data
           resources:
             requests:
-              cpu: "2"
+              cpu: "5"
               memory: 4Gi
             limits:
-              cpu: "8"
+              cpu: "24"
               memory: 16Gi
               nvidia.com/gpu: "1"
           startupProbe:

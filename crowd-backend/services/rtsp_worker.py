@@ -1234,16 +1234,29 @@ class RTSPWorker:
         consecutive_errors = 0
         last_good_frame_time = time.time()
         successful_frames = 0
+        # grab() still decodes, but retrieve() (BGR convert + copy) is only done at this rate
+        retrieve_interval = 1.0 / max(1.0, float(os.getenv("RTSP_RETRIEVE_FPS", "5")))
+        last_retrieve_ts = 0.0
 
         try:
             # Continuous frame capture loop (runs at full camera stream FPS, never waits for AI)
             while not self._stop_event.is_set():
-                ret, frame = cap.read()
-                if not ret or frame is None:
+                if not cap.grab():
                     consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
                     continue
 
                 now_ts = time.time()
+                if successful_frames > 0 and now_ts - last_retrieve_ts < retrieve_interval:
+                    consecutive_errors = 0
+                    last_good_frame_time = now_ts
+                    continue
+
+                ret, frame = cap.retrieve()
+                if not ret or frame is None:
+                    consecutive_errors = self._handle_bad_frame(consecutive_errors, last_good_frame_time)
+                    continue
+
+                last_retrieve_ts = now_ts
                 consecutive_errors = 0
                 last_good_frame_time = now_ts
                 successful_frames += 1
