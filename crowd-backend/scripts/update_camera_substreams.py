@@ -11,6 +11,7 @@ from config.config import get_settings
 
 CAMERA_SUBSTREAMS = {
     "cam_pf1_fob_kzj": "rtsp://admin:Admin123@10.51.200.20/Streaming/Channels/102",
+    "cam_pf1_fob_pf10": "rtsp://admin:Admin123@10.51.200.20/Streaming/Channels/102",
     "cam_middle_fob_4_5": "rtsp://admin:Admin123@10.51.200.1/Streaming/Channels/102",
     "cam_pf1_fob_hyb_end": "rtsp://admin:Admin123@10.51.200.44/Streaming/Channels/102",
     "cam_kzj_pf1_fob_kzj": "rtsp://admin:Admin123@10.51.200.52/Streaming/Channels/102",

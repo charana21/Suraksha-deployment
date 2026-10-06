@@ -154,11 +154,15 @@ const ENTRY_8_SOURCE_X = 1425; // Gate 8 X
 // CORRECTED: Threshold value for detecting high crowd density in FOBs (120 people)
 const FOB_THRESHOLD = 120;
 
-const CAMERA_DATA_SOURCE_BY_REGION: Record<string, string> = {};
+const CAMERA_DATA_SOURCE_BY_REGION: Record<string, string> = {
+  cam_pf1_fob_kzj: "cam_pf1_fob_pf10",
+  cam_pf1_fob_pf10: "cam_pf1_fob_pf10",
+};
 
 const HYD_CAMERA_IDS = [
   "cam_middle_fob_4_5",
   "cam_pf1_fob_kzj",
+  "cam_pf1_fob_pf10",
   "cam_hyb_pf1_a",
 ];
 

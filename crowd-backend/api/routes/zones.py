@@ -6,7 +6,7 @@ Provides:
 - Camera-to-zone mapping
 - Aggregated zone analytics for SVG rendering
 """
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from typing import Optional, List
 from datetime import datetime
 from api.security import require_authorized
@@ -209,6 +209,7 @@ async def get_all_zones_analytics(
 
 LATEST_CAMERA_IDS = [
     "cam_pf1_fob_kzj",
+    "cam_pf1_fob_pf10",
     "cam_pf1_fob_hyb_end",
     "cam_middle_fob_4_5",
     "cam_kzj_pf1_fob_kzj",
@@ -226,19 +227,43 @@ LATEST_CAMERA_IDS = [
     "cam_hyb_booking_gate4a",
     "cam_hyb_booking_gate6",
     "cam_hyb_booking_gate8",
+    "cam_pf2_fc_hyd_side",
+    "cam_pf7_hyd_end",
+    "cam_pf8_mid_fc_kzj",
+    "cam_north_parking",
+    "cam_gate2_wh",
+    "cam_pf_6_7_mmts_fc_hyd",
+    "cam_hyd_fob_fc_6_7",
+    "cam_kzj_fob_mid_8_9",
+    "cam_hyd_booking_gate2a",
+    "cam_near_gate_2a_fc_swathi_ent",
+    "cam_gate_5_booking_office",
+    "cam_gate2_fc_ac_wh",
+    "cam_rethifile_bo",
+    "cam_gate2a_towards_avtm",
+    "cam_gate2a_fc_parking",
 ]
 
 
 async def _build_camera_zone_map(db) -> dict:
-    """Build {camera_id: zone_id} directly from the cameras collection."""
+    """Build {camera_id: zone_id} directly from active cameras in the cameras collection."""
     try:
         docs = await db.cameras.find(
-            {"camera_id": {"$in": LATEST_CAMERA_IDS}},
+            {"status": "active"},
             {"camera_id": 1, "zone_id": 1, "_id": 0}
-        ).to_list(length=len(LATEST_CAMERA_IDS))
+        ).to_list(length=200)
     except pymongo.errors.PyMongoError:
-        return {}
-    return {doc["camera_id"]: doc.get("zone_id") for doc in docs}
+        docs = []
+
+    cam_map = {doc["camera_id"]: doc.get("zone_id") for doc in docs if "camera_id" in doc}
+    for cid in LATEST_CAMERA_IDS:
+        if cid not in cam_map:
+            cam_map[cid] = "zone_hyb_fob" if "fob" in cid else "zone_hyb_pf1"
+    if "cam_pf1_fob_pf10" in cam_map and "cam_pf1_fob_kzj" not in cam_map:
+        cam_map["cam_pf1_fob_kzj"] = cam_map["cam_pf1_fob_pf10"]
+    elif "cam_pf1_fob_kzj" in cam_map and "cam_pf1_fob_pf10" not in cam_map:
+        cam_map["cam_pf1_fob_pf10"] = cam_map["cam_pf1_fob_kzj"]
+    return cam_map
 
 # latest_analytics_data is a collection that stores the most recent analytics record for each camera, enriched with zone_id. This is used for quick access in the frontend without needing to aggregate from the entire analytics collection.
 async def _upsert_latest_analytics(records: list, camera_to_zone: dict):
@@ -281,9 +306,12 @@ async def get_latest_camera_analytics(background_tasks: BackgroundTasks):
     if db is None:
         raise HTTPException(status_code=503, detail=DATABASE_UNAVAILABLE)
 
+    camera_to_zone = await _build_camera_zone_map(db)
+    target_ids = list(camera_to_zone.keys()) if camera_to_zone else LATEST_CAMERA_IDS
+
     # Sort by (camera_id, timestamp DESC) to match the compound index — avoids in-memory sort
     analytics_pipeline = [
-        {"$match": {"camera_id": {"$in": LATEST_CAMERA_IDS}}},
+        {"$match": {"camera_id": {"$in": target_ids}}},
         {"$sort": {"camera_id": 1, "timestamp": -1}},
         {"$group": {
             "_id": "$camera_id",
@@ -294,11 +322,8 @@ async def get_latest_camera_analytics(background_tasks: BackgroundTasks):
     ]
 
     try:
-        # Run both queries in parallel
-        records, camera_to_zone = await asyncio.gather(
-            db.analytics.aggregate(analytics_pipeline).to_list(length=len(LATEST_CAMERA_IDS)),
-            _build_camera_zone_map(db)
-        )
+        # Run queries
+        records = await db.analytics.aggregate(analytics_pipeline).to_list(length=max(100, len(target_ids)))
     except (pymongo.errors.AutoReconnect, pymongo.errors.NetworkTimeout, pymongo.errors.ConnectionFailure) as e:
         raise HTTPException(status_code=503, detail=f"Database connection lost: {e}")
     except pymongo.errors.PyMongoError as e:
@@ -652,3 +677,37 @@ async def get_zone_analytics_single(zone_id: str):
         "timestamp": datetime.now(UTC).isoformat() + "Z",
         "zone": analytics
     }
+
+
+# ============================================================================
+# INTERNAL CROSS-SHARD ANALYTICS & BROADCAST ENDPOINTS
+# ============================================================================
+
+@router.get("/internal/camera-analytics", include_in_schema=False)
+async def get_internal_camera_analytics():
+    """Returns local camera analytics for peer shards."""
+    from services.zone_analytics import get_local_camera_analytics
+    from services.sharding import get_current_shard_index
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content={
+        "status": "success",
+        "shard_id": get_current_shard_index(),
+        "analytics": get_local_camera_analytics()
+    })
+
+
+@router.post("/internal/broadcast-zones", include_in_schema=False)
+async def receive_internal_zone_broadcast(request: Request):
+    """Receives zone updates forwarded from peer shard and broadcasts to local subscribers."""
+    try:
+        payload = await request.json()
+        station_id = payload.get("station_id")
+        zone_data = payload.get("zone_data")
+        if station_id and zone_data:
+            from services.websocket_manager import get_connection_manager
+            ws_mgr = get_connection_manager()
+            await ws_mgr.broadcast_zone_analytics(station_id, zone_data)
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+

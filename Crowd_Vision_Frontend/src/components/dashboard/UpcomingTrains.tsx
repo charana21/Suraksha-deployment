@@ -234,13 +234,26 @@ export function UpcomingTrains({
     fetchLiveToggleState();
 
     // Dedicated WebSocket for Train Updates
-    const baseUrl =
-      import.meta.env.VITE_API_URL ||
-      "https://crowdvision-api.tride.live/api";
+    let wsBase = "";
+    if (import.meta.env.VITE_WS_URL) {
+      wsBase = import.meta.env.VITE_WS_URL.replace(/\/$/, "");
+    } else {
+      const apiUrl = import.meta.env.VITE_API_URL || "/api";
+      if (apiUrl.startsWith("http")) {
+        wsBase = apiUrl.replace(/^http/, "ws").replace(/\/api$/, "");
+      } else if (typeof window !== "undefined") {
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const cleanPath = apiUrl.replace(/\/api$/, "");
+        wsBase = `${protocol}//${window.location.host}${cleanPath}`;
+      }
+    }
 
-    const wsUrl =
-      baseUrl.replace(/^http/, "ws").replace(/\/$/, "") +
-      "/ws/trains";
+    const token =
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("auth_token");
+    const wsUrl = token
+      ? `${wsBase}/api/ws/trains?token=${encodeURIComponent(token)}`
+      : `${wsBase}/api/ws/trains`;
 
     let ws: WebSocket | null = null;
 
@@ -250,6 +263,7 @@ export function UpcomingTrains({
 
     const connect = () => {
       try {
+        if (!wsUrl) return;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {

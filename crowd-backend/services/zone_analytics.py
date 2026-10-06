@@ -141,6 +141,36 @@ async def get_cameras_by_zone() -> Dict[str, List[Dict]]:
     return grouped
 
 
+def to_jsonable_data(obj: Any) -> Any:
+    """Recursively convert numpy types, datetimes, and complex objects to standard JSON-compatible Python types."""
+    if obj is None:
+        return None
+    if isinstance(obj, (int, float, str, bool)):
+        return obj
+    if hasattr(obj, "ndim"):
+        if getattr(obj, "ndim", 0) == 0:
+            return obj.item()
+        return obj.tolist()
+    if hasattr(obj, "tolist"):
+        return obj.tolist()
+    if hasattr(obj, "item"):
+        try:
+            return obj.item()
+        except Exception:
+            return None
+    if isinstance(obj, dict):
+        return {
+            str(k): to_jsonable_data(v)
+            for k, v in obj.items()
+            if k not in ("density_map", "frame", "annotated_frame", "head_detections", "raw_frame")
+        }
+    if isinstance(obj, (list, tuple, set)):
+        return [to_jsonable_data(v) for v in obj]
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    return str(obj)
+
+
 def get_camera_latest_analytics(camera_id: str) -> Optional[Dict]:
     """
     Get latest analytics for a camera from running RTSP streams
@@ -151,51 +181,105 @@ def get_camera_latest_analytics(camera_id: str) -> Optional[Dict]:
     Returns:
         Latest analytics dict or None if not available
     """
-    # Import here to avoid circular import (rtsp_worker -> zone_analytics -> rtsp_manager -> rtsp_worker)
     from services.rtsp_manager import get_rtsp_manager
     rtsp_manager = get_rtsp_manager()
 
-    # Find the stream for this camera
-    for stream_state in rtsp_manager.get_all_streams():
-        if stream_state.get("camera_id") == camera_id:
-            # Get latest analysis from the stream
-            stream_id = stream_state.get("stream_id")
-            worker = rtsp_manager._streams.get(stream_id)
-            if worker:
-                return worker.get_latest_analysis()
+    with rtsp_manager._lock:
+        # Direct lookup by camera_id
+        worker = rtsp_manager._streams.get(camera_id)
+        if worker:
+            analysis = worker.get_latest_analysis()
+            if analysis:
+                return to_jsonable_data(analysis)
+
+        # Match across streams by metadata or worker attribute
+        for sid, w in rtsp_manager._streams.items():
+            if not w:
+                continue
+            meta = rtsp_manager._stream_metadata.get(sid, {})
+            if meta.get("camera_id") == camera_id or getattr(w, "camera_id", None) == camera_id:
+                analysis = w.get_latest_analysis()
+                if analysis:
+                    return to_jsonable_data(analysis)
 
     return None
+
+
+def get_local_camera_analytics() -> Dict[str, Dict[str, Any]]:
+    """Return in-memory snapshot of latest analysis for all cameras processed by this pod."""
+    from services.rtsp_manager import get_rtsp_manager
+    rtsp_manager = get_rtsp_manager()
+    analytics_map = {}
+
+    with rtsp_manager._lock:
+        streams = dict(rtsp_manager._streams)
+        metadata = dict(rtsp_manager._stream_metadata)
+
+    for sid, worker in streams.items():
+        if not worker:
+            continue
+        analysis = worker.get_latest_analysis()
+        if not analysis:
+            continue
+        meta = metadata.get(sid, {})
+        cid = meta.get("camera_id") or getattr(worker, "camera_id", None) or sid
+        clean = to_jsonable_data(analysis)
+        analytics_map[cid] = clean
+        if sid != cid:
+            analytics_map[sid] = clean
+
+    return analytics_map
 
 
 # Preserve last-known valid metrics for up to configured TTL (default 30s) when frames are delayed
 CAMERA_METRICS_CACHE_TTL = 30.0
 _last_known_camera_metrics: Dict[str, Dict[str, Any]] = {}
-_remote_doc_cache: Dict[str, tuple] = {}
+_peer_analytics_cache: Dict[str, Dict[str, Any]] = {}
+_peer_cache_timestamp: float = 0.0
+PEER_CACHE_TTL = 1.0
 
 
-async def get_remote_camera_latest_analytics(camera_id: str) -> Optional[Dict]:
-    """Fetch the most recent analytics record for a camera from MongoDB with in-memory caching."""
+async def get_all_shards_camera_analytics() -> Dict[str, Dict[str, Any]]:
+    """
+    Return unified camera analytics across all shards without any expensive MongoDB queries.
+    Local cameras: Instant in-memory read.
+    Peer cameras: Fetched over internal headless service and cached for PEER_CACHE_TTL.
+    """
+    global _peer_analytics_cache, _peer_cache_timestamp
+
+    local_map = get_local_camera_analytics()
+    from services.sharding import get_shard_count, get_current_shard_index, get_pod_host_for_shard
+
+    shard_count = get_shard_count()
+    if shard_count <= 1:
+        return local_map
+
     now = time.time()
-    if camera_id in _remote_doc_cache:
-        cache_time, doc = _remote_doc_cache[camera_id]
-        if now - cache_time < 5.0:
-            return doc
+    current_shard = get_current_shard_index()
 
-    db = get_database()
-    if db is None:
-        return _remote_doc_cache.get(camera_id, (0, None))[1]
-    try:
-        doc = await db.analytics.find_one(
-            {"camera_id": camera_id},
-            sort=[("timestamp", -1)]
-        )
-        _remote_doc_cache[camera_id] = (now, doc)
-        return doc
-    except Exception as e:
-        logger.warning(f"Error fetching remote analytics for camera {camera_id}: {e}")
-        if camera_id in _remote_doc_cache:
-            return _remote_doc_cache[camera_id][1]
-        return None
+    if now - _peer_cache_timestamp > PEER_CACHE_TTL:
+        import aiohttp
+        timeout = aiohttp.ClientTimeout(total=1.0)
+        for shard_idx in range(shard_count):
+            if shard_idx == current_shard:
+                continue
+            peer_host = get_pod_host_for_shard(shard_idx)
+            peer_url = f"http://{peer_host}/api/internal/camera-analytics"
+            try:
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    async with session.get(peer_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            if isinstance(data, dict) and "analytics" in data and isinstance(data["analytics"], dict):
+                                _peer_analytics_cache.update(data["analytics"])
+                                _peer_cache_timestamp = now
+            except Exception as e:
+                logger.debug(f"[ZoneAnalytics] Peer shard {shard_idx} fetch from {peer_host}: {e}")
+
+    # Merge: Peer cache + local data (local overrides peer for owned cameras)
+    combined = dict(_peer_analytics_cache)
+    combined.update(local_map)
+    return combined
 
 
 def _parse_timestamp_to_epoch(ts: Any) -> Optional[float]:
@@ -463,24 +547,8 @@ async def get_zone_analytics(station_id: Optional[str] = None) -> Dict[str, Any]
     # Get cameras grouped by zone
     cameras_by_zone = await get_cameras_by_zone()
 
-    # Read every camera from shared storage so each backend replica returns the same aggregate.
-    camera_ids = set()
-    for zone in zones:
-        for cam in cameras_by_zone.get(zone.get("zone_id"), []):
-            cid = cam.get("camera_id")
-            if cid:
-                camera_ids.add(cid)
-
-    analytics_map = {}
-    if camera_ids:
-        camera_ids = sorted(camera_ids)
-        docs = await asyncio.gather(
-            *(get_remote_camera_latest_analytics(cid) for cid in camera_ids),
-            return_exceptions=True,
-        )
-        for cid, doc in zip(camera_ids, docs):
-            if doc and isinstance(doc, dict):
-                analytics_map[cid] = doc
+    # Collect in-memory camera analytics unified across all shards (0ms local, peer HTTP cached)
+    analytics_map = await get_all_shards_camera_analytics()
 
     # Build response
     zone_analytics = []
@@ -574,11 +642,36 @@ _last_cache_update = 0
 CACHE_TTL = 300  # 5 minutes
 _last_station_broadcast_ts: Dict[str, float] = {}
 
+async def _forward_zone_broadcast_to_peers(
+    station_id: str,
+    zone_data: Dict[str, Any],
+    current_shard: int,
+    shard_count: int
+) -> None:
+    """Forward zone analytics broadcast to peer pods so all connected clients get updates."""
+    from services.sharding import get_pod_host_for_shard
+    import aiohttp
+    timeout = aiohttp.ClientTimeout(total=0.5)
+    for shard_idx in range(shard_count):
+        if shard_idx == current_shard:
+            continue
+        peer_host = get_pod_host_for_shard(shard_idx)
+        peer_url = f"http://{peer_host}/api/internal/broadcast-zones"
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                await session.post(
+                    peer_url,
+                    json={"station_id": station_id, "zone_data": zone_data},
+                    headers={"X-Internal-Forwarded": "true"}
+                )
+        except Exception:
+            pass  # Peer unreachable / restarting; non-blocking
+
+
 async def broadcast_zone_update_for_camera(camera_id: str, websocket_manager) -> None:
     """
     Trigger zone analytics broadcast when a camera's analytics are updated.
-    
-    OPTIMIZED: Uses in-memory cache to avoid 2 DB calls per frame.
+    Uses in-memory cache and peer forwarding to keep all pods and clients synchronized.
     """
     if websocket_manager is None:
         return
@@ -613,14 +706,14 @@ async def broadcast_zone_update_for_camera(camera_id: str, websocket_manager) ->
             return
 
         station_id = zone.get("station_id")
-        
-        # Update cache
         _camera_station_cache[camera_id] = station_id
-        # print(f"[ZoneBroadcast] Cache update: {camera_id} -> {station_id}")
 
-    # Check subscribers (fast check)
+    # Check subscribers on this pod
+    from services.sharding import get_shard_count, get_current_shard_index
+    shard_count = get_shard_count()
     zone_subscribers = websocket_manager.get_zone_subscribers(station_id)
-    if zone_subscribers == 0:
+
+    if zone_subscribers == 0 and shard_count <= 1:
         return
 
     # Rate-limit zone broadcasts per station to avoid per-frame fan-out cost.
@@ -632,23 +725,24 @@ async def broadcast_zone_update_for_camera(camera_id: str, websocket_manager) ->
             return
         _last_station_broadcast_ts[station_id] = now
 
-    # Get aggregated zone analytics (This may still be expensive, usually ~5-10ms)
-    # Could be further optimized with rate limiting if needed
+    # Get aggregated zone analytics (in-memory instant aggregation)
     zone_data = await get_zone_analytics(station_id=station_id)
 
-    # Broadcast
-    await websocket_manager.broadcast_zone_analytics(station_id, zone_data)
+    # Broadcast to local subscribers if any
+    if zone_subscribers > 0:
+        await websocket_manager.broadcast_zone_analytics(station_id, zone_data)
+
+    # Forward to peer shards so clients connected to other pods also receive live updates
+    if shard_count > 1:
+        current_shard = get_current_shard_index()
+        asyncio.create_task(
+            _forward_zone_broadcast_to_peers(station_id, zone_data, current_shard, shard_count)
+        )
 
 
 async def get_single_zone_analytics(zone_id: str) -> Optional[Dict[str, Any]]:
     """
     Get analytics for a single zone
-
-    Args:
-        zone_id: Zone identifier
-
-    Returns:
-        Zone analytics or None if zone not found
     """
     db = get_database()
     if db is None:
@@ -662,18 +756,8 @@ async def get_single_zone_analytics(zone_id: str) -> Optional[Dict[str, Any]]:
     # Get cameras for this zone
     cameras = await get_cameras_for_zone(zone_id)
 
-    # Check for cameras hosted on another shard/pod
-    from services.rtsp_manager import get_rtsp_manager
-    rtsp_mgr = get_rtsp_manager()
-    local_cids = {s.get("camera_id") for s in rtsp_mgr.get_all_streams() if s.get("camera_id")}
-
-    remote_cids = [c.get("camera_id") for c in cameras if c.get("camera_id") and c.get("camera_id") not in local_cids]
-    analytics_map = {}
-    if remote_cids:
-        docs = await asyncio.gather(*(get_remote_camera_latest_analytics(cid) for cid in remote_cids), return_exceptions=True)
-        for cid, doc in zip(remote_cids, docs):
-            if doc and isinstance(doc, dict):
-                analytics_map[cid] = doc
+    # Unified in-memory analytics across shards
+    analytics_map = await get_all_shards_camera_analytics()
 
     # Aggregate analytics
     aggregated = aggregate_camera_analytics(cameras, analytics_map=analytics_map)

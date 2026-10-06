@@ -27,7 +27,7 @@ from services.sharding import (
     get_current_shard_index,
 )
 from utils.visualization import visualize_heatmap_only
-from api.security import require_admin, require_viewer, require_authorized
+from api.security import internal_forward_headers, require_admin, require_viewer, require_authorized
 import uuid
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -275,7 +275,7 @@ async def get_stream_status(stream_id: str, request: Request = None):
         timeout = aiohttp.ClientTimeout(total=4.0)
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                async with session.get(target_url, headers=internal_forward_headers(request)) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return JSONResponse(data)
@@ -322,7 +322,7 @@ async def list_rtsp_streams(request: Request = None):
             peer_url = f"http://{peer_host}/api/rtsp/list"
             try:
                 async with aiohttp.ClientSession(timeout=timeout) as session:
-                    async with session.get(peer_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                    async with session.get(peer_url, headers=internal_forward_headers(request)) as resp:
                         if resp.status == 200:
                             peer_data = await resp.json()
                             aggregated_streams.extend(peer_data.get('streams', []))
@@ -475,7 +475,7 @@ async def get_live_stream(stream_id: str, request: Request = None):
                 timeout = aiohttp.ClientTimeout(total=None, connect=5.0)
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     try:
-                        async with session.get(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                        async with session.get(target_url, headers=internal_forward_headers(request)) as resp:
                             if resp.status != 200:
                                 return
                             async for chunk in resp.content.iter_any():

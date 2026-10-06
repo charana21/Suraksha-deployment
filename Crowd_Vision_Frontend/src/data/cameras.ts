@@ -148,3 +148,10 @@ export const CAMERA_TITLES: Record<string, string> = Object.fromEntries(
   CAMERAS.filter((camera): camera is CameraDefinition & { name: string } => !!camera.name)
     .map((camera) => [camera.camera_id, camera.name]),
 );
+
+// Backward-compatibility alias for cam_pf1_fob_kzj <-> cam_pf1_fob_pf10
+if (CAMERA_BY_ID['cam_pf1_fob_pf10']) {
+  CAMERA_BY_ID['cam_pf1_fob_kzj'] = { ...CAMERA_BY_ID['cam_pf1_fob_pf10'], camera_id: 'cam_pf1_fob_kzj' };
+  CAMERA_TITLES['cam_pf1_fob_kzj'] = CAMERA_TITLES['cam_pf1_fob_pf10'];
+}
+

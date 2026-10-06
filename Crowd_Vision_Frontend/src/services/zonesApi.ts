@@ -109,7 +109,14 @@ class ZonesApiService {
    * Get WebSocket URL for zone analytics
    */
   getZoneWebSocketUrl(stationId?: string): string {
-    const wsBase = this.baseUrl.replace(/^http/, 'ws').replace('/api', '');
+    let wsBase = '';
+    if (this.baseUrl.startsWith('http')) {
+      wsBase = this.baseUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
+    } else if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const cleanPath = this.baseUrl.replace(/\/api$/, '');
+      wsBase = `${protocol}//${window.location.host}${cleanPath}`;
+    }
     if (stationId) {
       return `${wsBase}/api/ws/zones/analytics/${stationId}`;
     }

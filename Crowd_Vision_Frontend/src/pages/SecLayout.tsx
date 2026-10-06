@@ -9,46 +9,62 @@ import SecLayoutLiveSvgRaw from '@/assets/sec-layout-1-2-layout.svg?raw';
 import { useZoneAnalytics } from '@/hooks/useZoneAnalytics';
 import { CameraAnalytics, RiskLevel, ZoneAnalytics } from '@/types/zone';
 import { getDensityLevel, getMotionLevel, getRiskLevel } from '@/lib/metrics';
+import { CAMERAS, LIVE_CAMERA_IDS as ALL_REGISTERED_IDS, CAMERA_TITLES as ALL_REGISTERED_TITLES } from '@/data/cameras';
 
-const LIVE_CAMERA_IDS = [
-  'cam_hyb_pf1','cam_hyb_pf2','cam_hyb_pf4','cam_hyb_pf6',
-    'cam_middle_fob_4_5','cam_hyb_pf8','cam_hyb_pf10',
-      'cam_pf1_fob_kzj','cam_hyb_pf1_a','cam_pf1_fob_hyb_end',
-        'cam_kzj_pf1_fob_kzj','cam_kzj_pf1_fob_pf10',
-          'cam_hyb_booking','cam_hyb_booking_gate4a','cam_hyb_booking_gate6','cam_hyb_booking_gate8',
-          ];
+const LIVE_CAMERA_IDS = Array.from(
+  new Set([
+    ...ALL_REGISTERED_IDS,
+    'cam_hyb_pf1',
+    'cam_hyb_pf2',
+    'cam_hyb_pf4',
+    'cam_hyb_pf6',
+    'cam_middle_fob_4_5',
+    'cam_hyb_pf8',
+    'cam_hyb_pf10',
+    'cam_pf1_fob_kzj',
+    'cam_pf1_fob_pf10',
+    'cam_hyb_pf1_a',
+    'cam_pf1_fob_hyb_end',
+    'cam_kzj_pf1_fob_kzj',
+    'cam_kzj_pf1_fob_pf10',
+    'cam_hyb_booking',
+    'cam_hyb_booking_gate4a',
+    'cam_hyb_booking_gate6',
+    'cam_hyb_booking_gate8',
+  ])
+);
 
-          const CAMERA_TITLES: Record<string,string> = {
-            cam_hyb_pf1:'PF-1 Near KZJ FOB FC Gate 2',
-              cam_hyb_pf2:'PF 2 KZJ FOB FC RRI',
-                cam_hyb_pf4:'PF No.4 & 5 Middle PTZ',
-                  cam_hyb_pf6:'PF 6N Near Mid FOB',
-                    cam_middle_fob_4_5:'HYB FOB MIDDLE FC 4&5',
-                      cam_hyb_pf8:'PF 8 Middle FC KZJ',
-                        cam_hyb_pf10:'PF10 (Opp Gate-8) FC KZJ FOB',
-                            cam_pf1_fob_kzj:'HYD FOB FC PF10',
-                            cam_hyb_pf1_a:'PF1 NEARGATE-4 FC HYB',
-                              cam_pf1_fob_hyb_end:'HYD FOB FC PF1',
-                                cam_kzj_pf1_fob_kzj:'KZJ FOB FC PF10',
-                                  cam_kzj_pf1_fob_pf10:'KZJ FOB FC PF1',
-                                    cam_hyb_booking:'GATE 2A BOOKING COUNTER',
-                                      cam_hyb_booking_gate4a:'GATE 4 BOOKING OFFICE',
-                                        cam_hyb_booking_gate6:'GATE-6 BOOKING OFFICE',
-                                        cam_hyb_booking_gate8:'GATE 8 OUTSIDE',
-                                        };
+const CAMERA_TITLES: Record<string, string> = {
+  ...ALL_REGISTERED_TITLES,
+  cam_hyb_pf1: 'PF-1 Near KZJ FOB FC Gate 2',
+  cam_hyb_pf2: 'PF 2 KZJ FOB FC RRI',
+  cam_hyb_pf4: 'PF No.4 & 5 Middle PTZ',
+  cam_hyb_pf6: 'PF 6N Near Mid FOB',
+  cam_middle_fob_4_5: 'HYB FOB MIDDLE FC 4&5',
+  cam_hyb_pf8: 'PF 8 Middle FC KZJ',
+  cam_hyb_pf10: 'PF10 (Opp Gate-8) FC KZJ FOB',
+  cam_pf1_fob_kzj: 'HYD FOB FC PF10',
+  cam_pf1_fob_pf10: 'HYD FOB FC PF10',
+  cam_hyb_pf1_a: 'PF1 NEARGATE-4 FC HYB',
+  cam_pf1_fob_hyb_end: 'HYD FOB FC PF1',
+  cam_kzj_pf1_fob_kzj: 'KZJ FOB FC PF10',
+  cam_kzj_pf1_fob_pf10: 'KZJ FOB FC PF1',
+  cam_hyb_booking: 'GATE 2A BOOKING COUNTER',
+  cam_hyb_booking_gate4a: 'GATE 4 BOOKING OFFICE',
+  cam_hyb_booking_gate6: 'GATE-6 BOOKING OFFICE',
+  cam_hyb_booking_gate8: 'GATE 8 OUTSIDE',
+};
 
-                                        const CAMERA_ZONES: Record<string,string> = {
-                                          cam_hyb_pf1:'Platform Zone',cam_hyb_pf2:'Platform Zone',
-                                            cam_hyb_pf4:'Platform Zone',cam_hyb_pf6:'Platform Zone',
-                                              cam_middle_fob_4_5:'HYD FOB',cam_hyb_pf8:'Platform Zone',
-                                                cam_hyb_pf10:'Platform Zone',
-                                                  cam_pf1_fob_kzj:'HYD FOB',cam_hyb_pf1_a:'HYD FOB',
-                                                    cam_pf1_fob_hyb_end:'HYD FOB',
-                                                      cam_kzj_pf1_fob_kzj:'KZJ FOB',cam_kzj_pf1_fob_pf10:'KZJ FOB',
-                                                        cam_hyb_booking:'Booking Office',cam_hyb_booking_gate4a:'Booking Office',
-                                                          cam_hyb_booking_gate6:'Booking Office',
-                                                          cam_hyb_booking_gate8:'Booking Office',
-                                                          };
+const CAMERA_ZONES: Record<string, string> = {
+  ...Object.fromEntries(
+    CAMERAS.map((c) => [
+      c.camera_id,
+      c.type === 'FOB' ? 'HYD FOB' : c.type === 'BOOKING' ? 'Booking Office' : 'Platform Zone',
+    ])
+  ),
+  cam_pf1_fob_kzj: 'HYD FOB',
+  cam_pf1_fob_pf10: 'HYD FOB',
+};
 
                                                           const RISK = {
                                                             fill:{
@@ -121,79 +137,165 @@ const LIVE_CAMERA_IDS = [
                                                                                                                                                                                                                                                                           return{total,density,critical,high,risk};
                                                                                                                                                                                                                                                                             },[zones]);
 
-                                                                                                                                                                                                                                                                              const camMap=useMemo(()=>{
-                                                                                                                                                                                                                                                                                  const m=new Map<string,CameraAnalytics>();
-                                                                                                                                                                                                                                                                                      zones.forEach((zone:ZoneAnalytics)=>{
-                                                                                                                                                                                                                                                                                            if(!Array.isArray(zone.cameras))return;
-                                                                                                                                                                                                                                                                                                  (zone.cameras as any[]).forEach((cam)=>{
-                                                                                                                                                                                                                                                                                                          if(cam&&'camera_id' in cam){m.set(cam.camera_id,cam as CameraAnalytics);m.set(cam.svg_region_id,cam as CameraAnalytics);}
-                                                                                                                                                                                                                                                                                                                });
-                                                                                                                                                                                                                                                                                                                    });
-                                                                                                                                                                                                                                                                                                                        return m;
-                                                                                                                                                                                                                                                                                                                          },[zones]);
+  const camMap = useMemo(() => {
+    const m = new Map<string, CameraAnalytics>();
+    zones.forEach((zone: ZoneAnalytics) => {
+      if (!Array.isArray(zone.cameras)) return;
+      (zone.cameras as any[]).forEach((cam) => {
+        if (cam && 'camera_id' in cam) {
+          m.set(cam.camera_id, cam as CameraAnalytics);
+          if (cam.svg_region_id) m.set(cam.svg_region_id, cam as CameraAnalytics);
+          if (cam.camera_id === 'cam_pf1_fob_pf10') {
+            m.set('cam_pf1_fob_kzj', cam as CameraAnalytics);
+          } else if (cam.camera_id === 'cam_pf1_fob_kzj') {
+            m.set('cam_pf1_fob_pf10', cam as CameraAnalytics);
+          }
+        }
+      });
+    });
+    return m;
+  }, [zones]);
 
-                                                                                                                                                                                                                                                                                                                            const hoveredCam=useMemo(
-                                                                                                                                                                                                                                                                                                                                ()=>!hoveredId?undefined:camMap.get(hoveredId)??({camera_id:hoveredId,people_count:0,density_avg:0,motion_intensity:0,risk_score:0} as CameraAnalytics),
-                                                                                                                                                                                                                                                                                                                                    [hoveredId,camMap],
-                                                                                                                                                                                                                                                                                                                                      );
+  const hoveredCam = useMemo(() => {
+    if (!hoveredId) return undefined;
+    const cam =
+      camMap.get(hoveredId) ||
+      (hoveredId === 'cam_pf1_fob_kzj' ? camMap.get('cam_pf1_fob_pf10') : null) ||
+      (hoveredId === 'cam_pf1_fob_pf10' ? camMap.get('cam_pf1_fob_kzj') : null);
+    return (
+      cam ??
+      ({
+        camera_id: hoveredId,
+        people_count: 0,
+        density_avg: 0,
+        motion_intensity: 0,
+        risk_score: 0,
+      } as CameraAnalytics)
+    );
+  }, [hoveredId, camMap]);
 
-                                                                                                                                                                                                                                                                                                                                        useEffect(()=>{
-                                                                                                                                                                                                                                                                                                                                            if(viewMode!=='live')return;
-                                                                                                                                                                                                                                                                                                                                                const svg=liveSvgRef.current;if(!svg)return;
-                                                                                                                                                                                                                                                                                                                                                    svg.querySelector('#camera-labels')?.remove();
-                                                                                                                                                                                                                                                                                                                                                        const ns='http://www.w3.org/2000/svg';
-                                                                                                                                                                                                                                                                                                                                                            LIVE_CAMERA_IDS.forEach((id)=>{
-                                                                                                                                                                                                                                                                                                                                                                  const el=svg.querySelector(`#${id}`) as SVGRectElement|null;if(!el)return;
-                                                                                                                                                                                                                                                                                                                                                                        const cam=camMap.get(id);
-                                                                                                                                                                                                                                                                                                                                                                              const lvl=(cam?((cam.risk_level as RiskLevel)||getRiskLevel(cam.risk_score||0)):'UNKNOWN') as string;
-                                                                                                                                                                                                                                                                                                                                                                                    el.setAttribute('fill',RISK.fill[lvl]??RISK.fill.UNKNOWN);
-                                                                                                                                                                                                                                                                                                                                                                                          el.setAttribute('stroke',RISK.stroke[lvl]??RISK.stroke.UNKNOWN);
-                                                                                                                                                                                                                                                                                                                                                                                                el.setAttribute('stroke-width',lvl==='CRITICAL'?'3.5':'2');
-                                                                                                                                                                                                                                                                                                                                                                                                      lvl==='CRITICAL'?el.setAttribute('filter','drop-shadow(0 0 6px rgba(239,68,68,0.7))'):el.removeAttribute('filter');
-                                                                                                                                                                                                                                                                                                                                                                                                            const cx=parseFloat(el.getAttribute('x')||'0')+parseFloat(el.getAttribute('width')||'0')/2;
-                                                                                                                                                                                                                                                                                                                                                                                                                  const cy=parseFloat(el.getAttribute('y')||'0')+parseFloat(el.getAttribute('height')||'0')/2;
-                                                                                                                                                                                                                                                                                                                                                                                                                        const count=`${cam?.people_count??0}`;
-                                                                                                                                                                                                                                                                                                                                                                                                                              const iconId=`icon_${id}`;
-                                                                                                                                                                                                                                                                                                                                                                                                                                    if(!svg.querySelector(`#${iconId}`)){
-                                                                                                                                                                                                                                                                                                                                                                                                                                            const g=document.createElementNS(ns,'g');g.setAttribute('id',iconId);g.setAttribute('transform',`translate(${iconTx},${iconTy})`);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    const hd=document.createElementNS(ns,'circle');hd.setAttribute('cx','7');hd.setAttribute('cy','5');hd.setAttribute('r','4');hd.setAttribute('fill','#fff');hd.setAttribute('opacity','0.9');
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            const bd=document.createElementNS(ns,'path');bd.setAttribute('d','M3,11 Q3,10 7,10 Q11,10 11,11 L11,16 Q11,17 7,17 Q3,17 3,16 Z');bd.setAttribute('fill','#fff');bd.setAttribute('opacity','0.9');
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    g.appendChild(hd);g.appendChild(bd);el.parentElement?.appendChild(g);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          }else{(svg.querySelector(`#${iconId}`) as SVGElement).setAttribute('transform',`translate(${iconTx},${iconTy})`);}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                const txtId=`count_${id}`;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      const existing=svg.querySelector(`#${txtId}`) as SVGTextElement|null;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            if(existing){existing.textContent=count;}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  else{
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          const t=document.createElementNS(ns,'text');t.setAttribute('id',txtId);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  t.setAttribute('x',isNarrow?String(cx):String(cx+6));t.setAttribute('y',isNarrow?String(cy+16):String(cy+4));
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          t.setAttribute('font-family','Outfit,Arial,sans-serif');t.setAttribute('font-size','14');t.setAttribute('font-weight','700');
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  t.setAttribute('fill','#fff');t.setAttribute('stroke','#0a0f1a');t.setAttribute('stroke-width','0.8');
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          t.setAttribute('paint-order','stroke');t.setAttribute('text-anchor',isNarrow?'middle':'start');t.setAttribute('pointer-events','none');
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  t.textContent=count;el.parentElement?.appendChild(t);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            });
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                svg.querySelectorAll('text[id^="count_"]').forEach((t)=>t.setAttribute('font-size','38'));
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  },[viewMode,camMap]);
+  useEffect(() => {
+    if (viewMode !== 'live') return;
+    const svg = liveSvgRef.current;
+    if (!svg) return;
+    svg.querySelector('#camera-labels')?.remove();
+    const ns = 'http://www.w3.org/2000/svg';
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    useEffect(()=>{
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if(viewMode!=='live')return;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            const svg=liveSvgRef.current;if(!svg)return;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                const cleanups:Array<()=>void>=[];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    LIVE_CAMERA_IDS.forEach((id)=>{
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          const el=svg.querySelector(`#${id}`) as SVGElement|null;if(!el)return;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                el.style.pointerEvents='all';el.style.cursor='pointer';
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      const onEnter=()=>{
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              setHoveredId(id);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      const r=el.getBoundingClientRect();const cr=svg.getBoundingClientRect();const W=268;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              const left=r.right-cr.left+12+W>cr.width?r.left-cr.left-W-12:r.right-cr.left+12;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      setTipPos({left,top:Math.max(0,r.top-cr.top)});
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            };
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  const onLeave=()=>{setHoveredId(null);setTipPos(null);};
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        el.addEventListener('mouseenter',onEnter);el.addEventListener('mouseleave',onLeave);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              cleanups.push(()=>{el.removeEventListener('mouseenter',onEnter);el.removeEventListener('mouseleave',onLeave);});
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  });
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      return()=>cleanups.forEach((f)=>f());
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        },[viewMode]);
+    LIVE_CAMERA_IDS.forEach((id) => {
+      const el = (svg.querySelector(`#${id}`) ||
+        (id === 'cam_pf1_fob_kzj' ? svg.querySelector('#cam_pf1_fob_pf10') : null) ||
+        (id === 'cam_pf1_fob_pf10' ? svg.querySelector('#cam_pf1_fob_kzj') : null)) as SVGRectElement | null;
+      if (!el) return;
+
+      const cam =
+        camMap.get(id) ||
+        (id === 'cam_pf1_fob_kzj' ? camMap.get('cam_pf1_fob_pf10') : null) ||
+        (id === 'cam_pf1_fob_pf10' ? camMap.get('cam_pf1_fob_kzj') : null);
+
+      const lvl = (cam ? ((cam.risk_level as RiskLevel) || getRiskLevel(cam.risk_score || 0)) : 'UNKNOWN') as string;
+      el.setAttribute('fill', RISK.fill[lvl] ?? RISK.fill.UNKNOWN);
+      el.setAttribute('stroke', RISK.stroke[lvl] ?? RISK.stroke.UNKNOWN);
+      el.setAttribute('stroke-width', lvl === 'CRITICAL' ? '3.5' : '2');
+      if (lvl === 'CRITICAL') {
+        el.setAttribute('filter', 'drop-shadow(0 0 6px rgba(239,68,68,0.7))');
+      } else {
+        el.removeAttribute('filter');
+      }
+
+      const cx = parseFloat(el.getAttribute('x') || '0') + parseFloat(el.getAttribute('width') || '0') / 2;
+      const cy = parseFloat(el.getAttribute('y') || '0') + parseFloat(el.getAttribute('height') || '0') / 2;
+      const isNarrow = parseFloat(el.getAttribute('width') || '0') < 100;
+      const iconTx = isNarrow ? cx - 8 : cx - 18;
+      const iconTy = isNarrow ? cy - 20 : cy - 8;
+      const count = `${cam?.people_count ?? 0}`;
+      const iconId = `icon_${id}`;
+
+      if (!svg.querySelector(`#${iconId}`)) {
+        const g = document.createElementNS(ns, 'g');
+        g.setAttribute('id', iconId);
+        g.setAttribute('transform', `translate(${iconTx},${iconTy})`);
+        const hd = document.createElementNS(ns, 'circle');
+        hd.setAttribute('cx', '7');
+        hd.setAttribute('cy', '5');
+        hd.setAttribute('r', '4');
+        hd.setAttribute('fill', '#fff');
+        hd.setAttribute('opacity', '0.9');
+        const bd = document.createElementNS(ns, 'path');
+        bd.setAttribute('d', 'M3,11 Q3,10 7,10 Q11,10 11,11 L11,16 Q11,17 7,17 Q3,17 3,16 Z');
+        bd.setAttribute('fill', '#fff');
+        bd.setAttribute('opacity', '0.9');
+        g.appendChild(hd);
+        g.appendChild(bd);
+        el.parentElement?.appendChild(g);
+      } else {
+        (svg.querySelector(`#${iconId}`) as SVGElement).setAttribute('transform', `translate(${iconTx},${iconTy})`);
+      }
+
+      const txtId = `count_${id}`;
+      const existing = svg.querySelector(`#${txtId}`) as SVGTextElement | null;
+      if (existing) {
+        existing.textContent = count;
+      } else {
+        const t = document.createElementNS(ns, 'text');
+        t.setAttribute('id', txtId);
+        t.setAttribute('x', isNarrow ? String(cx) : String(cx + 6));
+        t.setAttribute('y', isNarrow ? String(cy + 16) : String(cy + 4));
+        t.setAttribute('font-family', 'Outfit,Arial,sans-serif');
+        t.setAttribute('font-size', '14');
+        t.setAttribute('font-weight', '700');
+        t.setAttribute('fill', '#fff');
+        t.setAttribute('stroke', '#0a0f1a');
+        t.setAttribute('stroke-width', '0.8');
+        t.setAttribute('paint-order', 'stroke');
+        t.setAttribute('text-anchor', isNarrow ? 'middle' : 'start');
+        t.setAttribute('pointer-events', 'none');
+        t.textContent = count;
+        el.parentElement?.appendChild(t);
+      }
+    });
+
+    svg.querySelectorAll('text[id^="count_"]').forEach((t) => t.setAttribute('font-size', '38'));
+  }, [viewMode, camMap]);
+
+  useEffect(() => {
+    if (viewMode !== 'live') return;
+    const svg = liveSvgRef.current;
+    if (!svg) return;
+    const cleanups: Array<() => void> = [];
+
+    LIVE_CAMERA_IDS.forEach((id) => {
+      const el = (svg.querySelector(`#${id}`) ||
+        (id === 'cam_pf1_fob_kzj' ? svg.querySelector('#cam_pf1_fob_pf10') : null) ||
+        (id === 'cam_pf1_fob_pf10' ? svg.querySelector('#cam_pf1_fob_kzj') : null)) as SVGElement | null;
+      if (!el) return;
+
+      el.style.pointerEvents = 'all';
+      el.style.cursor = 'pointer';
+
+      const onEnter = () => {
+        setHoveredId(id);
+        const r = el.getBoundingClientRect();
+        const cr = svg.getBoundingClientRect();
+        const W = 268;
+        const left = r.right - cr.left + 12 + W > cr.width ? r.left - cr.left - W - 12 : r.right - cr.left + 12;
+        setTipPos({ left, top: Math.max(0, r.top - cr.top) });
+      };
+
+      const onLeave = () => {
+        setHoveredId(null);
+        setTipPos(null);
+      };
+
+      el.addEventListener('mouseenter', onEnter);
+      el.addEventListener('mouseleave', onLeave);
+      cleanups.push(() => {
+        el.removeEventListener('mouseenter', onEnter);
+        el.removeEventListener('mouseleave', onLeave);
+      });
+    });
+
+    return () => cleanups.forEach((f) => f());
+  }, [viewMode]);
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           const activeSvg=viewMode==='withoutFobs'?SecLayoutNoFobSvg:viewMode==='live'?SecLayoutLiveCleanSvg:viewMode==='layout'?SecLayoutLayoutSvg:SecLayoutSvg;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             const activeMode=VIEW_MODES.find((m)=>m.id===viewMode)!;

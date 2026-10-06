@@ -28,7 +28,7 @@ const CAMERA_BOXES = [
   { id: 'cam_hyb_pf5', label: 'PF 5', x: 1080, y: 280, w: 200, h: 70 },
 
   { id: 'cam_hyb_pf6', label: 'PF 6', x: 120, y: 410, w: 200, h: 70 },
-  { id: 'cam_middle_fob_4_5', label: 'PF 7', x: 360, y: 410, w: 200, h: 70 },
+  { id: 'cam_pf7_hyd_end', label: 'PF 7', x: 360, y: 410, w: 200, h: 70 },
   { id: 'cam_hyb_pf8', label: 'PF 8', x: 600, y: 410, w: 200, h: 70 },
   { id: 'cam_hyb_pf9', label: 'PF 9', x: 840, y: 410, w: 200, h: 70 },
   { id: 'cam_hyb_pf10', label: 'PF 10', x: 1080, y: 410, w: 200, h: 70 },
@@ -100,14 +100,23 @@ export function FOBMapViewer({
       zone.cameras.forEach((cam) => {
         if (cam && typeof cam === 'object' && 'camera_id' in cam) {
           map.set(cam.camera_id, cam as CameraAnalytics);
-          map.set(cam.svg_region_id, cam as CameraAnalytics);
+          if (cam.svg_region_id) map.set(cam.svg_region_id, cam as CameraAnalytics);
+          if (cam.camera_id === 'cam_pf1_fob_pf10') {
+            map.set('cam_pf1_fob_kzj', cam as CameraAnalytics);
+          } else if (cam.camera_id === 'cam_pf1_fob_kzj') {
+            map.set('cam_pf1_fob_pf10', cam as CameraAnalytics);
+          }
         }
       });
     });
     return map;
   }, [zones]);
 
-  const hoveredCamera = hoveredCameraId ? cameraById.get(hoveredCameraId) : undefined;
+  const hoveredCamera = hoveredCameraId
+    ? cameraById.get(hoveredCameraId) ||
+      (hoveredCameraId === 'cam_pf1_fob_kzj' ? cameraById.get('cam_pf1_fob_pf10') : undefined) ||
+      (hoveredCameraId === 'cam_pf1_fob_pf10' ? cameraById.get('cam_pf1_fob_kzj') : undefined)
+    : undefined;
 
   const svgPx = useCallback(
     (svgX: number, svgY: number) => {

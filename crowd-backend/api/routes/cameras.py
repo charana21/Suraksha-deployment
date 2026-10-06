@@ -22,7 +22,7 @@ from services.sharding import (
     get_owning_pod_host,
     get_current_shard_index,
 )
-from api.security import require_admin, require_viewer
+from api.security import internal_forward_headers, require_admin, require_viewer
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +317,7 @@ async def start_camera_stream(camera_id: str, request: Request = None):
         timeout = aiohttp.ClientTimeout(total=10.0)
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                async with session.post(target_url, headers=internal_forward_headers(request)) as resp:
                     data = await resp.json()
                     return JSONResponse(status_code=resp.status, content=data)
         except Exception as e:
@@ -394,7 +394,7 @@ async def stop_camera_stream(camera_id: str, request: Request = None):
         timeout = aiohttp.ClientTimeout(total=10.0)
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                async with session.post(target_url, headers=internal_forward_headers(request)) as resp:
                     data = await resp.json()
                     return JSONResponse(status_code=resp.status, content=data)
         except Exception as e:
@@ -695,7 +695,7 @@ async def get_camera_status(camera_id: str, request: Request = None):
         timeout = aiohttp.ClientTimeout(total=4.0)
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(target_url, headers={"X-Internal-Forwarded": "true"}) as resp:
+                async with session.get(target_url, headers=internal_forward_headers(request)) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return data

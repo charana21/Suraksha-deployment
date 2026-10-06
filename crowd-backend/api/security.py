@@ -52,6 +52,16 @@ async def verify_token(
     return payload
 
 
+def internal_forward_headers(request: Optional[Request] = None) -> Dict[str, str]:
+    """Mark an internal shard request and preserve the caller's authorization."""
+    headers = {"X-Internal-Forwarded": "true"}
+    if request is not None:
+        authorization = request.headers.get("Authorization")
+        if authorization:
+            headers["Authorization"] = authorization
+    return headers
+
+
 def require_auth():
     return Depends(verify_token)
 

@@ -5,11 +5,23 @@
  * SINGLETON PATTERN: Only one WebSocket connection is shared across the app
  */
 
-const WS_BASE_URL =
-  import.meta.env.VITE_WS_URL ||
-  (import.meta.env.VITE_API_URL || 'https://crowdvision-api.tride.live/api')
-    .replace(/^http/, 'ws')
-    .replace(/\/api$/, '');
+function getWsBaseUrl(): string {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+  const apiUrl = import.meta.env.VITE_API_URL || '/api';
+  if (apiUrl.startsWith('http')) {
+    return apiUrl.replace(/^http/, 'ws').replace(/\/api$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const cleanPath = apiUrl.replace(/\/api$/, '');
+    return `${protocol}//${window.location.host}${cleanPath}`;
+  }
+  return '';
+}
+
+const WS_BASE_URL = getWsBaseUrl();
 
 import { TrainSchedule } from '@/types/trains';
 

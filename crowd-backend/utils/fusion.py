@@ -130,7 +130,8 @@ def detect_hallucination(
     pet_conf_std: float,
     pet_count: int,
     yolo_count: int,
-    settings: Optional[object] = None
+    settings: Optional[object] = None,
+    yolo_occupancy: float = 0.0,
 ) -> bool:
     """
     Detect if PET is likely hallucinating.
@@ -138,6 +139,8 @@ def detect_hallucination(
     Hallucination patterns:
     1. Low confidence std + low mean confidence = uniform weak predictions
     2. Very high PET count with very low YOLO count and low confidence
+    3. Structural hallucination: PET heavily inflated on background trusses/railings with low scene occupancy
+    4. Severe discrepancy: low YOLO count with inflated PET count
 
     Args:
         pet_avg_conf: Average PET confidence
@@ -145,6 +148,7 @@ def detect_hallucination(
         pet_count: PET prediction count
         yolo_count: YOLO detection count
         settings: Config settings object
+        yolo_occupancy: Fraction of frame covered by YOLO bboxes
 
     Returns:
         bool: True if hallucination is likely
@@ -165,19 +169,28 @@ def detect_hallucination(
     if yolo_count > 0 and pet_count > yolo_count * 5 and pet_avg_conf < 0.45:
         return True
 
+    # Pattern 3: Structure / truss hallucination - PET count significantly exceeds YOLO while scene is not dense
+    if pet_count > max(int(yolo_count * 2.2), 15):
+        if pet_avg_conf < 0.60 or yolo_occupancy < 0.12:
+            return True
+
+    # Pattern 4: Severe discrepancy when YOLO count is low
+    if yolo_count < 10 and pet_count >= 25 and pet_avg_conf < 0.65:
+        return True
+
     return False
 
 
 def _get_fusion_weights(settings: Optional[object]) -> Tuple[float, float, float, float]:
-    # PET is often more accurate, so defaults favor PET across all regimes
+    # Weights favor YOLO in low/moderate crowds to avoid PET structure hallucinations
     if settings:
         return (
-            getattr(settings, 'fusion_weight_sparse', 0.5),
-            getattr(settings, 'fusion_weight_low', 0.6),
-            getattr(settings, 'fusion_weight_medium', 0.75),
-            getattr(settings, 'fusion_weight_high', 0.95),
+            getattr(settings, 'fusion_weight_sparse', 0.15),
+            getattr(settings, 'fusion_weight_low', 0.30),
+            getattr(settings, 'fusion_weight_medium', 0.45),
+            getattr(settings, 'fusion_weight_high', 0.65),
         )
-    return 0.5, 0.6, 0.75, 0.95
+    return 0.15, 0.30, 0.45, 0.65
 
 
 def _sparse_zero_yolo_guard(
@@ -270,28 +283,28 @@ def _pet_dense_scene_guard(
 
 def _fuse_high_regime(
     yolo_count: int, pet_count: int, pet_avg_conf: float, pet_conf_std: float,
-    is_hallucination: bool, w_high: float,
+    is_hallucination: bool, w_high: float, yolo_occupancy: float = 0.0,
 ) -> Tuple[int, str]:
     if is_hallucination:
         # Hallucination in HIGH regime - use YOLO with multiplier
         # (YOLO likely undercounting due to occlusion)
         final = int(yolo_count * 1.5) if yolo_count > 10 else max(yolo_count, int(pet_count * 0.3))
         rule = f"HIGH_HALLUCINATION (conf={pet_avg_conf:.2f}, std={pet_conf_std:.2f}) -> YOLO*1.5"
-    elif pet_avg_conf >= 0.5:
-        # High confidence in HIGH regime - full PET trust
-        final = pet_count
-        rule = f"HIGH_CONFIDENT (conf={pet_avg_conf:.2f}) -> 100% PET"
-    elif pet_avg_conf >= 0.35:
-        # Moderate confidence in HIGH regime - 90% PET
+    elif pet_avg_conf >= 0.65 and yolo_occupancy >= 0.15:
+        # High confidence in confirmed dense crowd scene - high PET trust
+        weight = max(w_high, 0.85)
+        final = int((1 - weight) * yolo_count + weight * pet_count)
+        rule = f"HIGH_CONFIDENT_DENSE (conf={pet_avg_conf:.2f}, occ={yolo_occupancy:.2f}) -> {int(weight*100)}% PET"
+    elif pet_avg_conf >= 0.40:
+        # Moderate confidence in HIGH regime - blend using w_high (default 65% PET)
         weight = w_high
         final = int((1 - weight) * yolo_count + weight * pet_count)
         rule = f"HIGH (conf={pet_avg_conf:.2f}) -> {int(weight*100)}% PET"
     else:
         # Low confidence in HIGH regime but not hallucination
-        # Still trust PET more but with caution
-        weight = 0.7
+        weight = min(w_high, 0.5)
         final = int((1 - weight) * yolo_count + weight * pet_count)
-        rule = f"HIGH_LOW_CONF (conf={pet_avg_conf:.2f}) -> 70% PET"
+        rule = f"HIGH_LOW_CONF (conf={pet_avg_conf:.2f}) -> {int(weight*100)}% PET"
     return final, rule
 
 
@@ -299,17 +312,17 @@ def _fuse_medium_regime(
     yolo_count: int, pet_count: int, pet_avg_conf: float, is_hallucination: bool, w_medium: float,
 ) -> Tuple[int, str]:
     if is_hallucination:
-        # Hallucination in MEDIUM regime - still give PET some weight
-        final = int(0.5 * yolo_count + 0.5 * pet_count)
-        rule = "MEDIUM_HALLUCINATION -> 50/50"
+        # Suppress PET hallucination in MEDIUM regime - rely on YOLO detections
+        final = int(yolo_count * 1.15) if yolo_count > 10 else yolo_count
+        rule = "MEDIUM_HALLUCINATION -> YOLO"
     elif pet_avg_conf >= 0.45:
-        # Good confidence - use config weight (75% PET)
+        # Good confidence - use config weight
         weight = w_medium
         final = int((1 - weight) * yolo_count + weight * pet_count)
         rule = f"MEDIUM_CONFIDENT (conf={pet_avg_conf:.2f}) -> {int(weight*100)}% PET"
     else:
-        # Lower confidence but still favor PET (use slightly reduced weight)
-        weight = 0.6  # Still favor PET
+        # Lower confidence
+        weight = min(w_medium, 0.35)
         final = int((1 - weight) * yolo_count + weight * pet_count)
         rule = f"MEDIUM_LOW_CONF (conf={pet_avg_conf:.2f}) -> {int(weight*100)}% PET"
     return final, rule
@@ -319,17 +332,17 @@ def _fuse_low_regime(
     yolo_count: int, pet_count: int, pet_avg_conf: float, is_hallucination: bool, w_low: float,
 ) -> Tuple[int, str]:
     if is_hallucination:
-        # Hallucination in LOW regime - balanced approach
-        final = int(0.6 * yolo_count + 0.4 * pet_count)
-        rule = "LOW_HALLUCINATION -> 60% YOLO"
+        # Suppress PET hallucination in LOW regime
+        final = yolo_count
+        rule = "LOW_HALLUCINATION -> YOLO"
     elif pet_avg_conf >= 0.5:
-        # Good confidence - use config weight (60% PET)
+        # Good confidence - use config weight
         weight = w_low
         final = int((1 - weight) * yolo_count + weight * pet_count)
         rule = f"LOW_CONFIDENT (conf={pet_avg_conf:.2f}) -> {int(weight*100)}% PET"
     else:
-        # Lower confidence but still trust PET (use config weight)
-        weight = w_low
+        # Lower confidence
+        weight = min(w_low, 0.25)
         final = int((1 - weight) * yolo_count + weight * pet_count)
         rule = f"LOW (conf={pet_avg_conf:.2f}) -> {int(weight*100)}% PET"
     return final, rule
@@ -339,9 +352,8 @@ def _fuse_sparse_regime(
     yolo_count: int, pet_count: int, pet_avg_conf: float, is_hallucination: bool, w_sparse: float,
 ) -> Tuple[int, str]:
     if is_hallucination:
-        # Hallucination in SPARSE - still give PET some weight
-        final = int(0.7 * yolo_count + 0.3 * pet_count)
-        rule = "SPARSE_HALLUCINATION -> 70% YOLO"
+        final = yolo_count
+        rule = "SPARSE_HALLUCINATION -> YOLO"
         return final, rule
 
     if 0 < yolo_count <= 2:
@@ -383,10 +395,11 @@ def _apply_regime_fusion(
     regime: str, yolo_count: int, pet_count: int, pet_avg_conf: float, pet_conf_std: float,
     is_hallucination: bool, weights: Tuple[float, float, float, float],
     settings: Optional[object] = None,
+    yolo_occupancy: float = 0.0,
 ) -> Tuple[int, str]:
     w_sparse, w_low, w_medium, w_high = weights
     if regime == "HIGH":
-        final, rule = _fuse_high_regime(yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, w_high)
+        final, rule = _fuse_high_regime(yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, w_high, yolo_occupancy)
     elif regime == "MEDIUM":
         final, rule = _fuse_medium_regime(yolo_count, pet_count, pet_avg_conf, is_hallucination, w_medium)
     elif regime == "LOW":
@@ -436,7 +449,7 @@ def compute_fusion(
 
     # Step 2: Check for PET hallucination
     is_hallucination = detect_hallucination(
-        pet_avg_conf, pet_conf_std, pet_count, yolo_count, settings
+        pet_avg_conf, pet_conf_std, pet_count, yolo_count, settings, yolo_occupancy=yolo_occupancy
     )
 
     # Step 2b: Sparse guard for YOLO=0 frames
@@ -453,7 +466,7 @@ def compute_fusion(
 
     # Step 3: Apply regime-specific fusion
     final, rule = _apply_regime_fusion(
-        regime, yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, weights, settings
+        regime, yolo_count, pet_count, pet_avg_conf, pet_conf_std, is_hallucination, weights, settings, yolo_occupancy=yolo_occupancy
     )
 
     # Ensure non-negative before calibration
@@ -462,7 +475,7 @@ def compute_fusion(
     # Step 4: Post-fusion calibration for systematic undercount correction
     calibrated, multiplier, calib_bin = calibrate_fused_count(
         raw_count=final,
-        pet_count=pet_count,
+        pet_count=None if is_hallucination else pet_count,
         settings=settings
     )
     if calibrated != final:
