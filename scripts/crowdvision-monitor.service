@@ -1,0 +1,21 @@
+[Unit]
+Description=Suraksha CrowdVision Overnight Monitoring Daemon
+After=network.target k3s.service
+
+[Service]
+Type=simple
+User=user
+Group=user
+WorkingDirectory=/home/user/Downloads
+ExecStart=/usr/bin/python3 -u /home/user/Downloads/overnight_monitor.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+Environment=KUBECONFIG=/home/user/.kube/config
+Environment=HOME=/home/user
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target
