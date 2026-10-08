@@ -21,6 +21,7 @@ import {
   X,
   Maximize2,
   Minimize2,
+  Users,
 } from "lucide-react";
 import { ActionIcon } from "@mantine/core";
 import { IconMaximize } from "@tabler/icons-react";
@@ -1556,9 +1557,21 @@ export default function Dashboard() {
                         }
                       >
                         <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 shrink-0">
-                          <p className="text-xs font-semibold text-white tracking-wide truncate pr-2">
-                            {CAMERA_TITLES[liveStreamCameraId] || liveStreamCameraId}
-                          </p>
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <p className="text-xs font-semibold text-white tracking-wide truncate">
+                              {CAMERA_TITLES[liveStreamCameraId] || liveStreamCameraId}
+                            </p>
+                            {(() => {
+                              const cam = cameraById.get(liveStreamCameraId) || cameraById.get(liveStreamCameraId?.trim());
+                              if (!cam) return null;
+                              return (
+                                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                  <Users className="w-2.5 h-2.5" />
+                                  {cam.people_count ?? 0}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               onClick={() => setIsLiveStreamMaximized((prev) => !prev)}
