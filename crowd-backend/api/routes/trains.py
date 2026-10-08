@@ -485,6 +485,13 @@ def _parse_history_date_range(start_date: Optional[str], end_date: Optional[str]
     return start_dt, end_dt
 
 
+def _format_history_actual_time(value: Any) -> Any:
+    """Display midnight placeholder values as a hyphen in history responses."""
+    if isinstance(value, str) and value.strip() == "00:00":
+        return "-"
+    return value
+
+
 @router.get("/trains/live-status/history", tags=["Trains"], dependencies=[require_viewer])
 async def get_live_status_history(
     start_date: Optional[str] = Query(None, description="Range start date, YYYY-MM-DD (overrides `days`)"),
@@ -524,6 +531,14 @@ async def get_live_status_history(
         start_date=start_dt,
         end_date=end_dt
     )
+    records = [
+        {
+            **record,
+            "actual_arrival": _format_history_actual_time(record.get("actual_arrival")),
+            "actual_departure": _format_history_actual_time(record.get("actual_departure")),
+        }
+        for record in records
+    ]
 
     if start_dt is not None:
         range_start = start_dt.strftime("%Y-%m-%d")

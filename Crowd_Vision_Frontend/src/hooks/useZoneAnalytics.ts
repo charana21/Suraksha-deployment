@@ -93,8 +93,10 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
 
       setError(null);
     } catch (err) {
+      console.error('Failed to fetch zone analytics:', err);
       // Fallback to simulation data if API fails
       if (zones.length === 0) {
+        console.warn("API failed, using simulation data for", stationIdRef.current);
         const simulatedZones = getDefaultZoneAnalytics(stationIdRef.current);
         updateZones(simulatedZones);
         setLastUpdate(new Date());
@@ -114,6 +116,7 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
   // Disconnect WebSocket
   const disconnectWebSocket = useCallback(() => {
     if (wsRef.current) {
+      console.log('[ZoneAnalytics] Closing WebSocket connection');
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -128,17 +131,20 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
   const connectWebSocket = useCallback(() => {
     // Prevent multiple simultaneous connections
     if (isConnectingRef.current || wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('[ZoneAnalytics] Already connected or connecting, skipping');
       return;
     }
 
     isConnectingRef.current = true;
     const currentStationId = stationIdRef.current;
     const wsUrl = zonesApi.getZoneWebSocketUrl(currentStationId);
+    console.log('[ZoneAnalytics] Connecting to WebSocket:', wsUrl);
 
     try {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
+        console.log('[ZoneAnalytics] WebSocket connected');
         isConnectingRef.current = false;
         setIsConnected(true);
         setError(null);
@@ -200,15 +206,18 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
             }
           }
         } catch (err) {
+          console.error('[ZoneAnalytics] Failed to parse WebSocket message:', err);
         }
       };
 
       ws.onerror = (err) => {
+        console.error('[ZoneAnalytics] WebSocket error:', err);
         isConnectingRef.current = false;
         setError('WebSocket connection error');
       };
 
       ws.onclose = () => {
+        console.log('[ZoneAnalytics] WebSocket disconnected');
         isConnectingRef.current = false;
         setIsConnected(false);
         wsRef.current = null;
@@ -218,6 +227,7 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
           reconnectTimeoutRef.current = setTimeout(() => {
             // ONLY reconnect if we are still on the SAME station
             if (isMountedRef.current && stationIdRef.current === currentStationId) {
+              console.log('[ZoneAnalytics] Attempting to reconnect...');
               connectWebSocket();
             }
           }, 3000);
@@ -226,6 +236,7 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
 
       wsRef.current = ws;
     } catch (err) {
+      console.error('[ZoneAnalytics] Failed to create WebSocket:', err);
       isConnectingRef.current = false;
       setError('Failed to connect to WebSocket');
     }
@@ -288,22 +299,25 @@ export function useZoneAnalytics(options: UseZoneAnalyticsOptions = {}): UseZone
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId, enableWebSocket, pollInterval]);
 
-  // Reconcile against shared REST analytics even while the WebSocket is connected.
+  // Fallback polling when WebSocket is not connected
   useEffect(() => {
-    if (!enableWebSocket) {
-      return;
+    if (!isConnected && enableWebSocket) {
+      // Start polling as fallback
+      const intervalId = setInterval(fetchAnalytics, pollInterval);
+      pollIntervalRef.current = intervalId;
+    } else if (pollIntervalRef.current && isConnected) {
+      // Stop polling when WebSocket is connected
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
     }
 
-    const intervalId = setInterval(fetchAnalytics, pollInterval);
-    pollIntervalRef.current = intervalId;
-
     return () => {
-      clearInterval(intervalId);
-      if (pollIntervalRef.current === intervalId) {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
     };
-  }, [enableWebSocket, pollInterval, fetchAnalytics]);
+  }, [isConnected, enableWebSocket, pollInterval, updateZones]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

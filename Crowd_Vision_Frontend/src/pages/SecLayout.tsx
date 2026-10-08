@@ -9,62 +9,75 @@ import SecLayoutLiveSvgRaw from '@/assets/sec-layout-1-2-layout.svg?raw';
 import { useZoneAnalytics } from '@/hooks/useZoneAnalytics';
 import { CameraAnalytics, RiskLevel, ZoneAnalytics } from '@/types/zone';
 import { getDensityLevel, getMotionLevel, getRiskLevel } from '@/lib/metrics';
-import { CAMERAS, LIVE_CAMERA_IDS as ALL_REGISTERED_IDS, CAMERA_TITLES as ALL_REGISTERED_TITLES } from '@/data/cameras';
 
-const LIVE_CAMERA_IDS = Array.from(
-  new Set([
-    ...ALL_REGISTERED_IDS,
-    'cam_hyb_pf1',
-    'cam_hyb_pf2',
-    'cam_hyb_pf4',
-    'cam_hyb_pf6',
-    'cam_middle_fob_4_5',
-    'cam_hyb_pf8',
-    'cam_hyb_pf10',
-    'cam_pf1_fob_kzj',
-    'cam_pf1_fob_pf10',
-    'cam_hyb_pf1_a',
-    'cam_pf1_fob_hyb_end',
-    'cam_kzj_pf1_fob_kzj',
-    'cam_kzj_pf1_fob_pf10',
-    'cam_hyb_booking',
-    'cam_hyb_booking_gate4a',
-    'cam_hyb_booking_gate6',
-    'cam_hyb_booking_gate8',
-  ])
-);
+const LIVE_CAMERA_IDS = [
+  'cam_hyb_pf1','cam_hyb_pf2','cam_hyb_pf4','cam_hyb_pf6',
+    'cam_middle_fob_4_5','cam_pf8_mid_fc_kzj','cam_hyb_pf10',
+      'cam_pf1_fob_pf10','cam_hyb_pf1_a','cam_pf1_fob_hyb_end',
+        'cam_kzj_pf1_fob_kzj','cam_kzj_pf1_fob_pf10',
+        'cam_kzj_fob_mid_8_9','cam_kzj_fob_mid_4_5','cam_pf2_fc_hyd_side','cam_pf10_vip_saloon',
+        'cam_new_kzj_fob_near_pf1','cam_new_kzj_fob_fc_pf1',
+        'cam_rethifile_entr','cam_rethifile_bo',
+        'cam_gate2a_fc_parking',
+          'cam_hyb_booking','cam_hyb_booking_gate4a','cam_hyb_booking_gate6','cam_hyb_booking_gate8','cam_pf10_bme_counter',
+          'cam_gate2_wh','cam_gate2_fc_ac_wh','cam_near_gate_2a_fc_swathi_ent','cam_hyd_booking_gate2a',
+          ];
 
-const CAMERA_TITLES: Record<string, string> = {
-  ...ALL_REGISTERED_TITLES,
-  cam_hyb_pf1: 'PF-1 Near KZJ FOB FC Gate 2',
-  cam_hyb_pf2: 'PF 2 KZJ FOB FC RRI',
-  cam_hyb_pf4: 'PF No.4 & 5 Middle PTZ',
-  cam_hyb_pf6: 'PF 6N Near Mid FOB',
-  cam_middle_fob_4_5: 'HYB FOB MIDDLE FC 4&5',
-  cam_hyb_pf8: 'PF 8 Middle FC KZJ',
-  cam_hyb_pf10: 'PF10 (Opp Gate-8) FC KZJ FOB',
-  cam_pf1_fob_kzj: 'HYD FOB FC PF10',
-  cam_pf1_fob_pf10: 'HYD FOB FC PF10',
-  cam_hyb_pf1_a: 'PF1 NEARGATE-4 FC HYB',
-  cam_pf1_fob_hyb_end: 'HYD FOB FC PF1',
-  cam_kzj_pf1_fob_kzj: 'KZJ FOB FC PF10',
-  cam_kzj_pf1_fob_pf10: 'KZJ FOB FC PF1',
-  cam_hyb_booking: 'GATE 2A BOOKING COUNTER',
-  cam_hyb_booking_gate4a: 'GATE 4 BOOKING OFFICE',
-  cam_hyb_booking_gate6: 'GATE-6 BOOKING OFFICE',
-  cam_hyb_booking_gate8: 'GATE 8 OUTSIDE',
-};
+          const CAMERA_TITLES: Record<string,string> = {
+            cam_hyb_pf1:'PF-1 Near KZJ FOB FC Gate 2',
+              cam_hyb_pf2:'PF 2 KZJ FOB FC RRI',
+                cam_hyb_pf4:'PF No.4 & 5 Middle PTZ',
+                  cam_hyb_pf6:'PF 6N Near Mid FOB',
+                    cam_middle_fob_4_5:'HYB FOB MIDDLE FC 4&5',
+                      cam_pf8_mid_fc_kzj:'PF 8 MID FACING KZJ',
+                        cam_hyb_pf10:'PF10 (Opp Gate-8) FC KZJ FOB',
+                            cam_pf1_fob_pf10:'HYD FOB FC PF10',
+                            cam_hyb_pf1_a:'PF1 NEARGATE-4 FC HYB',
+                              cam_pf1_fob_hyb_end:'HYD FOB FC PF1',
+                                cam_kzj_pf1_fob_kzj:'KZJ FOB FC PF10',
+                                  cam_kzj_pf1_fob_pf10:'KZJ FOB FC PF1',
+                                  cam_kzj_fob_mid_8_9:'HYD FOB MID FACING 6&7',
+                                  cam_kzj_fob_mid_4_5:'KZJ FOB MID FACING 4&5',
+                                  
+                                  cam_pf2_fc_hyd_side:'PF 2 FACING HYD SIDE',
+                                  cam_pf10_vip_saloon:'PF10 VIP SALOON SIDING',
+                                  cam_new_kzj_fob_near_pf1:'NEW KZJ FOB NEAR PF 1',
+                                  cam_new_kzj_fob_fc_pf1:'NEW KZJ FOB FACING PF 1',
+                                  cam_rethifile_entr:'RETHIFILE ENTRANCE',
+                                  cam_rethifile_bo:'RETHIFILE BO/BUS STOP',
+                                  cam_gate2a_fc_parking:'GATE 2A FACING CAR PARKING',
+                                    cam_hyb_booking:'GATE 2A BOOKING COUNTER',
+                                      cam_hyb_booking_gate4a:'GATE 4 BOOKING OFFICE',
+                                        cam_hyb_booking_gate6:'GATE-6 BOOKING OFFICE',
+                                        cam_hyb_booking_gate8:'GATE 8 OUTSIDE',
+                                        cam_pf10_bme_counter:'PF-10 WAITING HALL AREA',
+                                        cam_gate2_wh:'GATE 2 WAITING HALL',
+                                        cam_gate2_fc_ac_wh:'GATE 2 FACING AC WAITING HALL',
+                                        cam_near_gate_2a_fc_swathi_ent:'NEAR GATE 2A FACING SWATHI ENT',
+                                        cam_hyd_booking_gate2a:'GATE 2A ENTRANCE',
+                                        };
 
-const CAMERA_ZONES: Record<string, string> = {
-  ...Object.fromEntries(
-    CAMERAS.map((c) => [
-      c.camera_id,
-      c.type === 'FOB' ? 'HYD FOB' : c.type === 'BOOKING' ? 'Booking Office' : 'Platform Zone',
-    ])
-  ),
-  cam_pf1_fob_kzj: 'HYD FOB',
-  cam_pf1_fob_pf10: 'HYD FOB',
-};
+                                        const CAMERA_ZONES: Record<string,string> = {
+                                          cam_hyb_pf1:'Platform Zone',cam_hyb_pf2:'Platform Zone',
+                                            cam_hyb_pf4:'Platform Zone',cam_hyb_pf6:'Platform Zone',
+                                              cam_middle_fob_4_5:'HYD FOB',cam_pf8_mid_fc_kzj:'Platform Zone',
+                                                cam_hyb_pf10:'Platform Zone',
+                                                  cam_pf1_fob_pf10:'HYD FOB',cam_hyb_pf1_a:'HYD FOB',
+                                                    cam_pf1_fob_hyb_end:'HYD FOB',
+                                                      cam_kzj_pf1_fob_kzj:'KZJ FOB',cam_kzj_pf1_fob_pf10:'KZJ FOB',
+                                                      cam_kzj_fob_mid_8_9:'KZJ FOB',cam_kzj_fob_mid_4_5:'KZJ FOB',
+                                                      
+                                                      cam_new_kzj_fob_near_pf1:'KZJ FOB',cam_new_kzj_fob_fc_pf1:'KZJ FOB',
+                                                      cam_pf2_fc_hyd_side:'Platform Zone',cam_pf10_vip_saloon:'Platform Zone',
+                                                      cam_rethifile_entr:'Booking Office',cam_rethifile_bo:'Booking Office',
+                                                      cam_gate2a_fc_parking:'Booking Office',
+                                                        cam_hyb_booking:'Booking Office',cam_hyb_booking_gate4a:'Booking Office',
+                                                          cam_hyb_booking_gate6:'Booking Office',
+                                                          cam_hyb_booking_gate8:'Booking Office',
+                                                          cam_pf10_bme_counter:'Booking Office',
+                                                          cam_gate2_wh:'Booking Office',cam_gate2_fc_ac_wh:'Booking Office',
+                                                          cam_near_gate_2a_fc_swathi_ent:'Booking Office',cam_hyd_booking_gate2a:'Booking Office',
+                                                          };
 
                                                           const RISK = {
                                                             fill:{
@@ -81,7 +94,7 @@ const CAMERA_ZONES: Record<string, string> = {
                                                                                                 MEDIUM:'bg-amber-500/15 text-amber-400 border-amber-500/30',
                                                                                                     HIGH:'bg-orange-500/15 text-orange-400 border-orange-500/30',
                                                                                                         CRITICAL:'bg-red-500/20 text-red-400 border-red-500/40',
-                                                                                                            UNKNOWN:'bg-gray-500/15 text-muted-foreground border-gray-500/30',
+                                                                                                            UNKNOWN:'bg-gray-500/15 text-gray-400 border-gray-500/30',
                                                                                                               } as Record<string,string>,
                                                                                                               };
 
@@ -97,7 +110,7 @@ const CAMERA_ZONES: Record<string, string> = {
                                                                                                                       interface StatCardProps{icon:React.ElementType;label:string;value:string|number;sub?:string;color:string;}
                                                                                                                       function StatCard({icon:Icon,label,value,sub,color}:StatCardProps){
                                                                                                                         return(
-                                                                                                                            <div className="flex flex-col gap-1 p-3 2xl:p-4 rounded-xl bg-background/40 border border-white/[0.08] hover:border-white/[0.14] transition-colors min-w-0">
+                                                                                                                            <div className="flex flex-col gap-1 p-3 2xl:p-4 rounded-xl bg-black/40 border border-white/[0.08] hover:border-white/[0.14] transition-colors min-w-0">
                                                                                                                                   <div className="flex items-center gap-2">
                                                                                                                                           <Icon className={`w-3.5 h-3.5 2xl:w-4 2xl:h-4 shrink-0 ${color}`}/>
                                                                                                                                                   <span className="text-[10px] 2xl:text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">{label}</span>
@@ -137,165 +150,79 @@ const CAMERA_ZONES: Record<string, string> = {
                                                                                                                                                                                                                                                                           return{total,density,critical,high,risk};
                                                                                                                                                                                                                                                                             },[zones]);
 
-  const camMap = useMemo(() => {
-    const m = new Map<string, CameraAnalytics>();
-    zones.forEach((zone: ZoneAnalytics) => {
-      if (!Array.isArray(zone.cameras)) return;
-      (zone.cameras as any[]).forEach((cam) => {
-        if (cam && 'camera_id' in cam) {
-          m.set(cam.camera_id, cam as CameraAnalytics);
-          if (cam.svg_region_id) m.set(cam.svg_region_id, cam as CameraAnalytics);
-          if (cam.camera_id === 'cam_pf1_fob_pf10') {
-            m.set('cam_pf1_fob_kzj', cam as CameraAnalytics);
-          } else if (cam.camera_id === 'cam_pf1_fob_kzj') {
-            m.set('cam_pf1_fob_pf10', cam as CameraAnalytics);
-          }
-        }
-      });
-    });
-    return m;
-  }, [zones]);
+                                                                                                                                                                                                                                                                              const camMap=useMemo(()=>{
+                                                                                                                                                                                                                                                                                  const m=new Map<string,CameraAnalytics>();
+                                                                                                                                                                                                                                                                                      zones.forEach((zone:ZoneAnalytics)=>{
+                                                                                                                                                                                                                                                                                            if(!Array.isArray(zone.cameras))return;
+                                                                                                                                                                                                                                                                                                  (zone.cameras as any[]).forEach((cam)=>{
+                                                                                                                                                                                                                                                                                                          if(cam&&'camera_id' in cam){m.set(cam.camera_id,cam as CameraAnalytics);m.set(cam.svg_region_id,cam as CameraAnalytics);}
+                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                    });
+                                                                                                                                                                                                                                                                                                                        return m;
+                                                                                                                                                                                                                                                                                                                          },[zones]);
 
-  const hoveredCam = useMemo(() => {
-    if (!hoveredId) return undefined;
-    const cam =
-      camMap.get(hoveredId) ||
-      (hoveredId === 'cam_pf1_fob_kzj' ? camMap.get('cam_pf1_fob_pf10') : null) ||
-      (hoveredId === 'cam_pf1_fob_pf10' ? camMap.get('cam_pf1_fob_kzj') : null);
-    return (
-      cam ??
-      ({
-        camera_id: hoveredId,
-        people_count: 0,
-        density_avg: 0,
-        motion_intensity: 0,
-        risk_score: 0,
-      } as CameraAnalytics)
-    );
-  }, [hoveredId, camMap]);
+                                                                                                                                                                                                                                                                                                                            const hoveredCam=useMemo(
+                                                                                                                                                                                                                                                                                                                                ()=>!hoveredId?undefined:camMap.get(hoveredId)??({camera_id:hoveredId,people_count:0,density_avg:0,motion_intensity:0,risk_score:0} as CameraAnalytics),
+                                                                                                                                                                                                                                                                                                                                    [hoveredId,camMap],
+                                                                                                                                                                                                                                                                                                                                      );
 
-  useEffect(() => {
-    if (viewMode !== 'live') return;
-    const svg = liveSvgRef.current;
-    if (!svg) return;
-    svg.querySelector('#camera-labels')?.remove();
-    const ns = 'http://www.w3.org/2000/svg';
+                                                                                                                                                                                                                                                                                                                                        useEffect(()=>{
+                                                                                                                                                                                                                                                                                                                                            if(viewMode!=='live')return;
+                                                                                                                                                                                                                                                                                                                                                const svg=liveSvgRef.current;if(!svg)return;
+                                                                                                                                                                                                                                                                                                                                                    svg.querySelector('#camera-labels')?.remove();
+                                                                                                                                                                                                                                                                                                                                                        const ns='http://www.w3.org/2000/svg';
+                                                                                                                                                                                                                                                                                                                                                            LIVE_CAMERA_IDS.forEach((id)=>{
+                                                                                                                                                                                                                                                                                                                                                                  const el=svg.querySelector(`#${id}`) as SVGRectElement|null;if(!el)return;
+                                                                                                                                                                                                                                                                                                                                                                        const cam=camMap.get(id);
+                                                                                                                                                                                                                                                                                                                                                                              const lvl=(cam?((cam.risk_level as RiskLevel)||getRiskLevel(cam.risk_score||0)):'UNKNOWN') as string;
+                                                                                                                                                                                                                                                                                                                                                                                    el.setAttribute('fill',RISK.fill[lvl]??RISK.fill.UNKNOWN);
+                                                                                                                                                                                                                                                                                                                                                                                          el.setAttribute('stroke',RISK.stroke[lvl]??RISK.stroke.UNKNOWN);
+                                                                                                                                                                                                                                                                                                                                                                                                el.setAttribute('stroke-width',lvl==='CRITICAL'?'3.5':'2');
+                                                                                                                                                                                                                                                                                                                                                                                                      lvl==='CRITICAL'?el.setAttribute('filter','drop-shadow(0 0 6px rgba(239,68,68,0.7))'):el.removeAttribute('filter');
+                                                                                                                                                                                                                                                                                                                                                                                                            const cx=parseFloat(el.getAttribute('x')||'0')+parseFloat(el.getAttribute('width')||'0')/2;
+                                                                                                                                                                                                                                                                                                                                                                                                                  const cy=parseFloat(el.getAttribute('y')||'0')+parseFloat(el.getAttribute('height')||'0')/2;
+                                                                                                                                                                                                                                                                                                                                                                                                                        const count=`${cam?.people_count??0}`;
+                                                                                                                                                                                                                                                                                                                                                                                                                              const iconId=`icon_${id}`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                    if(!svg.querySelector(`#${iconId}`)){
+                                                                                                                                                                                                                                                                                                                                                                                                                                            const g=document.createElementNS(ns,'g');g.setAttribute('id',iconId);g.setAttribute('transform',`translate(${iconTx},${iconTy})`);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    const hd=document.createElementNS(ns,'circle');hd.setAttribute('cx','7');hd.setAttribute('cy','5');hd.setAttribute('r','4');hd.setAttribute('fill','#fff');hd.setAttribute('opacity','0.9');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            const bd=document.createElementNS(ns,'path');bd.setAttribute('d','M3,11 Q3,10 7,10 Q11,10 11,11 L11,16 Q11,17 7,17 Q3,17 3,16 Z');bd.setAttribute('fill','#fff');bd.setAttribute('opacity','0.9');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    g.appendChild(hd);g.appendChild(bd);el.parentElement?.appendChild(g);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                          }else{(svg.querySelector(`#${iconId}`) as SVGElement).setAttribute('transform',`translate(${iconTx},${iconTy})`);}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                const txtId=`count_${id}`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      const existing=svg.querySelector(`#${txtId}`) as SVGTextElement|null;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            if(existing){existing.textContent=count;}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  else{
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          const t=document.createElementNS(ns,'text');t.setAttribute('id',txtId);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  t.setAttribute('x',isNarrow?String(cx):String(cx+6));t.setAttribute('y',isNarrow?String(cy+16):String(cy+4));
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          t.setAttribute('font-family','Outfit,Arial,sans-serif');t.setAttribute('font-size','14');t.setAttribute('font-weight','700');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  t.setAttribute('fill','#fff');t.setAttribute('stroke','#0a0f1a');t.setAttribute('stroke-width','0.8');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          t.setAttribute('paint-order','stroke');t.setAttribute('text-anchor',isNarrow?'middle':'start');t.setAttribute('pointer-events','none');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  t.textContent=count;el.parentElement?.appendChild(t);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            });
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                svg.querySelectorAll('text[id^="count_"]').forEach((t)=>t.setAttribute('font-size','38'));
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  },[viewMode,camMap]);
 
-    LIVE_CAMERA_IDS.forEach((id) => {
-      const el = (svg.querySelector(`#${id}`) ||
-        (id === 'cam_pf1_fob_kzj' ? svg.querySelector('#cam_pf1_fob_pf10') : null) ||
-        (id === 'cam_pf1_fob_pf10' ? svg.querySelector('#cam_pf1_fob_kzj') : null)) as SVGRectElement | null;
-      if (!el) return;
-
-      const cam =
-        camMap.get(id) ||
-        (id === 'cam_pf1_fob_kzj' ? camMap.get('cam_pf1_fob_pf10') : null) ||
-        (id === 'cam_pf1_fob_pf10' ? camMap.get('cam_pf1_fob_kzj') : null);
-
-      const lvl = (cam ? ((cam.risk_level as RiskLevel) || getRiskLevel(cam.risk_score || 0)) : 'UNKNOWN') as string;
-      el.setAttribute('fill', RISK.fill[lvl] ?? RISK.fill.UNKNOWN);
-      el.setAttribute('stroke', RISK.stroke[lvl] ?? RISK.stroke.UNKNOWN);
-      el.setAttribute('stroke-width', lvl === 'CRITICAL' ? '3.5' : '2');
-      if (lvl === 'CRITICAL') {
-        el.setAttribute('filter', 'drop-shadow(0 0 6px rgba(239,68,68,0.7))');
-      } else {
-        el.removeAttribute('filter');
-      }
-
-      const cx = parseFloat(el.getAttribute('x') || '0') + parseFloat(el.getAttribute('width') || '0') / 2;
-      const cy = parseFloat(el.getAttribute('y') || '0') + parseFloat(el.getAttribute('height') || '0') / 2;
-      const isNarrow = parseFloat(el.getAttribute('width') || '0') < 100;
-      const iconTx = isNarrow ? cx - 8 : cx - 18;
-      const iconTy = isNarrow ? cy - 20 : cy - 8;
-      const count = `${cam?.people_count ?? 0}`;
-      const iconId = `icon_${id}`;
-
-      if (!svg.querySelector(`#${iconId}`)) {
-        const g = document.createElementNS(ns, 'g');
-        g.setAttribute('id', iconId);
-        g.setAttribute('transform', `translate(${iconTx},${iconTy})`);
-        const hd = document.createElementNS(ns, 'circle');
-        hd.setAttribute('cx', '7');
-        hd.setAttribute('cy', '5');
-        hd.setAttribute('r', '4');
-        hd.setAttribute('fill', '#fff');
-        hd.setAttribute('opacity', '0.9');
-        const bd = document.createElementNS(ns, 'path');
-        bd.setAttribute('d', 'M3,11 Q3,10 7,10 Q11,10 11,11 L11,16 Q11,17 7,17 Q3,17 3,16 Z');
-        bd.setAttribute('fill', '#fff');
-        bd.setAttribute('opacity', '0.9');
-        g.appendChild(hd);
-        g.appendChild(bd);
-        el.parentElement?.appendChild(g);
-      } else {
-        (svg.querySelector(`#${iconId}`) as SVGElement).setAttribute('transform', `translate(${iconTx},${iconTy})`);
-      }
-
-      const txtId = `count_${id}`;
-      const existing = svg.querySelector(`#${txtId}`) as SVGTextElement | null;
-      if (existing) {
-        existing.textContent = count;
-      } else {
-        const t = document.createElementNS(ns, 'text');
-        t.setAttribute('id', txtId);
-        t.setAttribute('x', isNarrow ? String(cx) : String(cx + 6));
-        t.setAttribute('y', isNarrow ? String(cy + 16) : String(cy + 4));
-        t.setAttribute('font-family', 'Outfit,Arial,sans-serif');
-        t.setAttribute('font-size', '14');
-        t.setAttribute('font-weight', '700');
-        t.setAttribute('fill', '#fff');
-        t.setAttribute('stroke', '#0a0f1a');
-        t.setAttribute('stroke-width', '0.8');
-        t.setAttribute('paint-order', 'stroke');
-        t.setAttribute('text-anchor', isNarrow ? 'middle' : 'start');
-        t.setAttribute('pointer-events', 'none');
-        t.textContent = count;
-        el.parentElement?.appendChild(t);
-      }
-    });
-
-    svg.querySelectorAll('text[id^="count_"]').forEach((t) => t.setAttribute('font-size', '38'));
-  }, [viewMode, camMap]);
-
-  useEffect(() => {
-    if (viewMode !== 'live') return;
-    const svg = liveSvgRef.current;
-    if (!svg) return;
-    const cleanups: Array<() => void> = [];
-
-    LIVE_CAMERA_IDS.forEach((id) => {
-      const el = (svg.querySelector(`#${id}`) ||
-        (id === 'cam_pf1_fob_kzj' ? svg.querySelector('#cam_pf1_fob_pf10') : null) ||
-        (id === 'cam_pf1_fob_pf10' ? svg.querySelector('#cam_pf1_fob_kzj') : null)) as SVGElement | null;
-      if (!el) return;
-
-      el.style.pointerEvents = 'all';
-      el.style.cursor = 'pointer';
-
-      const onEnter = () => {
-        setHoveredId(id);
-        const r = el.getBoundingClientRect();
-        const cr = svg.getBoundingClientRect();
-        const W = 268;
-        const left = r.right - cr.left + 12 + W > cr.width ? r.left - cr.left - W - 12 : r.right - cr.left + 12;
-        setTipPos({ left, top: Math.max(0, r.top - cr.top) });
-      };
-
-      const onLeave = () => {
-        setHoveredId(null);
-        setTipPos(null);
-      };
-
-      el.addEventListener('mouseenter', onEnter);
-      el.addEventListener('mouseleave', onLeave);
-      cleanups.push(() => {
-        el.removeEventListener('mouseenter', onEnter);
-        el.removeEventListener('mouseleave', onLeave);
-      });
-    });
-
-    return () => cleanups.forEach((f) => f());
-  }, [viewMode]);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    useEffect(()=>{
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if(viewMode!=='live')return;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            const svg=liveSvgRef.current;if(!svg)return;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                const cleanups:Array<()=>void>=[];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    LIVE_CAMERA_IDS.forEach((id)=>{
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          const el=svg.querySelector(`#${id}`) as SVGElement|null;if(!el)return;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                el.style.pointerEvents='all';el.style.cursor='pointer';
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      const onEnter=()=>{
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              setHoveredId(id);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      const r=el.getBoundingClientRect();const cr=svg.getBoundingClientRect();const W=268;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              const left=r.right-cr.left+12+W>cr.width?r.left-cr.left-W-12:r.right-cr.left+12;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      setTipPos({left,top:Math.max(0,r.top-cr.top)});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            };
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  const onLeave=()=>{setHoveredId(null);setTipPos(null);};
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        el.addEventListener('mouseenter',onEnter);el.addEventListener('mouseleave',onLeave);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              cleanups.push(()=>{el.removeEventListener('mouseenter',onEnter);el.removeEventListener('mouseleave',onLeave);});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  });
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      return()=>cleanups.forEach((f)=>f());
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        },[viewMode]);
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           const activeSvg=viewMode==='withoutFobs'?SecLayoutNoFobSvg:viewMode==='live'?SecLayoutLiveCleanSvg:viewMode==='layout'?SecLayoutLayoutSvg:SecLayoutSvg;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             const activeMode=VIEW_MODES.find((m)=>m.id===viewMode)!;
@@ -320,7 +247,7 @@ const CAMERA_ZONES: Record<string, string> = {
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   </div>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             </div>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <div className="flex items-center gap-2 shrink-0">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isConnected?'bg-emerald-500/10 text-emerald-400 border-emerald-500/30':'bg-gray-500/10 text-muted-foreground border-gray-500/30'}`}>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isConnected?'bg-emerald-500/10 text-emerald-400 border-emerald-500/30':'bg-gray-500/10 text-gray-400 border-gray-500/30'}`}>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <span className={`w-2 h-2 rounded-full ${isConnected?'bg-emerald-400 animate-pulse':'bg-gray-500'}`}/>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               {isConnected?'Live Feed Active':'Connecting...'}
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           </span>
@@ -335,12 +262,12 @@ const CAMERA_ZONES: Record<string, string> = {
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <StatCard icon={Zap} label="Station Risk Level" value={stats.risk} sub={`${LIVE_CAMERA_IDS.length} cameras monitored`} color={riskColor(stats.risk)}/>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 </div>
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div className="flex flex-col rounded-2xl border border-border/50 overflow-hidden bg-background/30 backdrop-blur-sm">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 2xl:px-6 2xl:py-4 border-b border-border/50 bg-background/20">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <div className="flex items-center gap-1 bg-background/30 rounded-xl p-1 border border-border/40">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div className="flex flex-col rounded-2xl border border-border/50 overflow-hidden bg-black/30 backdrop-blur-sm">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 2xl:px-6 2xl:py-4 border-b border-border/50 bg-black/20">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <div className="flex items-center gap-1 bg-black/30 rounded-xl p-1 border border-border/40">
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             {VIEW_MODES.map(({id,label,icon:Icon,desc})=>(
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <button key={id} onClick={()=>setViewMode(id)} title={desc}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              className={`flex items-center gap-1.5 px-3 py-1.5 2xl:px-4 2xl:py-2 rounded-lg text-xs 2xl:text-sm font-semibold transition-all duration-200 ${viewMode===id?'bg-primary text-primary-foreground shadow-md shadow-primary/20':'text-muted-foreground hover:text-foreground hover:bg-card/5'}`}>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              className={`flex items-center gap-1.5 px-3 py-1.5 2xl:px-4 2xl:py-2 rounded-lg text-xs 2xl:text-sm font-semibold transition-all duration-200 ${viewMode===id?'bg-primary text-primary-foreground shadow-md shadow-primary/20':'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <Icon className="w-3.5 h-3.5 shrink-0"/>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <span className="hidden sm:inline">{label}</span>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   </button>

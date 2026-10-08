@@ -92,6 +92,7 @@ export function ActiveRiskPanel({
                   riskBgColors[zone.risk_level],
                   zone.risk_level === "CRITICAL" && "border-risk-critical/40",
                   zone.risk_level === "HIGH" && "border-risk-high/30",
+                  zone.risk_level === "MEDIUM" && "border-risk-medium/30",
                   zone.risk_level === "CRITICAL" && "animate-pulse"
                 )}
               >

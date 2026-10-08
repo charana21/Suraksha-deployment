@@ -14,6 +14,25 @@ from services.island_platform_service import island_platform_service
 from utils.logging_config import get_logger
 logger = get_logger(__name__)
 
+# Filter for the list/live queries: only requires every contributing train
+# to have an assigned platform; arrival/departure times may still be pending.
+PLATFORM_ASSIGNED_FILTER = {
+    "$not": {
+        "$elemMatch": {"platform": {"$exists": False}}
+    }
+}
+
+# Filter for WhatsApp: every contributing train must have either a live
+# `platform` or a non-empty `expected_platforms` list (historical prediction).
+PLATFORM_OR_EXPECTED_FILTER = {
+    "$not": {
+        "$elemMatch": {
+            "platform": {"$in": [None, ""]},
+            "expected_platforms.0": {"$exists": False}
+        }
+    }
+}
+
 
 class IslandAlertService:
     """Service for managing island platform footfall alerts."""
@@ -457,22 +476,9 @@ class IslandAlertService:
         # Build query
         query = {}
 
-        # Only show alerts where every contributing train has been fully
-        # confirmed (arrival time, departure time, and an assigned platform).
-        # Alerts still relying on a predicted/pending platform are excluded.
-        query["contributing_trains"] = {
-            "$not": {
-                "$elemMatch": {
-                    "$or": [
-                        {"arrival_time": None},
-                        {"arrival_time": {"$exists": False}},
-                        {"departure_time": None},
-                        {"departure_time": {"$exists": False}},
-                        {"platform": {"$exists": False}}
-                    ]
-                }
-            }
-        }
+        # Only show alerts where every contributing train has an assigned
+        # platform. Arrival/departure times may still be pending.
+        query["contributing_trains"] = PLATFORM_ASSIGNED_FILTER
 
         if island_id:
             query["island_id"] = island_id
@@ -513,6 +519,21 @@ class IslandAlertService:
             "offset": offset,
             "alerts": alerts
         }
+
+    @classmethod
+    async def get_latest_alerts(cls, limit: int = 10) -> list:
+        """
+        Get the most recently created alerts (no filters applied).
+
+        Args:
+            limit: Number of alerts to return (default 10)
+
+        Returns:
+            list: Alert documents, newest first by created_at
+        """
+        return await MongoDB.database[cls.COLLECTION_NAME].find({}).sort(
+            "created_at", -1
+        ).limit(limit).to_list(length=limit)
 
     @classmethod
     async def get_daily_summary(cls, target_date: date) -> Dict:
@@ -627,21 +648,9 @@ class IslandAlertService:
             "window_start": {"$gte": lookback, "$lte": future},  # Within time range
             "window_end": {"$gte": now},  # Alert hasn't ended yet
             "status": {"$in": ["triggered", "acknowledged"]},
-            # Only fully confirmed trains (arrival, departure, and an
-            # assigned platform) - exclude alerts still showing "Pending"
-            "contributing_trains": {
-                "$not": {
-                    "$elemMatch": {
-                        "$or": [
-                            {"arrival_time": None},
-                            {"arrival_time": {"$exists": False}},
-                            {"departure_time": None},
-                            {"departure_time": {"$exists": False}},
-                            {"platform": {"$exists": False}}
-                        ]
-                    }
-                }
-            }
+            # Only trains with an assigned platform; arrival/departure
+            # times may still be pending
+            "contributing_trains": PLATFORM_ASSIGNED_FILTER
         }).sort("window_start", 1).to_list(length=50)
 
         return {
@@ -651,6 +660,49 @@ class IslandAlertService:
             "count": len(alerts),
             "alerts": alerts
         }
+
+
+    @classmethod
+    async def get_pending_whatsapp_alerts(cls, now_ist: datetime, lookahead_minutes: int) -> list:
+        """
+        Get active alerts that haven't been sent via WhatsApp yet.
+
+        Picks alerts whose window hasn't ended and starts within the next
+        `lookahead_minutes`, oldest window first.
+
+        Args:
+            now_ist: Current IST time (naive, same wall-clock basis as window_start)
+            lookahead_minutes: How far ahead of window_start to notify
+
+        Returns:
+            list: Alert documents
+        """
+        return await MongoDB.database[cls.COLLECTION_NAME].find({
+            "window_start": {"$lte": now_ist + timedelta(minutes=lookahead_minutes)},
+            "window_end": {"$gte": now_ist},
+            "status": "triggered",
+            "whatsapp_sent": {"$ne": True},
+            # Every train needs a live platform or expected platforms;
+            # arrival/departure times may still be pending
+            "contributing_trains": PLATFORM_OR_EXPECTED_FILTER
+        }).sort("window_start", 1).to_list(length=50)
+
+    @classmethod
+    async def claim_whatsapp_send(cls, alert_id: str) -> bool:
+        """
+        Atomically flag an alert as sent via WhatsApp before dispatching it.
+
+        Returns True only for the caller that flipped the flag, so overlapping
+        cycles or multiple worker processes can never send the same alert twice.
+        """
+        result = await MongoDB.database[cls.COLLECTION_NAME].update_one(
+            {"alert_id": alert_id, "whatsapp_sent": {"$ne": True}},
+            {"$set": {
+                "whatsapp_sent": True,
+                "whatsapp_sent_at": datetime.now(UTC) + timedelta(hours=5, minutes=30)  # IST
+            }}
+        )
+        return result.modified_count == 1
 
 
 # Singleton instance

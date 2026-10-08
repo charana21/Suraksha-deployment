@@ -155,6 +155,7 @@ class WebSocketManager {
 
   private connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) {
+      console.log('[WebSocket] Already connected or connecting');
       return;
     }
 
@@ -167,9 +168,11 @@ class WebSocketManager {
       : `${WS_BASE_URL}/api/ws/analytics`;
 
     try {
+      console.log(`[WebSocket] Connecting to ${url}`);
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
+        console.log('[WebSocket] Connected');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.notifyConnection(true);
@@ -177,22 +180,29 @@ class WebSocketManager {
 
       this.ws.onmessage = (event) => {
         try {
+          console.log('[WebSocket] Raw message:', event.data.substring(0, 150) + '...');
           const message: WebSocketMessage = JSON.parse(event.data);
+          // console.log('[WebSocket] Parsed:', message.type, 'camera:', (message as any).camera_id); // Fixed access
+          console.log('[WebSocket] Parsed:', message.type);
           this.messageHandlers.forEach(handler => {
             try {
               handler(message);
             } catch (e) {
+              console.error('[WebSocket] Handler error:', e);
             }
           });
         } catch (error) {
+          console.error('[WebSocket] Failed to parse message:', error);
         }
       };
 
       this.ws.onerror = (error) => {
+        console.error('[WebSocket] Error:', error);
         this.isConnecting = false;
       };
 
       this.ws.onclose = (event) => {
+        console.log('[WebSocket] Disconnected, code:', event.code, 'reason:', event.reason);
         this.isConnecting = false;
         this.notifyConnection(false);
 
@@ -202,6 +212,7 @@ class WebSocketManager {
         }
       };
     } catch (error) {
+      console.error('[WebSocket] Connection failed:', error);
       this.isConnecting = false;
       this.attemptReconnect();
     }
@@ -214,6 +225,7 @@ class WebSocketManager {
     }
 
     if (this.ws) {
+      console.log('[WebSocket] Disconnecting');
       this.ws.close();
       this.ws = null;
     }
@@ -224,6 +236,7 @@ class WebSocketManager {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('[WebSocket] Max reconnection attempts reached');
       return;
     }
 
@@ -237,6 +250,10 @@ class WebSocketManager {
       30000
     );
 
+    console.log(
+      `[WebSocket] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+    );
+
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectTimeout = null;
       this.connect();
@@ -248,6 +265,7 @@ class WebSocketManager {
       try {
         handler(connected);
       } catch (e) {
+        console.error('[WebSocket] Connection handler error:', e);
       }
     });
   }

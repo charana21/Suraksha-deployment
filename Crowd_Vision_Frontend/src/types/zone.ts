@@ -70,7 +70,7 @@ export interface ZonesListResponse {
 
 export const RISK_COLORS: Record<RiskLevel | 'UNKNOWN', string> = {
   LOW: '#22c55e',      // Green - Safe
-  MEDIUM: '#f97316',   // Orange - Caution
+  MEDIUM: '#eab308',   // Orange - Caution
   HIGH: '#ef4444',     // Red - Danger
   CRITICAL: '#dc2626', // Dark Red - Emergency
   UNKNOWN: '#6b7280',  // Gray - No data

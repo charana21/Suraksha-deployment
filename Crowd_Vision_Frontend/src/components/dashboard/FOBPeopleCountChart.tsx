@@ -140,6 +140,7 @@ export function FOBPeopleCountChart({
       }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(simplePoints));
     } catch (e) {
+      console.warn("Failed to save chart data", e);
     }
   };
 
@@ -156,6 +157,7 @@ export function FOBPeopleCountChart({
         isSimulated: false
       }));
     } catch (e) {
+      console.warn("Failed to load chart data", e);
       return [];
     }
   };
@@ -216,6 +218,7 @@ export function FOBPeopleCountChart({
             localData = mappedPoints;
           }
         } catch (err) {
+          console.error("Failed to fetch graph history", err);
         } finally {
           if (isMounted) setIsLoading(false);
         }
@@ -286,6 +289,7 @@ export function FOBPeopleCountChart({
             setData(mappedPoints);
           }
         } catch (err) {
+          console.error("Failed to fetch graph history", err);
         } finally {
           if (isMounted) setIsLoading(false);
         }
@@ -330,6 +334,7 @@ export function FOBPeopleCountChart({
             setDailyStats({ avg, peak, peakTime });
           }
         } catch (e) {
+          console.error("Failed to fetch 24h stats", e);
         }
       };
 
@@ -388,6 +393,7 @@ export function FOBPeopleCountChart({
         peakTime: parsed.peakTime ? new Date(parsed.peakTime) : null
       };
     } catch (e) {
+      console.warn("Failed to load daily stats", e);
       return null;
     }
   };
@@ -402,6 +408,7 @@ export function FOBPeopleCountChart({
       };
       localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(payload));
     } catch (e) {
+      console.warn("Failed to save daily stats", e);
     }
   };
 

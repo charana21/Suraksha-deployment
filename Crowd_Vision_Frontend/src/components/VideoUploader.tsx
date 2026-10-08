@@ -169,7 +169,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
             </div>
             {uploadState.error?.includes('backend') && (
               <p className="text-xs text-muted-foreground text-center">
-                Make sure the Python backend is available at localhost:3006 or configure VITE_API_URL
+                Make sure the Python backend is running at localhost:8000 or configure VITE_API_URL
               </p>
             )}
           </div>

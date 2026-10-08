@@ -25,6 +25,6 @@ data:
   ANALYTICS_DIR: "data/analytics"
   IMAGES_DIR: "data/images"
   SAVE_HEATMAPS: "false"
-  MONGODB_DATABASE: "crowdvision_test"
+  MONGODB_DATABASE: "crowdvision_prod"
   auth_enabled: "false"
   EXTRA_ALLOWED_ORIGINS: ""

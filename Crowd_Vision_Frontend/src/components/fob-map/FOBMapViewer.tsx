@@ -17,7 +17,7 @@ const VB_W = 1600;
 const VB_H = 600;
 
 const CAMERA_BOXES = [
-  { id: 'cam_pf1_fob_kzj', label: 'HYB FOB', x: 180, y: 80, w: 260, h: 140 },
+  { id: 'cam_pf1_fob_pf10', label: 'HYB FOB', x: 180, y: 80, w: 260, h: 140 },
   { id: 'cam_middle_fob_4_5', label: 'MIDDLE FOB', x: 670, y: 80, w: 260, h: 140 },
   { id: 'cam_kzj_pf1_fob_kzj', label: 'KZJ FOB', x: 1160, y: 80, w: 260, h: 140 },
 
@@ -28,8 +28,8 @@ const CAMERA_BOXES = [
   { id: 'cam_hyb_pf5', label: 'PF 5', x: 1080, y: 280, w: 200, h: 70 },
 
   { id: 'cam_hyb_pf6', label: 'PF 6', x: 120, y: 410, w: 200, h: 70 },
-  { id: 'cam_pf7_hyd_end', label: 'PF 7', x: 360, y: 410, w: 200, h: 70 },
-  { id: 'cam_hyb_pf8', label: 'PF 8', x: 600, y: 410, w: 200, h: 70 },
+  { id: 'cam_middle_fob_4_5', label: 'PF 7', x: 360, y: 410, w: 200, h: 70 },
+  { id: 'cam_pf8_mid_fc_kzj', label: 'PF 8', x: 600, y: 410, w: 200, h: 70 },
   { id: 'cam_hyb_pf9', label: 'PF 9', x: 840, y: 410, w: 200, h: 70 },
   { id: 'cam_hyb_pf10', label: 'PF 10', x: 1080, y: 410, w: 200, h: 70 },
 
@@ -100,23 +100,14 @@ export function FOBMapViewer({
       zone.cameras.forEach((cam) => {
         if (cam && typeof cam === 'object' && 'camera_id' in cam) {
           map.set(cam.camera_id, cam as CameraAnalytics);
-          if (cam.svg_region_id) map.set(cam.svg_region_id, cam as CameraAnalytics);
-          if (cam.camera_id === 'cam_pf1_fob_pf10') {
-            map.set('cam_pf1_fob_kzj', cam as CameraAnalytics);
-          } else if (cam.camera_id === 'cam_pf1_fob_kzj') {
-            map.set('cam_pf1_fob_pf10', cam as CameraAnalytics);
-          }
+          map.set(cam.svg_region_id, cam as CameraAnalytics);
         }
       });
     });
     return map;
   }, [zones]);
 
-  const hoveredCamera = hoveredCameraId
-    ? cameraById.get(hoveredCameraId) ||
-      (hoveredCameraId === 'cam_pf1_fob_kzj' ? cameraById.get('cam_pf1_fob_pf10') : undefined) ||
-      (hoveredCameraId === 'cam_pf1_fob_pf10' ? cameraById.get('cam_pf1_fob_kzj') : undefined)
-    : undefined;
+  const hoveredCamera = hoveredCameraId ? cameraById.get(hoveredCameraId) : undefined;
 
   const svgPx = useCallback(
     (svgX: number, svgY: number) => {
@@ -146,7 +137,7 @@ export function FOBMapViewer({
     >
       <div className="flex flex-col sm:flex-row justify-center items-center mb-4 sm:mb-6 md:mb-8 relative w-full max-w-[1600px] gap-3 sm:gap-0">
         <h2
-          className="text-sm sm:text-base md:text-lg font-black text-center text-foreground/40 tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.25em] uppercase"
+          className="text-sm sm:text-base md:text-lg font-black text-center text-white/40 tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.25em] uppercase"
           style={{ fontFamily: "'Outfit', sans-serif" }}
         >
           {title || 'FOB LIVE VIEW'}
@@ -208,7 +199,7 @@ export function FOBMapViewer({
 
             {hoveredCamera && tooltipPos && (
               <div
-                className="absolute z-30 w-56 rounded-xl border border-border/70 bg-[#121620]/95 text-foreground shadow-2xl p-3 pointer-events-none"
+                className="absolute z-30 w-56 rounded-xl border border-border/70 bg-[#121620]/95 text-white shadow-2xl p-3 pointer-events-none"
                 style={{ left: tooltipPos.left, top: tooltipPos.top }}
               >
                 <p className="text-xs font-semibold tracking-wide">
@@ -216,23 +207,23 @@ export function FOBMapViewer({
                 </p>
                 <div className="mt-2 space-y-1.5 text-[11px]">
                   <div className="flex items-center justify-between">
-                    <span className="text-foreground/70">Count</span>
+                    <span className="text-white/70">Count</span>
                     <span className="font-semibold">{hoveredCamera.people_count ?? 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-foreground/70">Density</span>
+                    <span className="text-white/70">Density</span>
                     <span className="font-semibold">
                       {getDensityLevel(hoveredCamera.density_avg || 0)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-foreground/70">Motion</span>
+                    <span className="text-white/70">Motion</span>
                     <span className="font-semibold">
                       {getMotionLevel(hoveredCamera.motion_intensity || 0)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-foreground/70">Risk</span>
+                    <span className="text-white/70">Risk</span>
                     <span className="font-semibold">
                       {getRiskLevel(hoveredCamera.risk_score || 0)}
                     </span>

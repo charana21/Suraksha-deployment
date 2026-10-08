@@ -109,6 +109,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
           }));
         }
       } catch (apiError) {
+        console.warn("Backend alerts unavailable, using local storage.", apiError);
       }
 
       // 3. API Only (No Local Storage)
@@ -121,6 +122,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
       setAlerts(sliced);
       cacheAlerts(sliced);
     } catch (error) {
+      console.error("Failed to fetch alerts:", error);
     } finally {
       setIsLoading(false);
     }
@@ -219,6 +221,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
       localStorage.setItem('crowd_vision_acked_ids', JSON.stringify([...localAckSet]));
 
     } catch (error) {
+      console.error("Failed to acknowledge alert:", error);
     }
   }, []);
 
@@ -236,7 +239,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
 
       // Check per-zone
       stats.zones.forEach((zone) => {
-        if (zone.riskLevel === 'CRITICAL' || zone.riskLevel === 'HIGH') {
+        if (zone.riskLevel === 'CRITICAL' || zone.riskLevel === 'HIGH' || zone.riskLevel === 'MEDIUM') {
           newAlerts.push({
             cameraId: stats.cameraId,
             cameraName,

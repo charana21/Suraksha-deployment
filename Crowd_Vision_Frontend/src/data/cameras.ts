@@ -131,7 +131,9 @@ export const CAMERAS: CameraDefinition[] = [
   { camera_id: 'cam_gate8_parking_entr', name: 'GATE 8 PARKING ENTRANCE', zone_id: 'zone_hyd_pf10', type: 'PLATFORM',cam_type:'dome',direction:'down' },
   { camera_id: 'cam_pf5_hyd_end', name: 'PF 5 HYB END', zone_id: 'zone_hyd_pf5', type: 'PLATFORM',cam_type:'static',direction:'left' },
   { camera_id: 'cam_pf1_near_gate4_fc_kzj', name: 'PF 1 NEAR GATE 4 FACING KZJ', zone_id: 'zone_hyd_pf1', type: 'PLATFORM',cam_type:'static',direction:'left' },
-  { camera_id: 'cam_pf_6_7_mmts_fc_hyd', name: 'PF 6&7 MMTS BOOKING FACING HYB', zone_id: 'zone_hyd_pf6', type: 'PLATFORM',cam_type:'static',direction:'left' },
+  { camera_id: 'cam_new_kzj_fob_fc_pf1', name: 'NEW KZJ FOB FACING PF 1', zone_id: 'zone_kzj_fob', type: 'FOB', cam_type: 'static', direction: 'down' },
+  { camera_id: 'cam_new_kzj_fob_near_pf1', name: 'NEW KZJ FOB NEAR PF 4&5', zone_id: 'zone_kzj_fob', type: 'FOB', cam_type: 'static', direction: 'down' },
+  { camera_id: 'cam_pf10_bme_counter', name: 'PF-10 WAITING HALL AREA', zone_id: 'zone_pf10_waiting_hall', type: 'PLATFORM', cam_type: 'static', direction: 'left' },
   // { camera_id: 'cam_hyd_fob_mid_fc_6_7', name: 'HYB FOB MIDDLE FACING 6&7', zone_id: 'zone_hyd_pf7', type: 'PLATFORM',cam_type:'' },
 ];
 

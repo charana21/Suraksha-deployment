@@ -332,7 +332,7 @@ export function FOBMapViewer({ zones = [], selectedZoneId = null, onZoneSelect =
   return (
     <div className={cn('relative w-full bg-[#0B0F1A] p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl border border-white/[0.03] flex flex-col items-center', className)}>
       <div className="flex flex-col sm:flex-row justify-center items-center mb-4 sm:mb-6 md:mb-8 relative w-full max-w-[1600px] gap-3 sm:gap-0">
-        <h2 className="text-sm sm:text-base md:text-lg font-black text-center text-foreground/40 tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.25em] uppercase" style={{ fontFamily: "'Outfit', sans-serif" }}>
+        <h2 className="text-sm sm:text-base md:text-lg font-black text-center text-white/40 tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.25em] uppercase" style={{ fontFamily: "'Outfit', sans-serif" }}>
           {isKzj ? 'KAZIPET FOB VIEW' : (title || 'HYDERABAD FOB VIEW')}
         </h2>
       </div>
@@ -408,24 +408,24 @@ export function FOBMapViewer({ zones = [], selectedZoneId = null, onZoneSelect =
                         </div>
                       )}
 
-                      <p className="text-center text-[9px] font-bold text-foreground uppercase tracking-wider mb-3" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                      <p className="text-center text-[9px] font-bold text-white uppercase tracking-wider mb-3" style={{ fontFamily: "'Outfit', sans-serif" }}>
                         {card.label}
                       </p>
                       <div className={cn("grid grid-cols-2 gap-y-3 gap-x-2 items-center", isOffline && "opacity-50 grayscale")}>
                         <div className="text-center">
-                          <p className="text-[9px] text-foreground/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Count</p>
-                          <p className="text-xl font-black text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>{zone?.people_count || 0}</p>
+                          <p className="text-[9px] text-white/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Count</p>
+                          <p className="text-xl font-black text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>{zone?.people_count || 0}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-[9px] text-foreground/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Risk</p>
+                          <p className="text-[9px] text-white/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Risk</p>
                           <p className="text-xl font-black" style={{ color, fontFamily: "'Outfit', sans-serif" }}>{zone?.risk_score ? `${Math.round(zone.risk_score)}% ` : '0%'}</p>
                         </div>
                         <div className="text-center border-t border-white/5 pt-1.5">
-                          <p className="text-[9px] text-foreground/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Density</p>
+                          <p className="text-[9px] text-white/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Density</p>
                           <p className="text-xs font-black uppercase tracking-wider" style={{ color: densityColor, fontFamily: "'Outfit', sans-serif" }}>{densityLevel}</p>
                         </div>
                         <div className="text-center border-t border-white/5 pt-1.5">
-                          <p className="text-[9px] text-foreground/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Motion</p>
+                          <p className="text-[9px] text-white/30 uppercase font-bold mb-0.5" style={{ fontFamily: "'Outfit', sans-serif" }}>Motion</p>
                           <p className="text-xs font-black uppercase tracking-wider text-blue-400" style={{ fontFamily: "'Outfit', sans-serif" }}>{motionLevel}</p>
                         </div>
                       </div>
@@ -525,23 +525,23 @@ export function FOBMapViewer({ zones = [], selectedZoneId = null, onZoneSelect =
                           <div className={cn("grid grid-cols-2 gap-x-1 sm:gap-x-2 md:gap-x-3 gap-y-1 sm:gap-y-1.5 md:gap-y-2", isOffline && "opacity-50 grayscale")}>
                             {/* Row 1: Count & Risk */}
                             <div className="flex flex-col items-center justify-center">
-                              <span className="text-[10px] sm:text-[10px] md:text-[10px] font-bold text-foreground/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Count</span>
-                              <span className="text-lg sm:text-lg md:text-xl lg:text-lg xl:text-xl 2xl:text-2xl font-black text-foreground leading-none" style={{ fontFamily: "'Outfit', sans-serif" }}>{zone?.people_count || 0}</span>
+                              <span className="text-[10px] sm:text-[10px] md:text-[10px] font-bold text-white/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Count</span>
+                              <span className="text-lg sm:text-lg md:text-xl lg:text-lg xl:text-xl 2xl:text-2xl font-black text-white leading-none" style={{ fontFamily: "'Outfit', sans-serif" }}>{zone?.people_count || 0}</span>
                             </div>
                             <div className="flex flex-col items-center justify-center border-l border-white/10">
-                              <span className="text-[10px] sm:text-[10px] md:text-[10px] font-bold text-foreground/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Est. Risk</span>
+                              <span className="text-[10px] sm:text-[10px] md:text-[10px] font-bold text-white/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Est. Risk</span>
                               <span className="text-lg sm:text-lg md:text-xl lg:text-lg xl:text-xl 2xl:text-2xl font-black leading-none" style={{ color, fontFamily: "'Outfit', sans-serif" }}>{zone?.risk_score ? `${Math.round(zone.risk_score)}% ` : '0%'}</span>
                             </div>
 
                             {/* Row 2: Density & Motion */}
                             <div className="flex flex-col items-center justify-center border-t border-white/10 pt-0.5 sm:pt-1">
-                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold text-foreground/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Density</span>
+                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold text-white/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Density</span>
                               <span className="text-[9px] sm:text-[10px] md:text-xs font-black leading-none uppercase whitespace-nowrap" style={{ color: densityColor, fontFamily: "'Outfit', sans-serif" }}>
                                 {densityLevel}
                               </span>
                             </div>
                             <div className="flex flex-col items-center justify-center border-t border-l border-white/10 pt-0.5 sm:pt-1">
-                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold text-foreground/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Motion</span>
+                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-bold text-white/50 uppercase leading-none mb-0.5 sm:mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Motion</span>
                               <span className="text-[9px] sm:text-[10px] md:text-xs font-black leading-none uppercase whitespace-nowrap text-blue-400" style={{ fontFamily: "'Outfit', sans-serif" }}>
                                 {motionLevel}
                               </span>

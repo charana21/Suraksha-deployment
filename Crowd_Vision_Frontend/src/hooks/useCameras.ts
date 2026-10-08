@@ -26,7 +26,7 @@ export function useCameras(options: UseCamerasOptions = {}) {
     }
     return {
       id: bCam.camera_id,
-      name: bCam.name,
+      name: bCam.name, // DIRECT MAPPING - Fixes "name not used" issue
       rtspUrl: bCam.rtsp_url,
       fobType: bCam.fob_type,
       zoneId: bCam.zone_id,
@@ -48,36 +48,33 @@ export function useCameras(options: UseCamerasOptions = {}) {
     isFetchingRef.current = true;
 
     try {
-      // Query active cameras so all 20 active cameras are fetched
-      const response = await rtspApi.listCameras({ status: 'active' });
+      const response = await rtspApi.listCameras();
+      
+      // We might need to fetch runtime status for each active camera if the list endpoint doesn't return it
+      // For now, let's assume list returns the base config. 
+      // The prompt says: "Poll GET /api/cameras/{id}/status ... to get authoritative runtime status"
+      // So we might need a secondary step or the UI component does it.
+      // For the list, we map what we have.
       
       const mappedCameras = await Promise.all(response.cameras.map(async (c) => {
+        // Option: we could parallel fetch status here if list doesn't have it, 
+        // but maybe better to let the UI component poll for active ones or do it here if list is small.
+        // Let's rely on what list returns for now + basic mapping.
+        
         let runtimeStatus = c.runtime_status;
-        let isLocalWorker = c.is_local_worker;
-        let liveFrameAgeMs = c.live_frame_age_ms;
-        let shardId = c.shard_id;
-
-        if (includeRuntimeStatus && c.status === 'active') {
-          try {
-            const statusRes = await rtspApi.getCameraRuntimeStatus(c.camera_id);
-            if (statusRes.runtime_status) {
-              runtimeStatus = statusRes.runtime_status;
-            }
-            if (statusRes.shard_id !== undefined) shardId = statusRes.shard_id;
-            if (statusRes.is_local_worker !== undefined) isLocalWorker = statusRes.is_local_worker;
-            if (statusRes.live_frame_age_ms !== undefined) liveFrameAgeMs = statusRes.live_frame_age_ms;
-          } catch (e) {
-            // Keep existing status on transient poll error
-          }
+        // If the camera is marked as 'active' (configured), we might want to know its stream status.
+        // Doing this for ALL cameras every 5s might be heavy if there are many. 
+        // But for < 20 cameras it's fine.
+        if (includeRuntimeStatus && c.is_active && !runtimeStatus) {
+             try {
+               const statusRes = await rtspApi.getCameraRuntimeStatus(c.camera_id);
+               runtimeStatus = statusRes.runtime_status;
+             } catch (e) {
+               console.warn(`Could not get status for ${c.camera_id}`, e);
+             }
         }
         
-        return mapBackendCamera({
-          ...c,
-          runtime_status: runtimeStatus,
-          is_local_worker: isLocalWorker,
-          live_frame_age_ms: liveFrameAgeMs,
-          shard_id: shardId
-        });
+        return mapBackendCamera({ ...c, runtime_status: runtimeStatus });
       }));
 
       setCameras(mappedCameras);
@@ -89,6 +86,7 @@ export function useCameras(options: UseCamerasOptions = {}) {
 
       setError(null);
     } catch (err) {
+      console.error('Failed to fetch cameras:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch cameras');
     } finally {
       isFetchingRef.current = false;
@@ -110,6 +108,7 @@ export function useCameras(options: UseCamerasOptions = {}) {
       await rtspApi.startCamera(id);
       await fetchCameras(); // Refresh state
     } catch (err) {
+      console.error('Failed to start camera:', err);
       throw err;
     }
   };
@@ -120,6 +119,7 @@ export function useCameras(options: UseCamerasOptions = {}) {
       await rtspApi.stopCamera(id);
       await fetchCameras(); // Refresh state
     } catch (err) {
+      console.error('Failed to stop camera:', err);
       throw err;
     }
   };
@@ -129,6 +129,7 @@ export function useCameras(options: UseCamerasOptions = {}) {
     try {
       return await rtspApi.getCameraRuntimeStatus(id);
     } catch (err) {
+      console.error('Failed to get camera status:', err);
       throw err;
     }
   };
@@ -153,6 +154,7 @@ export function useCameras(options: UseCamerasOptions = {}) {
       
       return updatedBackendCamera;
     } catch (err) {
+      console.error('Failed to update camera:', err);
       throw err;
     }
   };

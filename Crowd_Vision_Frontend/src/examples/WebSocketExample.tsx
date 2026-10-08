@@ -19,8 +19,10 @@ export function WebSocketExample() {
     cameraId,
     enabled,
     onAnalytics: (id, data) => {
+      console.log(`[Analytics] Camera ${id}:`, data);
     },
     onAlert: (id, alert) => {
+      console.log(`[Alert] Camera ${id}:`, alert);
     },
   });
 
@@ -193,7 +195,7 @@ export function WebSocketExample() {
             <li>
               You should see a WebSocket connection to{' '}
               <code className="bg-muted px-1 py-0.5 rounded">
-                ws://localhost:8000/api/ws/analytics
+                ws://localhost:6006/api/ws/analytics
               </code>
             </li>
             <li>Click the connection to see real-time messages</li>

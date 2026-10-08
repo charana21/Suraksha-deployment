@@ -50,7 +50,7 @@ export const YearCalendarView = ({
                                 ◀ {year - 1}
                             </button> */}
                             <div
-                                className="px-5 py-1.5 rounded-lg text-foreground font-black text-lg"
+                                className="px-5 py-1.5 rounded-lg text-white font-black text-lg"
                                 style={{ backgroundColor: "hsl(var(--navy))" }}
                             >
                                 {year}
@@ -74,10 +74,10 @@ export const YearCalendarView = ({
                             <div className="p-2.5 rounded-xl bg-blue-900/40">
                                 <Users className="w-5 h-5 text-blue-400" />
                             </div>
-                            <span className="text-sm font-semibold text-muted-foreground">Annual Footfall</span>
+                            <span className="text-sm font-semibold text-gray-300">Annual Footfall</span>
                         </div>
-                        <p className="text-2xl font-black text-foreground">{formatFootfall(totalYearFootfall)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Total for {year}</p>
+                        <p className="text-2xl font-black text-white">{formatFootfall(totalYearFootfall)}</p>
+                        <p className="text-xs text-gray-400 mt-1">Total for {year}</p>
                     </div>
 
                     <div className="bg-card border border-gray-800 rounded-2xl p-5 shadow-sm">
@@ -85,10 +85,10 @@ export const YearCalendarView = ({
                             <div className="p-2.5 rounded-xl bg-amber-900/40">
                                 <TrendingUp className="w-5 h-5 text-amber-400" />
                             </div>
-                            <span className="text-sm font-semibold text-muted-foreground">Avg Daily</span>
+                            <span className="text-sm font-semibold text-gray-300">Avg Daily</span>
                         </div>
-                        <p className="text-2xl font-black text-foreground">{formatFootfall(avgDailyYear)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Across all months</p>
+                        <p className="text-2xl font-black text-white">{formatFootfall(avgDailyYear)}</p>
+                        <p className="text-xs text-gray-400 mt-1">Across all months</p>
                     </div>
 
                     <div className="bg-card border border-gray-800 rounded-2xl p-5 shadow-sm">
@@ -96,10 +96,10 @@ export const YearCalendarView = ({
                             <div className="p-2.5 rounded-xl bg-green-900/40">
                                 <ArrowUp className="w-5 h-5 text-green-400" />
                             </div>
-                            <span className="text-sm font-semibold text-muted-foreground">Peak Month</span>
+                            <span className="text-sm font-semibold text-gray-300">Peak Month</span>
                         </div>
-                        <p className="text-2xl font-black text-foreground">{formatFootfall(peakMonth.peakFootfall)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-2xl font-black text-white">{formatFootfall(peakMonth.peakFootfall)}</p>
+                        <p className="text-xs text-gray-400 mt-1">
                             {peakMonth.name.charAt(0) + peakMonth.name.slice(1).toLowerCase()} — Day {peakMonth.peakDay}
                         </p>
                     </div>
@@ -109,10 +109,10 @@ export const YearCalendarView = ({
                             <div className="p-2.5 rounded-xl bg-purple-900/40">
                                 <CalendarDays className="w-5 h-5 text-purple-400" />
                             </div>
-                            <span className="text-sm font-semibold text-muted-foreground">Key Events</span>
+                            <span className="text-sm font-semibold text-gray-300">Key Events</span>
                         </div>
-                        <p className="text-2xl font-black text-foreground">{totalEvents}</p>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <p className="text-2xl font-black text-white">{totalEvents}</p>
+                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                             {googleEventsLoading ? (
                                 <>
                                     <RefreshCw className="w-3 h-3 animate-spin" />
@@ -164,7 +164,7 @@ export const YearCalendarView = ({
                                 avg: "  170K",
                                 peak: "250K (14 Jan)",
                                 specials: 12,
-                                color: "border-gray-800 bg-background",
+                                color: "border-gray-800 bg-black",
                                  accentColor: "#e9a329",
                                
                             },
@@ -175,7 +175,7 @@ export const YearCalendarView = ({
                                 avg: "210K",
                                 peak: "2.10M (15 Feb)",
                                 specials: 98,
-                                color: "border-gray-800 bg-background",
+                                color: "border-gray-800 bg-black",
                                  accentColor: "#7948ea",
                             },
 
@@ -185,12 +185,12 @@ export const YearCalendarView = ({
                                 className={`rounded-2xl border-2 p-5 ${festival.color}`}
                             >
                                 <div className="flex items-center gap-2 mb-2">
-                                    <CalendarDays className="w-4 h-4 text-foreground" />
-                                    <h3 className="font-bold text-foreground" >
+                                    <CalendarDays className="w-4 h-4 text-white" />
+                                    <h3 className="font-bold text-white" >
                                         {festival.name}
                                     </h3>
                                 </div>
-                                <p className="text-xs text-foreground mb-3">Period: <strong className="text-foreground">{festival.period}</strong></p>
+                                <p className="text-xs text-white mb-3">Period: <strong className="text-white">{festival.period}</strong></p>
                                 <div className="card-black-50 rounded-xl p-3 space-y-1.5 mb-3">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-muted-foreground flex items-center gap-1">
@@ -212,7 +212,7 @@ export const YearCalendarView = ({
                                     </div>
                                 </div>
                                 <div
-                                    className="rounded-xl py-3 text-center text-foreground"
+                                    className="rounded-xl py-3 text-center text-white"
                                     style={{ backgroundColor: festival.accentColor }}
                                 >
                                     <p className="text-xs font-semibold opacity-90">Special Trains Operated</p>

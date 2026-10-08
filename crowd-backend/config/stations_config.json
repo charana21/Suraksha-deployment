@@ -253,7 +253,10 @@
             {"camera_name": "GATE 2 FACING AC WAITING HALL",      "camera_id": "cam_gate2_fc_ac_wh",             "zone_id": "zone_gate2a_booking"},
             {"camera_name": "RETHIFILE BO/BUS STOP",              "camera_id": "cam_rethifile_bo",               "zone_id": "zone_hyb_pf1"},
             {"camera_name": "GATE 2A FACING CAR PARKING",         "camera_id": "cam_gate2e_fc_parking",          "zone_id": "zone_gate2a_booking"},
-            {"camera_name": "GATE 5 PATHWAY",                     "camera_id": "cam_gate5_pathway",              "zone_id": "zone_gate5_booking"}
+            {"camera_name": "GATE 5 PATHWAY",                     "camera_id": "cam_gate5_pathway",              "zone_id": "zone_gate5_booking"},
+            {"camera_name": "GATE 2A TOWARDS ATVM",               "camera_id": "cam_gate2a_towards_avtm",        "zone_id": "zone_gate2a_booking"},
+            {"camera_name": "GATE 2A FACING CAR PARKING",         "camera_id": "cam_gate2a_fc_parking",          "zone_id": "zone_gate2a_booking"},
+            {"camera_name": "GATE-5 BOOKING OUTSIDE",              "camera_id": "cam_gate5_pathway_outside",      "zone_id": "zone_gate5_booking"}
         ]
     }
 }

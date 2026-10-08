@@ -22,7 +22,6 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { analyticsApi, AnalyticsHistoryPoint } from '@/services/analyticsApi';
 import { Alert } from '@/types/camera';
 import { ZoneHistoryGraph } from '@/components/dashboard/ZoneHistoryGraph';
-import { CAMERAS, CAMERA_TITLES } from '@/data/cameras';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -35,9 +34,46 @@ const REPORT_RANGES = [
   { id: '30d', label: 'Last 30 Days', rangeParam: '30d' as const, hours: 720, interval: '1h' },
 ];
 
+// ── Corrected camera labels — aligned 1-to-1 with CAMERA_TITLES in the SVG/dashboard ──
+const CAMERA_LABELS: Record<string, string> = {
+  cam_hyb_pf1: 'PF-1 NEAR KZJ FOB FC GATE 2',
+  cam_hyb_pf2: 'PF 2 KZJ FOB FC RRI',
+  cam_hyb_pf4: 'PF.NO.4&5 MIDDLE PTZ',
+  //cam_hyb_pf6:            'PF 6 NEAR MID FOB',
+  cam_middle_fob_4_5: 'HYB FOB MIDDLE FC 4&5',
+  cam_pf8_mid_fc_kzj: 'PF 8 MID FACING KZJ',
+  cam_hyb_pf10: 'PF10 (OPP GATE-8) FC KZJ FOB',
+  cam_mid_fob_pf1: 'KZJ SIDE NEW FOB FC PF10',
+  cam_pf1_fob_pf10: 'HYD FOB FC PF10',
+  cam_hyb_pf1_a: 'PF1 NEARGATE-4 FC HYB',
+  cam_pf1_fob_hyb_end: 'HYD FOB FC PF1',
+  cam_kzj_pf1_fob_kzj: 'KZJ FOB FC PF10',
+  cam_kzj_pf1_fob_pf10: 'KZJ FOB FC PF1',
+  cam_kzj_fob_mid_8_9: 'HYD FOB MID FACING 6&7',
+  cam_kzj_fob_mid_4_5: 'KZJ FOB MID FACING 4&5',
+  cam_pf2_fc_hyd_side: 'PF 2 FACING HYD SIDE',
+  cam_pf10_vip_saloon: 'PF10 VIP SALOON SIDING',
+  cam_new_kzj_fob_near_pf1: 'NEW KZJ FOB NEAR PF 1',
+  cam_new_kzj_fob_fc_pf1: 'NEW KZJ FOB FACING PF 1',
+  cam_rethifile_entr: 'RETHIFILE ENTRANCE',
+  cam_rethifile_bo: 'RETHIFILE BO/BUS STOP',
+  cam_gate2a_fc_parking: 'GATE 2A FACING CAR PARKING',
+  cam_hyb_booking: 'GATE 2A BOOKING OFFICE',
+  cam_hyb_booking_gate4a: 'GATE 4 OUTSIDE ENTRANCE',
+  cam_hyb_booking_gate6: 'GATE 6 OUTSIDE ENTRANCE',
+  cam_hyb_booking_gate8: 'GATE 8 OUTSIDE',
+  cam_pf10_bme_counter: 'PF-10 WAITING HALL AREA',
+  cam_gate2_wh: 'GATE 2 WAITING HALL',
+  cam_gate2_fc_ac_wh: 'GATE 2 FACING AC WAITING HALL',
+  cam_near_gate_2a_fc_swathi_ent: 'NEAR GATE 2A FACING SWATHI ENT',
+  cam_hyd_booking_gate2a: 'GATE 2A ENTRANCE',
+  // zone_mid_fob camera
+  cam_mid_fob_center: 'MID FOB FC PF-10',
+};
+
 const getCameraLabel = (id?: string) => {
   if (!id) return '';
-  return CAMERA_TITLES[id] || id;
+  return CAMERA_LABELS[id] || id;
 };
 
 const normalizeZoneId = (zoneId?: string): string => (zoneId || '').trim().toLowerCase();
@@ -67,10 +103,6 @@ type HistoryGroup = {
   cameraIds?: string[];
 };
 
-// Camera ids backing the Middle FOB zone, sourced from the camera registry instead
-// of being duplicated here.
-const MID_FOB_CAMERA_IDS = CAMERAS.filter(c => c.zone_id === 'zone_mid_fob').map(c => c.camera_id);
-
 // FOB footfall groups mapped to zones/cameras
 const FOB_GROUPS: HistoryGroup[] = [
   {
@@ -87,7 +119,7 @@ const FOB_GROUPS: HistoryGroup[] = [
     title: 'Middle FOB',
     hue: 280,
     zoneIds: ['zone_mid_fob'],
-    cameraIds: MID_FOB_CAMERA_IDS,
+    cameraIds: ['cam_mid_fob_pf1', 'cam_mid_fob_center', 'cam_new_kzj_fob_near_pf1', 'cam_new_kzj_fob_fc_pf1'],
   },
 ];
 
@@ -356,14 +388,20 @@ export default function Reports() {
     // Fall back to client-side aggregation
     const counts: Record<string, number> = { FOB: 0, PLATFORM: 0, BOOKING: 0 };
 
+    // Debug log to see what data we're working with
+    console.log('Calculating zone types from', filteredAlerts.length, 'alerts');
+
     filteredAlerts.forEach(a => {
       // Use improved deriveZoneType function
       const t = deriveZoneType(a);
+      console.log('Alert zone:', a.zoneId, 'cameraId:', a.cameraId, 'derived type:', t);
 
       if (t && counts.hasOwnProperty(t)) {
         counts[t]++;
       }
     });
+
+    console.log('Final zone type counts:', counts);
 
     // Return all non-zero entries
     return Object.entries(counts)
@@ -391,11 +429,11 @@ export default function Reports() {
   }, [statsData, hourlyData]);
 
   const tooltipStyle = {
-  backgroundColor: 'hsl(var(--card))',
-  border: '1px solid hsl(var(--border))',
-  borderRadius: '8px',
-  color: 'hsl(var(--foreground))',
-};
+    backgroundColor: 'hsl(var(--card))',
+    border: '1px solid hsl(var(--border))',
+    borderRadius: '8px',
+    color: 'hsl(var(--foreground))',
+  };
 
   const stationZoneIds = useMemo(
     () => Array.from(new Set([
@@ -428,24 +466,14 @@ export default function Reports() {
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1
-              className="text-xl font-bold text-foreground tracking-tight"
-              style={{ fontFamily: "'Outfit', sans-serif" }}
-            >
-              Analytics Reports
-            </h1>
-            <p
-              className="text-xs text-muted-foreground mt-0.5"
-              style={{ fontFamily: "'Outfit', sans-serif" }}
-            >
-              Historical data analysis and safety insights
-            </p>
+            <h1 className="text-2xl font-semibold text-foreground">Analytics Reports</h1>
+            <p className="text-sm text-muted-foreground">Historical data analysis and safety insights</p>
           </div>
           <Select value={timeRange} onValueChange={setTimeRange}>
-           <SelectTrigger className="h-9 w-[180px] bg-card border-border text-foreground">
-  <CalendarClock className="w-4 h-4 mr-2 text-muted-foreground" />
-  <SelectValue />
-</SelectTrigger>
+            <SelectTrigger className="h-9 w-[180px] bg-muted/50 border-border/50">
+              <CalendarClock className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {REPORT_RANGES.map(r => (
                 <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
@@ -458,14 +486,14 @@ export default function Reports() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
           {[
             { icon: AlertTriangle, label: 'Total Alerts', value: stats.totalAlerts, className: 'text-foreground', iconClass: 'text-primary' },
-{ icon: TrendingUp, label: 'Critical', value: stats.critical, className: 'text-risk-critical', iconClass: 'text-risk-critical' },
-{ icon: Users, label: 'Avg / Day', value: stats.avgPerDay, className: 'text-foreground', iconClass: 'text-primary' },
-{ icon: Clock, label: 'Peak Hour', value: stats.peakHour, className: 'text-foreground', iconClass: 'text-primary' },
+            { icon: TrendingUp, label: 'Critical', value: stats.critical, className: 'text-risk-critical', iconClass: 'text-risk-critical' },
+            { icon: Users, label: 'Avg / Day', value: stats.avgPerDay, className: 'text-foreground', iconClass: 'text-primary' },
+            { icon: Clock, label: 'Peak Hour', value: stats.peakHour, className: 'text-foreground', iconClass: 'text-primary' },
           ].map(({ icon: Icon, label, value, className, iconClass }) => (
-            <div key={label} className="rounded-lg border border-border bg-card p-3 sm:p-5 shadow-sm">
+            <div key={label} className="stat-card p-3 sm:p-5">
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
                 <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${iconClass}`} />
-                <span className="text-muted-foreground text-[10px] sm:text-xs uppercase tracking-wider">{label}</span>
+                <span className="metric-label text-[10px] sm:text-xs uppercase tracking-wider">{label}</span>
               </div>
               <p className={`metric-value text-lg sm:text-2xl font-bold ${className}`}>
                 {isLoading ? '—' : value ?? '—'}
@@ -482,7 +510,7 @@ export default function Reports() {
             <span className="text-xs text-muted-foreground">(All cameras combined)</span>
           </div>
           <ZoneHistoryGraph
-            title="SECUNDERABAD STATION - TOTAL FOOTFALL"
+            title="SECUNDRABAD STATION-TOTAL FOOTFALL"
             hue={215}
             rangeLabel={selectedRangeObj.label}
             data={stationHistoryQuery.data?.chartData ?? []}
@@ -577,10 +605,10 @@ export default function Reports() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Alert Trend */}
-          <Card className="bg-card border border-border shadow-sm">
-  <CardHeader>
-    <CardTitle className="text-base text-foreground">Alert Trend</CardTitle>
-              <CardDescription className="text-muted-foreground">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Alert Trend</CardTitle>
+              <CardDescription>
                 {selectedRangeObj.hours <= 48 ? 'Hourly' : 'Daily'} alerts over {selectedRangeObj.label.toLowerCase()}
               </CardDescription>
             </CardHeader>
@@ -590,20 +618,20 @@ export default function Reports() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} minTickGap={30} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: 'hsl(var(--foreground))' }}/>
+                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: 'hsl(var(--foreground))' }} />
                   <Legend />
-                  <Line type="monotone" dataKey="total" stroke="#3b82f6" name="Total Alerts" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="critical" stroke="#ef4444" name="Critical" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" name="Total Alerts" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="critical" stroke="hsl(var(--risk-critical))" name="Critical" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* Severity Distribution */}
-          <Card className="bg-card border border-border shadow-sm">
-  <CardHeader>
-    <CardTitle className="text-base text-foreground">Severity Distribution</CardTitle>
-              <CardDescription className="text-muted-foreground ">Breakdown by importance</CardDescription>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Severity Distribution</CardTitle>
+              <CardDescription>Breakdown by importance</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -627,17 +655,16 @@ export default function Reports() {
           </Card>
 
           {/* Zone Type Distribution */}
-          <Card className="bg-card border border-border shadow-sm">
-  <CardHeader>
-    <CardTitle className="text-base text-foreground">Zone Type Distribution</CardTitle>
-              <CardDescription className="text-muted-foreground">Alerts breakdown by zone type</CardDescription>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Zone Type Distribution</CardTitle>
+              <CardDescription>Alerts breakdown by zone type</CardDescription>
             </CardHeader>
             <CardContent>
               {zoneTypeData.length === 0 ? (
                 <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
-
-  No zone-type data available for this range
-</div>
+                  No zone-type data available for this range
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -665,10 +692,10 @@ export default function Reports() {
           </Card>
 
           {/* Top Alert Sources */}
-          <Card className="bg-card border border-border shadow-sm">
-  <CardHeader>
-    <CardTitle className="text-base text-foreground">Top Alert Sources</CardTitle>
-              <CardDescription className="text-muted-foreground">Cameras with highest frequency</CardDescription>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Top Alert Sources</CardTitle>
+              <CardDescription>Cameras with highest frequency</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -677,7 +704,7 @@ export default function Reports() {
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} width={120} />
                   <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: 'hsl(var(--foreground))' }} />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -686,8 +713,8 @@ export default function Reports() {
           {/* Time Distribution */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-base text-foreground">Time Distribution</CardTitle>
-              <CardDescription className="text-muted-foreground">Alerts by hour of day (00–23h)</CardDescription>
+              <CardTitle className="text-base">Time Distribution</CardTitle>
+              <CardDescription>Alerts by hour of day (00–23h)</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={220}>
@@ -696,7 +723,7 @@ export default function Reports() {
                   <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={1} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
                   <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: 'hsl(var(--foreground))' }} />
-                  <Bar dataKey="alerts" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="alerts" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -705,10 +732,10 @@ export default function Reports() {
         </div>
 
         {/* ── Info Note ── */}
-        <div className="rounded-lg border border-border bg-card p-3 sm:p-5 shadow-sm">
-          <FileText className="w-5 h-5 text-slate-500 flex-shrink-0 mt-0.5" />
-<div className="text-sm text-muted-foreground">
-  <p className="font-medium text-foreground mb-1">Live Analytics Data</p>
+        <div className="glass-panel p-4 flex items-start gap-3">
+          <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">Live Analytics Data</p>
             <p>
               Reports are generated based on the selected time range: <strong>{selectedRangeObj.label}</strong>.
               Station-wide and zone footfall charts have their own independent time range selectors.

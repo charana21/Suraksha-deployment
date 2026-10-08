@@ -28,6 +28,7 @@ export const useFrameAnalytics = ({ jobId, fps }: UseFrameAnalyticsOptions) => {
 
         if (!response.ok) {
           // Analytics might not exist for older jobs
+          console.warn("Analytics not available for this job");
           return;
         }
 
@@ -46,6 +47,7 @@ export const useFrameAnalytics = ({ jobId, fps }: UseFrameAnalyticsOptions) => {
           setCurrentFrame(data.frames[0]);
         }
       } catch (err) {
+        console.error("Failed to fetch analytics:", err);
         setError("Failed to load frame analytics");
       } finally {
         setIsLoading(false);

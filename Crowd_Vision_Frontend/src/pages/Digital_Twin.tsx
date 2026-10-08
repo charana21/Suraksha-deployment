@@ -21,7 +21,7 @@ export default function DigitalTwinPge() {
           Digital Twin
         </div>
 
-        <h1 className="mt-4 text-2xl font-semibold text-foreground">
+        <h1 className="mt-4 text-2xl font-semibold text-white">
           Opening the Digital Twin in a new tab
         </h1>
 
@@ -42,7 +42,7 @@ export default function DigitalTwinPge() {
 
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-foreground"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to dashboard

@@ -300,6 +300,8 @@ class Settings(BaseSettings):
     msg91_whatsapp_crowd_alert_template_id: str = ""
     msg91_whatsapp_booking_office_template_id: str = "bookingoffice_alert"
     msg91_custom_whatsapp_message_template_id: str = "camera_alert"
+    msg91_whatsapp_island_alert_template_id: str = "island_alert"
+    msg91_whatsapp_fob_alert_template_id: str = "fob_congestion_alert"
 
     fob_analytics_whatsapp_threshold: int = 120
     booking_office_alert_threshold: int = 190
@@ -351,6 +353,8 @@ class Settings(BaseSettings):
     island_alert_window_minutes: int = 45  # Sliding window duration
     island_alert_step_minutes: int = 5  # Sliding window step size
     island_planning_advance_minutes: int = 90  # Start alerts N minutes before first train
+    island_alert_whatsapp_enabled: bool = True  # Send confirmed island alerts via WhatsApp
+    island_alert_whatsapp_lookahead_minutes: int = 120  # Notify N minutes before window_start
 
     # Platform Certainty Label Thresholds
     platform_certainty_high_threshold: float = 80.0  # ≥80% stability = HIGH certainty

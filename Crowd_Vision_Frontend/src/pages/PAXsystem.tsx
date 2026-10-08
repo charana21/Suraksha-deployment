@@ -188,6 +188,7 @@ export default function PASystem() {
         throw new Error(data.detail || data.error || data.message || 'Failed')
       }
     } catch (err) {
+      console.error(err)
       setToast('❌ Failed to send WhatsApp text: ' + err.message)
       setTimeout(() => setToast(null), 5000)
     }

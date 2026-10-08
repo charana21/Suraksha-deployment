@@ -87,6 +87,8 @@ class TrainsApiService {
   }
 
   async setLiveToggle(enabled: boolean): Promise<TrainLiveToggleResponse> {
+    console.log('[TrainsApi] Setting live toggle to:', enabled);
+
     const response = await fetch(this.buildUrl('/trains/live-toggle'), {
       method: 'POST',
       headers: {
@@ -97,6 +99,7 @@ class TrainsApiService {
     });
 
     const result = await this.handleResponse<TrainLiveToggleResponse>(response, 'Updating live toggle');
+    console.log('[TrainsApi] Live toggle response:', result);
 
     return result;
   }

@@ -3,14 +3,22 @@ Camera metadata management service
 Provides CRUD operations for camera metadata (single source of truth)
 """
 from typing import Optional, List, Dict, Any
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 import json
 import logging
 import os
 import time
+import asyncio
 import aiofiles
+from pymongo import DESCENDING
 from db.mongodb import MongoDB
+from services.notification_service import NotificationService
 logger = logging.getLogger(__name__)
+
+FEED_MONITOR_CAMERAS_CONFIG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "config", "feed_monitor_cameras.json",
+)
 
 # ============================================================
 # INITIAL CAMERA DEFINITIONS (ONE-TIME SEEDING)
@@ -91,6 +99,218 @@ OLD_KZJ_CAMERA_IDS = [
 
 class CameraService:
     """Camera metadata CRUD operations"""
+
+    _feed_monitor_config: Optional[Dict[str, Any]] = None
+
+    @staticmethod
+    def _load_feed_monitor_config() -> Dict[str, Any]:
+        if CameraService._feed_monitor_config is not None:
+            return CameraService._feed_monitor_config
+
+        try:
+            with open(FEED_MONITOR_CAMERAS_CONFIG_PATH, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except FileNotFoundError:
+            logger.error(
+                "[CameraService][FeedMonitor] Camera config not found: %s",
+                FEED_MONITOR_CAMERAS_CONFIG_PATH,
+            )
+            config = {}
+        except Exception:
+            logger.exception("[CameraService][FeedMonitor] Failed to read camera config")
+            config = {}
+
+        CameraService._feed_monitor_config = config
+        return config
+
+    @staticmethod
+    def _load_feed_monitor_camera_ids() -> List[str]:
+        camera_ids = CameraService._load_feed_monitor_config().get("camera_ids", [])
+        return list(dict.fromkeys(camera_ids))
+
+    @staticmethod
+    def _feed_monitor_check_interval_seconds() -> int:
+        return CameraService._load_feed_monitor_config()["check_interval_seconds"]
+
+    @staticmethod
+    def _feed_monitor_freshness_window_minutes() -> int:
+        return CameraService._load_feed_monitor_config()["freshness_window_minutes"]
+
+    @staticmethod
+    def _as_utc(timestamp):
+        if timestamp is None:
+            return None
+        if timestamp.tzinfo is None:
+            return timestamp.replace(tzinfo=timezone.utc)
+        return timestamp.astimezone(timezone.utc)
+
+    @staticmethod
+    async def _latest_analytics_by_camera(camera_ids: List[str]) -> Dict[str, Dict]:
+        projection = {"_id": 0, "camera_id": 1, "timestamp": 1}
+
+        async def fetch_latest(camera_id: str):
+            return await MongoDB.database.analytics.find_one(
+                {"camera_id": camera_id},
+                projection,
+                sort=[("timestamp", DESCENDING)],
+            )
+
+        results = await asyncio.gather(
+            *(fetch_latest(camera_id) for camera_id in camera_ids),
+            return_exceptions=True,
+        )
+
+        latest = {}
+        failed_cameras = []
+        for camera_id, result in zip(camera_ids, results):
+            if isinstance(result, Exception):
+                failed_cameras.append((camera_id, result))
+                continue
+            if result:
+                latest[camera_id] = result
+
+        if failed_cameras:
+            failed_camera_ids = ", ".join(camera_id for camera_id, _ in failed_cameras)
+            raise RuntimeError(
+                f"Failed to fetch latest analytics for camera(s): {failed_camera_ids}"
+            ) from failed_cameras[0][1]
+
+        return latest
+
+    @staticmethod
+    def _stale_camera_rows(
+        camera_ids: List[str],
+        latest_by_camera: Dict[str, Dict],
+        now_utc: datetime,
+    ) -> List[Dict[str, Any]]:
+        cutoff = now_utc - timedelta(
+            minutes=CameraService._feed_monitor_freshness_window_minutes()
+        )
+        stale_rows = []
+
+        for camera_id in camera_ids:
+            latest = latest_by_camera.get(camera_id)
+            timestamp = CameraService._as_utc(latest.get("timestamp")) if latest else None
+            if timestamp and timestamp >= cutoff:
+                continue
+
+            stale_rows.append({
+                "camera_id": camera_id,
+                "latest_timestamp": timestamp,
+                "minutes_since_latest": (
+                    round((now_utc - timestamp).total_seconds() / 60, 1)
+                    if timestamp else None
+                ),
+            })
+
+        return stale_rows
+
+    @staticmethod
+    def _format_inactive_duration(minutes: Optional[float]) -> Optional[str]:
+        """Format minutes as '15min' under an hour, otherwise '1h 24min'."""
+        if minutes is None:
+            return None
+        total_minutes = int(minutes)
+        hours, mins = divmod(total_minutes, 60)
+        return f"{hours}h {mins}min" if hours else f"{mins}min"
+
+    @staticmethod
+    def _format_stale_camera_rows(stale_rows: List[Dict[str, Any]]) -> str:
+        lines = []
+        for row in stale_rows:
+            latest = row["latest_timestamp"]
+            latest_text = latest.isoformat(timespec="seconds").replace("+00:00", "Z") if latest else "no record found"
+            age_text = (
+                CameraService._format_inactive_duration(row["minutes_since_latest"])
+                or "unknown (no analytics record)"
+            )
+            lines.append(
+                f"Camera Id: {row['camera_id']}<br>"
+                f"Last Timestamp: {latest_text}<br>"
+                f"Inactive Duration: {age_text}"
+            )
+        return "<br>".join(lines)
+
+    @staticmethod
+    async def check_camera_feeds_once() -> Dict[str, Any]:
+        if MongoDB.database is None:
+            return {"status": "skipped", "reason": "database unavailable"}
+
+        camera_ids = CameraService._load_feed_monitor_camera_ids()
+        if not camera_ids:
+            return {"status": "skipped", "reason": "no monitored cameras configured"}
+
+        now_utc = datetime.now(timezone.utc)
+        latest_by_camera = await CameraService._latest_analytics_by_camera(camera_ids)
+        stale_rows = CameraService._stale_camera_rows(camera_ids, latest_by_camera, now_utc)
+
+        if not stale_rows:
+            logger.info(
+                "[CameraService][FeedMonitor] All %d monitored cameras are fresh",
+                len(camera_ids),
+            )
+            return {"status": "ok", "stale_count": 0}
+
+        if len(stale_rows) == 1:
+            trigger_reason = CameraService._format_stale_camera_rows(stale_rows)
+        else:
+            trigger_reason = (
+                f"{len(stale_rows)} camera feeds have been inactive for more than "
+                f"{CameraService._feed_monitor_freshness_window_minutes()} minutes. "
+                "See the attached Excel report for camera IDs, last timestamps, and inactive durations."
+            )
+
+        feed_monitor_rows = [
+            {
+                "camera_id": row["camera_id"],
+                "last_timestamp": (
+                    row["latest_timestamp"].isoformat(timespec="seconds").replace("+00:00", "Z")
+                    if row["latest_timestamp"] else None
+                ),
+                "inactive_duration": CameraService._format_inactive_duration(
+                    row["minutes_since_latest"]
+                ),
+            }
+            for row in stale_rows
+        ]
+        alert_data = {
+            "alert_id": f"feed_monitor_{now_utc.strftime('%Y%m%d%H%M%S')}",
+            "camera_id": "camera_feed_monitor",
+            "camera_name": "Camera Feed Monitor",
+            "location": "Analytics ingestion",
+            "severity": "CRITICAL",
+            "people_count": len(stale_rows),
+            "density_level": "N/A",
+            "risk_level": "CRITICAL",
+            "timestamp": now_utc,
+            "trigger_reason": trigger_reason,
+            "feed_monitor_rows": feed_monitor_rows,
+            "email_subject": "Inactive Camera Feed Monitor",
+            "send_email": True,
+        }
+
+        result = await NotificationService.get_instance().send_email_alert(
+            alert_data,
+            skip_checks=True,
+        )
+        logger.warning(
+            "[CameraService][FeedMonitor] Stale cameras detected: %s; email_result=%s",
+            [row["camera_id"] for row in stale_rows],
+            result,
+        )
+        return {"status": "alerted", "stale_count": len(stale_rows), "email": result}
+
+    @staticmethod
+    async def camera_feed_monitor_scheduler() -> None:
+        while True:
+            try:
+                await CameraService.check_camera_feeds_once()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("[CameraService][FeedMonitor] Camera feed monitor check failed")
+
+            await asyncio.sleep(CameraService._feed_monitor_check_interval_seconds())
 
     @staticmethod
     async def _cleanup_old_zones_and_cameras(db):

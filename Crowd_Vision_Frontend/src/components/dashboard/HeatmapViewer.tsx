@@ -64,6 +64,7 @@ export function HeatmapViewer({ heatmap, type, onTypeChange, streamId, frameUrl 
           setIsLoadingNewFrame(true);
         }
       } catch (error) {
+        console.error('Failed to check stream status:', error);
         setStreamStatus('error');
       }
     };

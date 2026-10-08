@@ -268,6 +268,7 @@ export const useVideoAnalysis = () => {
 
   const pollJobStatus = useCallback(async (jobId: string): Promise<void> => {
     try {
+      console.log(`[Poll] Checking status for job: ${jobId}`);
       const response = await fetch(`${API_BASE_URL}/api/status/${jobId}`);
 
       if (!response.ok) {
@@ -275,6 +276,7 @@ export const useVideoAnalysis = () => {
       }
 
       const data: ApiStatusResponse = await response.json();
+      console.log(`[Poll] Status: ${data.status}, Progress: ${data.progress}%`);
 
       if (data.status === "processing" || data.status === "queued") {
         setUploadState((prev) => ({
@@ -293,6 +295,9 @@ export const useVideoAnalysis = () => {
         const videoUrl = data.processedVideoUrl?.startsWith("http")
           ? data.processedVideoUrl
           : `${API_BASE_URL}${data.processedVideoUrl}`;
+
+        console.log("[Complete] Video URL:", videoUrl);
+        console.log("[Complete] Zones:", data.zones);
 
         // Transform alerts to have proper Date objects
         const alerts: Alert[] = (data.alerts || []).map((alert: any) => ({
@@ -327,6 +332,7 @@ export const useVideoAnalysis = () => {
           pollingIntervalRef.current = null;
         }
 
+        console.error("[Error] Analysis failed:", data.error);
         setUploadState({
           status: "error",
           progress: 0,
@@ -334,6 +340,7 @@ export const useVideoAnalysis = () => {
         });
       }
     } catch (error) {
+      console.error("Polling error:", error);
       // Don't stop polling on network errors, it might be temporary
     }
   }, []);
@@ -357,6 +364,7 @@ export const useVideoAnalysis = () => {
       });
 
       try {
+        console.log("[Upload] Starting upload for:", file.name);
         const formData = new FormData();
         formData.append("video", file);
 
@@ -373,6 +381,7 @@ export const useVideoAnalysis = () => {
         }
 
         const { jobId } = await response.json();
+        console.log("[Upload] Job created:", jobId);
 
         // Switch to processing state
         setUploadState((prev) => ({
@@ -397,6 +406,7 @@ export const useVideoAnalysis = () => {
           return;
         }
 
+        console.error("Upload error:", error);
         setUploadState({
           status: "error",
           progress: 0,

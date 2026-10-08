@@ -36,7 +36,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
                      p-4 pointer-events-none"
         >
           <div className="text-center mb-3">
-            <h3 className="font-bold text-base text-foreground ">
+            <h3 className="font-bold text-base text-white ">
               {data.name} {data.year}
             </h3>
             <div
@@ -51,7 +51,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
                 <Users className="w-3.5 h-3.5 text-blue-400" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Total Footfall</p>
+                <p className="text-xs text-gray-400">Total Footfall</p>
                 <p className="font-bold text-sm text-blue-400">
                   {formatFootfall(currentTotal)}
                 </p>
@@ -63,7 +63,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
                 <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Average Daily</p>
+                <p className="text-xs text-gray-400">Average Daily</p>
                 <p className="font-bold text-sm text-amber-400">
                   {formatFootfall(data.avgDaily)}
                 </p>
@@ -75,7 +75,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
                 <ArrowUp className="w-3.5 h-3.5 text-green-400" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Peak Day</p>
+                <p className="text-xs text-gray-400">Peak Day</p>
                 <p className="font-bold text-sm text-green-400">
                   {formatFootfall(data.peakFootfall)} ({data.peakDay}{" "}
                   {data.name.slice(0, 3)})
@@ -89,7 +89,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
                   <CalendarDays className="w-3.5 h-3.5 text-purple-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground mb-1">Key Events</p>
+                  <p className="text-xs text-gray-400 mb-1">Key Events</p>
                   <div className="flex flex-wrap gap-1">
                     {data.keyEvents.slice(0, 3).map((event) => (
                       <span
@@ -100,7 +100,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
                       </span>
                     ))}
                     {data.keyEvents.length > 3 && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-400">
                         +{data.keyEvents.length - 3} more
                       </span>
                     )}
@@ -122,14 +122,14 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
           className="flex justify-center gap-3 pt-2 px-4"
           style={{ backgroundColor: thresholdColor }}
         >
-          <div className="w-3 h-4 bg-card/20 rounded-b-full" />
-          <div className="w-3 h-4 bg-card/20 rounded-b-full" />
-          <div className="w-3 h-4 bg-card/20 rounded-b-full" />
+          <div className="w-3 h-4 bg-white/20 rounded-b-full" />
+          <div className="w-3 h-4 bg-white/20 rounded-b-full" />
+          <div className="w-3 h-4 bg-white/20 rounded-b-full" />
         </div>
 
         {/* Header */}
         <div
-          className="text-center py-2 px-3 font-bold text-lg tracking-widest text-foreground"
+          className="text-center py-2 px-3 font-bold text-lg tracking-widest text-white"
           style={{ backgroundColor: thresholdColor }}
         >
           {data.name}
@@ -137,7 +137,7 @@ export const MonthCard = ({ data, index, onClick }: MonthCardProps) => {
 
         {/* Value */}
         <div className="bg-card py-10 px-3 text-center">
-          <span className="text-2xl font-black text-foreground">
+          <span className="text-2xl font-black text-white">
             {formatFootfall(currentTotal)}
           </span>
         </div>

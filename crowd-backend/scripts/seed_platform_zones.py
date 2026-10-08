@@ -322,6 +322,9 @@ EXCEL_CAMERAS = [
     {"camera_id": "cam_rethifile_bo",               "name": "RETHIFILE BO/BUS STOP",              "zone_id": "zone_hyb_pf1",        "zone_type": "BOOKING",   "location": "RETHIFILE BO/BUS STOP",              "rtsp_url": "rtsp://localhost:8554/mystream"},
     {"camera_id": "cam_gate2e_fc_parking",          "name": "GATE 2A FACING CAR PARKING",         "zone_id": "zone_gate2a_booking",  "zone_type": "BOOKING",   "location": "GATE 2A FACING CAR PARKING",         "rtsp_url": "rtsp://localhost:8554/mystream"},
     {"camera_id": "cam_gate5_pathway",              "name": "GATE 5 PATHWAY",                     "zone_id": "zone_gate5_booking",   "zone_type": "BOOKING",   "location": "GATE 5 PATHWAY",                     "rtsp_url": "rtsp://localhost:8554/mystream"},
+    {"camera_id": "cam_gate2a_towards_avtm",        "name": "GATE 2A TOWARDS ATVM",               "zone_id": "zone_gate2a_booking",  "zone_type": "BOOKING",   "location": "GATE 2A TOWARDS ATVM",               "rtsp_url": "rtsp://localhost:8554/mystream"},
+    {"camera_id": "cam_gate2a_fc_parking",          "name": "GATE 2A FACING CAR PARKING",         "zone_id": "zone_gate2a_booking",  "zone_type": "BOOKING",   "location": "GATE 2A FACING CAR PARKING",         "rtsp_url": "rtsp://localhost:8554/mystream"},
+    {"camera_id": "cam_gate5_pathway_outside",      "name": "GATE-5 BOOKING OUTSIDE",             "zone_id": "zone_gate5_booking",   "zone_type": "BOOKING",   "location": "GATE-5 BOOKING OUTSIDE",             "rtsp_url": "rtsp://localhost:8554/mystream"},
 ]
 
 # Add Excel cameras to CAMERA_ZONE_MAP

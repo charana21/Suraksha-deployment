@@ -36,6 +36,7 @@ const Login = () => {
                 duration: 4000,
             });
         } catch (error) {
+            console.error(error);
             const message = error instanceof Error ? error.message : "Invalid email or password.";
             toast({
                 variant: "destructive",
@@ -58,7 +59,7 @@ const Login = () => {
 
             <div className="w-full max-w-md p-8 relative z-10">
                 <div className="mb-8 text-center">
-                    <h1 className="text-4xl font-black tracking-tight text-foreground mb-2">
+                    <h1 className="text-4xl font-black tracking-tight text-white mb-2">
                         SURAKSHA<span className="text-blue-500">AI</span>
                     </h1>
                     <p className="text-slate-400">Secure Access Portal</p>
@@ -76,7 +77,7 @@ const Login = () => {
                                     placeholder="Enter your email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="pl-10 bg-slate-950/50 border-slate-800 focus:border-blue-500 text-foreground placeholder:text-slate-600 transition-all"
+                                    className="pl-10 bg-slate-950/50 border-slate-800 focus:border-blue-500 text-white placeholder:text-slate-600 transition-all"
                                     disabled={loading}
                                 />
                             </div>
@@ -96,7 +97,7 @@ const Login = () => {
         placeholder="Enter your password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="pl-10 pr-10 bg-slate-950/50 border-slate-800 focus:border-blue-500 text-foreground placeholder:text-slate-600 transition-all"
+        className="pl-10 pr-10 bg-slate-950/50 border-slate-800 focus:border-blue-500 text-white placeholder:text-slate-600 transition-all"
         disabled={loading}
         />
 
@@ -104,7 +105,7 @@ const Login = () => {
         <button
         type="button"
         onClick={() => setShowPassword(prev => !prev)}
-        className="absolute right-3 top-2.5 text-slate-500 hover:text-foreground transition-colors"
+        className="absolute right-3 top-2.5 text-slate-500 hover:text-white transition-colors"
         tabIndex={-1}
         >
         {showPassword ? (
@@ -119,7 +120,7 @@ const Login = () => {
                         <Button
                             type="submit"
                             className={cn(
-                                "w-full bg-blue-600 hover:bg-blue-500 text-foreground font-bold py-6 rounded-xl transition-all duration-300 shadow-lg shadow-blue-900/20",
+                                "w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 rounded-xl transition-all duration-300 shadow-lg shadow-blue-900/20",
                                 loading && "opacity-70 cursor-not-allowed"
                             )}
                             disabled={loading}

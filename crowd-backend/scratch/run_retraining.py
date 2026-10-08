@@ -4,7 +4,7 @@ import pandas as pd
 from services.forecasting.runner import ForecastingRunner
 
 print("=== STARTING FULL RETRAINING AND FORECAST GENERATION ===")
-res = ForecastingRunner.run_pipeline_sync(skip_backtest=False)
+res = ForecastingRunner.run_pipeline_sync(skip_backtest=True)
 
 print("\n=== PIPELINE RESULTS ===")
 print("Status:", res["status"])

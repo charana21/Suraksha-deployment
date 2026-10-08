@@ -16,6 +16,7 @@ from .common import (
 from .features import (
     compute_named_holiday_ratios,
     build_named_ratio_array,
+    compute_historical_context_features,
     build_frame,
     recursive_forecast
 )
@@ -74,6 +75,9 @@ def generate_target_forecast(df: pd.DataFrame, target: str, winner_name: str, wi
     on_med, before_med, after_med, p_on, p_bef, p_aft = compute_named_holiday_ratios(
         values_for_features_full, cf, cutoff_idx)
     named_ratio_arr = build_named_ratio_array(cf, on_med, before_med, after_med, p_on, p_bef, p_aft)
+    hist_mdow_arr, hist_m_arr = compute_historical_context_features(
+        df, target, cf.full_dates, latest_history
+    )
 
     # Train model on historical actuals
     train_start = min(config.MIN_TRAIN_START_IDX, cutoff_idx)
@@ -83,7 +87,7 @@ def generate_target_forecast(df: pd.DataFrame, target: str, winner_name: str, wi
         raise ValueError(f"No training observations available for {target}")
 
     X_train = build_frame(values_for_features_full, train_idx, cf, base, holiday_ratio,
-                          seasonal_arr, named_ratio_arr)
+                          seasonal_arr, named_ratio_arr, hist_mdow_arr=hist_mdow_arr, hist_m_arr=hist_m_arr)
     y_train = values_actual_clean[train_idx]
     model, inv = _fit_model(winner_name, X_train, y_train, winner_members)
 
@@ -98,7 +102,7 @@ def generate_target_forecast(df: pd.DataFrame, target: str, winner_name: str, wi
     if year_start_idx <= hist_end_idx:
         hist_idx = list(range(year_start_idx, hist_end_idx + 1))
         X_hist = build_frame(values_for_features_full, hist_idx, cf, base, holiday_ratio,
-                             seasonal_arr, named_ratio_arr)
+                             seasonal_arr, named_ratio_arr, hist_mdow_arr=hist_mdow_arr, hist_m_arr=hist_m_arr)
         raw_preds_hist = model.predict(X_hist)
         for i, p in zip(hist_idx, raw_preds_hist):
             preds_map[i] = max(float(inv(p)), 0.0)
@@ -108,7 +112,9 @@ def generate_target_forecast(df: pd.DataFrame, target: str, winner_name: str, wi
     if hist_end_idx < year_end_idx:
         future_idx = list(range(hist_end_idx + 1, year_end_idx + 1))
         preds_future = recursive_forecast(model, values_for_features_full, future_idx, cf, base,
-                                          holiday_ratio, inv, seasonal_arr, named_ratio_arr)
+                                          holiday_ratio, inv, seasonal_arr, named_ratio_arr,
+                                          hist_mdow_arr=hist_mdow_arr, hist_m_arr=hist_m_arr,
+                                          target_name=target)
         for i in future_idx:
             preds_map[i] = preds_future[i]
             is_blind_map[i] = True

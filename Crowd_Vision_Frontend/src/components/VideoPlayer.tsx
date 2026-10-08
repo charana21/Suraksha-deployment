@@ -53,6 +53,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       setProgress(0);
       setIsPlaying(false);
 
+      console.log("[VideoPlayer] Loading video from:", src);
+
       // Fetch debug info
       const jobId = src.split("/").pop();
       if (jobId) {
@@ -61,9 +63,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         fetch(fetchUrl)
           .then((res) => res.json())
           .then((data) => {
+            console.log("[VideoPlayer] Debug info:", data);
             setDebugInfo(data);
           })
-          .catch(() => {});
+          .catch((err) =>
+            console.error("[VideoPlayer] Debug fetch failed:", err)
+          );
       }
     }, [src]);
 
@@ -73,6 +78,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
           videoRef.current.pause();
         } else {
           videoRef.current.play().catch((err) => {
+            console.error("Play error:", err);
             setError("Failed to play video");
           });
         }
@@ -101,11 +107,13 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         setDuration(videoRef.current.duration);
         setIsLoading(false);
         setError(null);
+        console.log("[VideoPlayer] Video loaded successfully");
       }
     };
 
     const handleCanPlay = () => {
       setIsLoading(false);
+      console.log("[VideoPlayer] Video can play");
     };
 
     const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
@@ -115,6 +123,14 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       let errorMessage = "Failed to load video. ";
 
       if (errorDetails) {
+        console.error("[VideoPlayer] Error details:", {
+          code: errorDetails.code,
+          message: errorDetails.message,
+          networkState: videoEl?.networkState,
+          readyState: videoEl?.readyState,
+          src: src,
+        });
+
         switch (errorDetails.code) {
           case 1:
             errorMessage += "Video loading was aborted.";

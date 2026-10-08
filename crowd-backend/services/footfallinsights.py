@@ -47,11 +47,10 @@ MONTH_META = [
 ]
 
 HOURLY_BUCKETS = [
-    {"label": "00:00 – 05:00", "start": 0,  "end": 5},
-    {"label": "05:00 – 10:00", "start": 5,  "end": 10},
-    {"label": "10:00 – 15:00", "start": 10, "end": 15},
-    {"label": "15:00 – 20:00", "start": 15, "end": 20},
-    {"label": "20:00 – 24:00", "start": 20, "end": 24},
+    {"label": "00:00 – 06:00", "start": 0,  "end": 6},
+    {"label": "06:00 – 12:00", "start": 6,  "end": 12},
+    {"label": "12:00 – 18:00", "start": 12, "end": 18},
+    {"label": "18:00 – 24:00", "start": 18, "end": 24},
 ]
 
 

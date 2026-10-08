@@ -112,6 +112,7 @@ export function StaticFOBGraph({
           setOverallPeak(response.overall_peak);
         }
       } catch (err) {
+        console.error("Failed to fetch graph history", err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -172,13 +173,13 @@ export function StaticFOBGraph({
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-3 sm:gap-5 pl-0 sm:pl-2 border-l-0 sm:border-l border-slate-200 ml-auto sm:ml-0">
+            <div className="flex items-center gap-3 sm:gap-5 pl-0 sm:pl-2 border-l-0 sm:border-l border-border/50 ml-auto sm:ml-0">
               <div className="text-center">
-                <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-medium">AVG</p>
-               <p className="text-base sm:text-lg font-bold text-slate-900">{stats.avg}</p>
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider font-medium">AVG</p>
+                <p className="text-base sm:text-lg font-bold text-foreground">{stats.avg}</p>
               </div>
               <div className="text-center">
-                <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider font-medium">PEAK</p>
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider font-medium">PEAK</p>
                 <p className="text-base sm:text-lg font-bold text-risk-medium">{stats.peak}</p>
               </div>
             </div>

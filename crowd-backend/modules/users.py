@@ -59,6 +59,15 @@ WHATSAPP_SERVICE_ALIASES = {
         "msg91_custom_whatsapp_message_template_id",
         "custom_whatsapp_message",
     ],
+    "msg91_whatsapp_island_alert_template_id": [
+        "msg91_whatsapp_island_alert_template_id",
+    ],
+    "msg91_whatsapp_fob_alert_template_id": [
+        "msg91_whatsapp_fob_alert_template_id",
+        "msg91_whatsapp_crowd_alert_template_id",
+        "whatsapp_content_sid",
+        "twilio_whatsapp_content_sid",
+    ],
 }
 
 WHATSAPP_SERVICE_KEYS = {
@@ -67,6 +76,8 @@ WHATSAPP_SERVICE_KEYS = {
     "msg91_whatsapp_booking_office_template_id",
     "msg91_whatsapp_crowd_alert_template_id",
     "msg91_custom_whatsapp_message_template_id",
+    "msg91_whatsapp_island_alert_template_id",
+    "msg91_whatsapp_fob_alert_template_id",
     "suraksha_ai",
     *[
         alias

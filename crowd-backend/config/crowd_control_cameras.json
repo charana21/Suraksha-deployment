@@ -1,0 +1,61 @@
+{
+  "platforms": {
+    "PF 1": ["cam_hyb_pf1", "cam_hyb_pf1_a"],
+    "PF 2&3": ["cam_hyb_pf2"],
+    "PF 4&5": ["cam_hyb_pf4"],
+    "PF 6&7": [],
+    "PF 8&9": ["cam_hyb_pf8"],
+    "PF 10": ["cam_hyb_pf10"]
+  },
+  "fobs": {
+    "Hyd FOB": ["cam_middle_fob_4_5", "cam_pf1_fob_pf10", "cam_pf1_fob_hyb_end"],
+    "Mid FOB": ["cam_mid_fob_center", "cam_mid_fob_pf1"],
+    "KZJ FOB": ["cam_kzj_pf1_fob_kzj", "cam_kzj_pf1_fob_pf10"]
+  },
+  "booking_office":{
+    "GATE 2A BOOKING COUNTER": ["cam_hyb_booking"],
+    "GATE 4 GENERAL WAITING HALL":["cam_hyb_booking_gate4a"],
+    "GATE 6 BOOKING OFFICE": ["cam_hyb_booking_gate6"],
+    "GATE 8 OUTSIDE":["cam_hyb_booking_gate8"]
+  },
+  "holding_areas": {
+    "PF 1 Right-Side Waiting Hall": ["cam_gate2_fc_ac_wh","cam_gate2_wh"],
+    "PF 1 Left-Side Waiting Hall": ["cam_hyb_booking_gate4a"],
+    "PF 10 Waiting Hall": ["cam_pf10_bme_counter"]
+  },
+  "thresholds": {
+    "platforms": {
+      "main": {
+        "names": ["PF1", "PF10"],
+        "levels": [700, 1000, 1200],
+        "capacity": 1200
+      },
+      "island": {
+        "levels": [500, 700, 900],
+        "capacity": 900
+      }
+    },
+    "fobs": {
+      "Hyd FOB": {
+        "levels": [95, 120, 150],
+        "capacity": 150
+      },
+      "KZJ FOB": {
+        "levels": [95, 120, 150],
+        "capacity": 150
+      },
+      "Mid FOB": {
+        "levels": [105, 130, 160],
+        "capacity": 160
+      }
+    },
+    "booking_office": {
+      "levels": [110, 150, 190],
+      "capacity": 190
+    },
+    "holding_areas": {
+      "levels": [260, 320, 350],
+      "capacity": 350
+    }
+  }
+}

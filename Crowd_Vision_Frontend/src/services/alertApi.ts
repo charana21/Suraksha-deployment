@@ -123,7 +123,8 @@ export interface IslandTrain {
     arrival_time: string | null;
     departure_time: string | null;
     passengers: number;
-    platform: string;
+    platform?: string | null;
+    expected_platforms?: string[] | null;
     stability_percent?: number;
     certainty?: string;
     explanation?: string;
@@ -157,6 +158,15 @@ export interface IslandAlertResponse {
     current_time: string;
     window_end: string;
     count: number;
+    alerts: IslandAlert[];
+}
+
+export interface IslandAlertLatestResponse {
+    status: string;
+    count: number;
+    total: number;
+    limit: number;
+    offset: number;
     alerts: IslandAlert[];
 }
 
@@ -257,6 +267,15 @@ class AlertApiService {
         const query = new URLSearchParams({ hours_ahead: hours_ahead.toString() });
         const response = await fetch(`${this.baseUrl}/island-alerts/live?${query.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch island alerts');
+        return response.json();
+    }
+
+    /**
+     * Get latest (past) island platform alerts
+     */
+    async getLatestIslandAlerts(): Promise<IslandAlertLatestResponse> {
+        const response = await fetch(`${this.baseUrl}/island-alerts/latest`);
+        if (!response.ok) throw new Error('Failed to fetch past island alerts');
         return response.json();
     }
 }

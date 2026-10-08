@@ -5,7 +5,7 @@ import time
 import logging
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, HistGradientBoostingRegressor
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ from .common import (
 from .features import (
     compute_named_holiday_ratios,
     build_named_ratio_array,
+    compute_historical_context_features,
     build_frame,
     recursive_forecast
 )
@@ -74,32 +75,43 @@ def get_validation_cutoffs(df: pd.DataFrame):
 
 def get_model_configs():
     """Returns list of (name, estimator_prototype, target_transform_name)."""
-    configs = [
-        ('RandomForest_raw', RandomForestRegressor(
-            n_estimators=400, max_depth=8, min_samples_leaf=3, random_state=42, n_jobs=1), 'raw'),
-        ('RandomForest_log', RandomForestRegressor(
-            n_estimators=400, max_depth=8, min_samples_leaf=3, random_state=42, n_jobs=1), 'log'),
-        ('GradientBoosting_raw', GradientBoostingRegressor(
-            n_estimators=300, max_depth=3, learning_rate=0.05, random_state=42), 'raw'),
-        ('GBM_quantile50', GradientBoostingRegressor(
-            n_estimators=300, max_depth=3, learning_rate=0.05, loss='quantile', alpha=0.50, random_state=42), 'raw'),
-    ]
+    configs = []
 
+    # High-performance gradient boosters with parallel execution
     if HAS_XGBOOST and XGBRegressor is not None:
-        configs.append(
+        configs.extend([
+            ('XGBoost_log', XGBRegressor(
+                n_estimators=450, max_depth=5, learning_rate=0.03,
+                subsample=0.85, colsample_bytree=0.85, random_state=42,
+                verbosity=0, n_jobs=-1), 'log'),
             ('XGBoost_raw', XGBRegressor(
-                n_estimators=400, max_depth=4, learning_rate=0.05,
-                subsample=0.8, colsample_bytree=0.8, random_state=42,
-                verbosity=0, n_jobs=1), 'raw')
-        )
+                n_estimators=400, max_depth=4, learning_rate=0.04,
+                subsample=0.85, colsample_bytree=0.85, random_state=42,
+                verbosity=0, n_jobs=-1), 'raw'),
+        ])
 
     if HAS_LIGHTGBM and LGBMRegressor is not None:
         configs.extend([
+            ('LightGBM_log', LGBMRegressor(
+                n_estimators=450, max_depth=5, learning_rate=0.03,
+                subsample=0.85, colsample_bytree=0.85, random_state=42,
+                verbose=-1, n_jobs=-1), 'log'),
             ('LightGBM_raw', LGBMRegressor(
-                n_estimators=400, max_depth=4, learning_rate=0.05,
-                subsample=0.8, colsample_bytree=0.8, random_state=42,
-                verbose=-1, n_jobs=1, force_col_wise=True), 'raw'),
+                n_estimators=400, max_depth=4, learning_rate=0.04,
+                subsample=0.85, colsample_bytree=0.85, random_state=42,
+                verbose=-1, n_jobs=-1), 'raw'),
         ])
+
+    configs.extend([
+        ('HistGBM_log', HistGradientBoostingRegressor(
+            max_iter=350, max_depth=5, learning_rate=0.03, random_state=42), 'log'),
+        ('HistGBM_raw', HistGradientBoostingRegressor(
+            max_iter=350, max_depth=4, learning_rate=0.04, random_state=42), 'raw'),
+        ('RandomForest_log', RandomForestRegressor(
+            n_estimators=300, max_depth=8, min_samples_leaf=3, random_state=42, n_jobs=-1), 'log'),
+        ('RandomForest_raw', RandomForestRegressor(
+            n_estimators=300, max_depth=8, min_samples_leaf=3, random_state=42, n_jobs=-1), 'raw'),
+    ])
 
     return configs
 
@@ -169,11 +181,14 @@ def run_backtest(df, cf_hist, base, target, idx_of_date, n_full, values_for_feat
             values_hidden, cf_hist, cutoff_idx)
         named_ratio_arr = build_named_ratio_array(
             cf_hist, on_med, before_med, after_med, p_on, p_bef, p_aft)
+        hist_mdow_arr, hist_m_arr = compute_historical_context_features(
+            df, target, cf_hist.full_dates, cutoff)
 
         train_idx_raw = list(range(config.MIN_TRAIN_START_IDX, cutoff_idx + 1))
         train_valid_mask = ~np.isnan(values_actual_clean[train_idx_raw])
         train_idx = [i for i, m in zip(train_idx_raw, train_valid_mask) if m]
-        X_train = build_frame(values_hidden, train_idx, cf_hist, base, holiday_ratio, seasonal_arr, named_ratio_arr)
+        X_train = build_frame(values_hidden, train_idx, cf_hist, base, holiday_ratio, seasonal_arr, named_ratio_arr,
+                              hist_mdow_arr=hist_mdow_arr, hist_m_arr=hist_m_arr)
         y_train_raw = values_actual_clean[train_idx]
 
         for name, model_proto, transform_name in get_model_configs():
@@ -182,7 +197,8 @@ def run_backtest(df, cf_hist, base, target, idx_of_date, n_full, values_for_feat
             model = type(model_proto)(**model_proto.get_params())
             model.fit(X_train, fwd(y_train_raw))
             preds = recursive_forecast(model, values_hidden, forecast_idx, cf_hist, base,
-                                        holiday_ratio, inv, seasonal_arr, named_ratio_arr)
+                                        holiday_ratio, inv, seasonal_arr, named_ratio_arr,
+                                        hist_mdow_arr=hist_mdow_arr, hist_m_arr=hist_m_arr)
             y_pred = [preds[i] for i in forecast_idx]
             fold_preds[(fold_year, name)] = y_pred
             m = metrics(y_true, y_pred)
@@ -194,40 +210,48 @@ def run_backtest(df, cf_hist, base, target, idx_of_date, n_full, values_for_feat
                                       mean_under_amount=am['mean_under_amount'],
                                       mean_over_amount=am['mean_over_amount']))
             if verbose:
-                logger.info(f"  fold={fold_year} {name}: MAE={m['MAE']:.0f} MAPE={m['MAPE']:.2f}% "
-                            f"under_viol={am['under_violation_pct']:.1f}% ({time.time()-t0:.1f}s)")
+                logger.info(f"  fold={fold_year} {name:16s}: MAE={m['MAE']:.0f} MAPE={m['MAPE']:.2f}% "
+                            f"Acc={m['validation_accuracy']:.2f}% R2={m['R2']:.3f} ({time.time()-t0:.1f}s)")
 
     if not fold_results:
         # Fallback if historical data doesn't cover all fold cutoffs
-        logger.warning(f"No fold completed for target {target}, using default GBM_quantile65")
-        return "GBM_quantile65", None, pd.DataFrame(), pd.DataFrame()
+        logger.warning(f"No fold completed for target {target}, using default XGBoost_raw")
+        return "XGBoost_raw", None, pd.DataFrame(), pd.DataFrame()
 
     fr = pd.DataFrame(fold_results)
     avg_base = fr.groupby('model')[['MAE', 'RMSE', 'MAPE', 'R2', 'validation_accuracy',
                                      'under_violation_pct', 'over_violation_pct', 'violation_pct',
                                      'mean_under_amount', 'mean_over_amount']].mean().reset_index()
 
-    # Ensemble top models
-    top_members = avg_base.sort_values('MAE').head(config.ENSEMBLE_SIZE)['model'].tolist()
-    ens_name = f'Ensemble_top{config.ENSEMBLE_SIZE}'
-    for fold_year, y_true in fold_y_true.items():
-        member_preds = [fold_preds[(fold_year, m)] for m in top_members if (fold_year, m) in fold_preds]
-        if member_preds:
-            y_pred = np.mean(member_preds, axis=0)
-            m = metrics(y_true, y_pred)
-            am = two_sided_asymmetric_metrics(y_true, y_pred, config.UNDER_THRESHOLD, config.OVER_THRESHOLD)
-            fold_results.append(dict(target=target, fold=fold_year, model=ens_name, **m,
-                                      under_violation_pct=am['under_violation_pct'],
-                                      over_violation_pct=am['over_violation_pct'],
-                                      violation_pct=am['violation_pct'],
-                                      mean_under_amount=am['mean_under_amount'],
-                                      mean_over_amount=am['mean_over_amount']))
+    # Candidate ensembles: evaluate top-2 and top-3 ensembles by lowest MAE
+    candidate_ensembles = [
+        ('Ensemble_top2', avg_base.sort_values('MAE').head(2)['model'].tolist()),
+        ('Ensemble_top3', avg_base.sort_values('MAE').head(3)['model'].tolist()),
+    ]
+    for ens_name, top_members in candidate_ensembles:
+        if len(top_members) >= 2:
+            for fold_year, y_true in fold_y_true.items():
+                member_preds = [fold_preds[(fold_year, m)] for m in top_members if (fold_year, m) in fold_preds]
+                if len(member_preds) == len(top_members):
+                    y_pred = np.mean(member_preds, axis=0)
+                    m = metrics(y_true, y_pred)
+                    am = two_sided_asymmetric_metrics(y_true, y_pred, config.UNDER_THRESHOLD, config.OVER_THRESHOLD)
+                    fold_results.append(dict(target=target, fold=fold_year, model=ens_name, **m,
+                                              under_violation_pct=am['under_violation_pct'],
+                                              over_violation_pct=am['over_violation_pct'],
+                                              violation_pct=am['violation_pct'],
+                                              mean_under_amount=am['mean_under_amount'],
+                                              mean_over_amount=am['mean_over_amount']))
 
     fr = pd.DataFrame(fold_results)
     avg = fr.groupby('model')[['MAE', 'RMSE', 'MAPE', 'R2', 'validation_accuracy',
                                 'under_violation_pct', 'over_violation_pct', 'violation_pct',
                                 'mean_under_amount', 'mean_over_amount']].mean().reset_index()
     winner = select_winner(avg)
-    winner_members = top_members if winner == ens_name else None
+    winner_members = None
+    for ens_name, members in candidate_ensembles:
+        if winner == ens_name:
+            winner_members = members
+            break
     return winner, winner_members, avg, fr
 

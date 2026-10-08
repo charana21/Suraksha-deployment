@@ -92,6 +92,7 @@ export const fetchGoogleCalendarEvents = async (
     const fixedEvents = getFixedKeyEventsMap(year);
 
     if (!apiKey) {
+        console.warn("No Google Calendar API key provided, using built-in events");
         return fixedEvents;
     }
 
@@ -117,6 +118,7 @@ export const fetchGoogleCalendarEvents = async (
 
         return { ...events, ...fixedEvents };
     } catch (error) {
+        console.error("Failed to fetch Google Calendar events:", error);
         return fixedEvents;
     }
 };

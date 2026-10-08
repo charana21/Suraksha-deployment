@@ -1,14 +1,13 @@
 {
   "winners": {
-    "UTS Total": "GBM_quantile50",
-    "PRS Total": "Ensemble_top3"
+    "UTS Total": "Ensemble_top2",
+    "PRS Total": "XGBoost_raw"
   },
   "winner_members": {
-    "UTS Total": null,
-    "PRS Total": [
-      "GBM_quantile50",
-      "XGBoost_raw",
-      "GradientBoosting_raw"
-    ]
+    "UTS Total": [
+      "XGBoost_log",
+      "RandomForest_log"
+    ],
+    "PRS Total": null
   }
 }

@@ -45,6 +45,45 @@ export function getFootfallTextColor(value: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Key Indian events / holidays for 2026
+// ─────────────────────────────────────────────────────────────────
+export const EVENTS_2026: Record<string, { name: string; color: string }> = {
+    "2026-01-01": { name: "New Year's Day", color: "#e74c3c" },
+    "2026-01-14": { name: "Makar Sankranti / Pongal", color: "#f39c12" }, 
+    "2026-01-26": { name: "Republic Day", color: "#27ae60" },              
+    "2026-02-14": { name: "Valentine's Day", color: "#e91e63" },
+    "2026-02-15": { name: "Maha Shivratri", color: "#9b59b6" },            
+    "2026-03-03": { name: "Holika Dahan", color: "#e74c3c" },              
+    "2026-03-04": { name: "Holi", color: "#e74c3c" },                       
+    "2026-03-19": { name: "Gudi Padwa / Ugadi", color: "#f39c12" },        
+    "2026-03-21": { name: "Eid ul-Fitr", color: "#16a085" },               
+    "2026-03-26": { name: "Ram Navami", color: "#e67e22" },                
+    "2026-04-03": { name: "Good Friday", color: "#7f8c8d" },               
+    "2026-04-14": { name: "Ambedkar Jayanti", color: "#2980b9" },
+    "2026-05-01": { name: "Labour Day / Buddha Purnima", color: "#c0392b" }, 
+    "2026-05-27": { name: "Eid ul-Adha (Bakrid)", color: "#16a085" },       
+    "2026-06-26": { name: "Muharram", color: "#2c3e50" },                  
+    "2026-08-15": { name: "Independence Day", color: "#27ae60" },
+    "2026-08-26": { name: "Onam (Thiruvonam)", color: "#27ae60" },         
+    "2026-08-28": { name: "Raksha Bandhan", color: "#e67e22" },            
+    "2026-09-04": { name: "Janmashtami", color: "#8e44ad" },               
+    "2026-09-05": { name: "Teacher's Day (India)", color: "#3498db" },     // Added National Teacher's Day
+    "2026-09-14": { name: "Ganesh Chaturthi", color: "#e67e22" },          
+    "2026-10-02": { name: "Gandhi Jayanti", color: "#2c3e50" },
+    "2026-10-05": { name: "World Teacher's Day", color: "#3498db" },       // Added International Teacher's Day
+    "2026-10-11": { name: "Navratri Begins", color: "#e74c3c" },           
+    "2026-10-20": { name: "Dussehra", color: "#e74c3c" },                  
+    "2026-11-06": { name: "Dhanteras", color: "#f39c12" },                 
+    "2026-11-08": { name: "Diwali (Lakshmi Puja)", color: "#f39c12" },     
+    "2026-11-14": { name: "Children's Day", color: "#3498db" },
+    "2026-11-15": { name: "Chhath Puja", color: "#e67e22" },               
+    "2026-11-24": { name: "Guru Nanak Jayanti", color: "#f39c12" },
+    "2026-12-25": { name: "Christmas", color: "#c0392b" },
+    "2026-12-31": { name: "New Year's Eve", color: "#9b59b6" }
+};
+
+
+// ─────────────────────────────────────────────────────────────────
 // Simulation engine constants
 //   • Each "step" = 2 minutes of real time
 //   • Cycle = SIMULATION_CYCLE_STEPS steps (25 × 2 min = 50 min)
@@ -55,10 +94,26 @@ export const SIMULATION_STEP_MS = 2 * 60 * 1000; // 2 minutes per step
 export const SIMULATION_CYCLE_STEPS = 25;           // 25 steps per full cycle
 
 /** Fast refresh for festival halo days: 30 seconds per step */
+export const FESTIVAL_STEP_MS = 30_000;
+export const FESTIVAL_FAST_STEPS = 40; // 40 × 30 s = 20-min cycle for festival days
 
 /** Target monthly peak footfall at the top of each cycle */
 const SIMULATION_PEAK_MONTHLY = 5_000_000;
 
+/**
+ * Festival halo window: ±2 days from any event in EVENTS_2026.
+ * These days use the fast 30-second refresh cycle.
+ */
+export function isFestivalHaloDay(dayDate: number, month: number, year: number): boolean {
+    const target = new Date(year, month, dayDate);
+    for (let offset = -2; offset <= 1; offset++) {
+        const check = new Date(target);
+        check.setDate(target.getDate() + offset);
+        const key = `${check.getFullYear()}-${String(check.getMonth() + 1).padStart(2, "0")}-${String(check.getDate()).padStart(2, "0")}`;
+        if (EVENTS_2026[key]) return true;
+    }
+    return false;
+}
 
 /**
  * Per-month peak scale: fraction of SIMULATION_PEAK_MONTHLY each month's
@@ -125,8 +180,17 @@ const MONTH_NAMES = [
 // Helpers
 // ─────────────────────────────────────────────────────────────────
 
-const getDayType = (date: Date): string => {
+const getDayType = (
+    date: Date,
+    events: Record<string, { name: string; color: string }>
+): string => {
     const dow = date.getDay();
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    if (events[key]) {
+        const n = events[key].name;
+        if (n === "Diwali" || n === "Holi") return "Festival";
+        return n;
+    }
     if (dow === 0 || dow === 6) return "Weekend";
     if (dow === 5) return "Friday Rush";
     return "Regular";
@@ -156,6 +220,11 @@ const getDaysInMonth = (year: number, month: number): number =>
  * The function returns the HIGHEST applicable multiplier.
  */
 function getHaloDemandMultiplier(dayDate: number, month: number, year: number): number {
+    const MAJOR_FESTIVALS = new Set([
+        "Diwali", "Holi", "Maha Shivratri", "Eid ul-Adha", "Makar Sankranti",
+        "Ganesh Chaturthi", "Navratri Begins", "Dussehra",
+    ]);
+
     const target = new Date(year, month, dayDate);
     let bestMult = 1.0;
 
@@ -163,6 +232,28 @@ function getHaloDemandMultiplier(dayDate: number, month: number, year: number): 
     const dow = target.getDay();
     if (dow === 0 || dow === 6) bestMult = Math.max(bestMult, 1.18);
     else if (dow === 5) bestMult = Math.max(bestMult, 1.12);
+
+    // Check all events in a ±4-day window around this date
+    for (let offset = -4; offset <= 2; offset++) {
+        const check = new Date(target);
+        check.setDate(target.getDate() + offset);
+        const key = `${check.getFullYear()}-${String(check.getMonth() + 1).padStart(2, "0")}-${String(check.getDate()).padStart(2, "0")}`;
+        const event = EVENTS_2026[key];
+        if (!event) continue;
+
+        const isMajor = MAJOR_FESTIVALS.has(event.name);
+        const peakMult = isMajor ? 2.0 : 1.5;   // multiplier ON the festival day itself
+        const haloDecay = isMajor ? 0.18 : 0.12;  // strength drop per day of distance
+
+        // offset < 0 means the festival is AHEAD (lead-up booking surge)
+        // offset = 0 means today IS the festival
+        // offset > 0 means festival was in the past (cool-down)
+        const distance = Math.abs(offset);
+        // Lead-up (offset < 0) is slightly stronger than cool-down (offset > 0)
+        const dirScale = offset < 0 ? 1.0 : 0.70;
+        const mult = peakMult - distance * haloDecay * dirScale;
+        if (mult > bestMult) bestMult = mult;
+    }
 
     // Add a day-specific jitter (±5%) to make each day feel unique
     const jitter = 0.95 + seededRand(month * 100 + dayDate) * 0.10;
@@ -216,21 +307,25 @@ export const generateMonthData = (year: number, month: number): MonthData => {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
-        const dayType = getDayType(date);
+        const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const eventData = EVENTS_2026[dateKey];
+        const dayType = getDayType(date, EVENTS_2026);
         const isNoDataMonth = month >= 7;
-        const footfall = isNoDataMonth ? 0 : generateFootfall(dayType, month, false, day);
+        const footfall = isNoDataMonth ? 0 : generateFootfall(dayType, month, !!eventData, day);
 
         let specials = 0;
         if (!isNoDataMonth) {
             if (dayType === "Weekend") specials = 2;
             else if (dayType === "Friday Rush" || dayType !== "Regular")
                 specials = Math.floor(seededRand(month * 100 + day) * 3) + 1;
+            if (eventData) specials = Math.floor(seededRand(month * 200 + day) * 4) + 2;
         }
 
-        days.push({ date: day, dayType, footfall, specials });
+        days.push({ date: day, dayType, footfall, specials, event: eventData?.name, eventColor: eventData?.color });
 
         totalFootfall += footfall;
         if (footfall > peakFootfall) { peakFootfall = footfall; peakDay = day; }
+        if (!isNoDataMonth && eventData && !keyEvents.includes(eventData.name)) keyEvents.push(eventData.name);
     }
 
     return {
@@ -259,9 +354,14 @@ export const formatFootfall = (n: number): string => {
 // ─────────────────────────────────────────────────────────────────
 // CORE ENGINE — getLiveFootfall
 //
-// Simulation behavior:
-//  Normal, weekend, and Friday patterns refresh every two minutes.
-//  Event effects are provided by the backend calendar-insights API.
+// Two-speed simulation:
+//  Festival halo days (±2 days of any event in EVENTS_2026):
+//    → Fast 30-second step cycle
+//    → Values START at 250K and grow to a festival-scaled peak
+//    → Resets every FESTIVAL_FAST_STEPS × 30 s (~20 min)
+//  All other days (normal/weekend/regular):
+//    → Slow 2-minute step cycle (unchanged)
+//    → Values grow from 0 → monthly peak (~5M total) then reset
 //  Special rules:
 //    • January (0)  → always static (return base `total`)
 //    • Aug–Dec (7-11) → always 0
@@ -280,6 +380,28 @@ export const getLiveFootfall = (
 
     // ── Demand multiplier (used by both paths) ──────────────────────
     const demandMult = getHaloDemandMultiplier(dayDate, month, year);
+
+    // ════════════════════════════════════════════════════════════════
+    // FAST PATH — Festival halo days (±2 days of any event)
+    // Refresh every 30 seconds, starts at 250 K, grows upward.
+    // ════════════════════════════════════════════════════════════════
+    if (isFestivalHaloDay(dayDate, month, year)) {
+        const fastStep = Math.floor(Date.now() / FESTIVAL_STEP_MS) % FESTIVAL_FAST_STEPS;
+        const fastProgress = fastStep / (FESTIVAL_FAST_STEPS - 1); // 0.0 → 1.0
+
+        // For Mar-Jul (months 2-6), use a 260k floor; otherwise 250k
+        const floor = (month >= 2 && month <= 6) ? 260_000 : 250_000;
+        const festivalPeak = floor * demandMult;
+
+        // Linear grow from floor up to festivalPeak
+        const value = floor + (festivalPeak - floor) * fastProgress;
+
+        // Seeded noise changes every fast step (visible jump every 30 s)
+        const noiseSeed = fastStep * 10000 + month * 100 + dayDate;
+        const noise = 0.992 + seededRand(noiseSeed) * 0.016;
+
+        return Math.max(floor, Math.round(value * noise));
+    }
 
     // ════════════════════════════════════════════════════════════════
     // SLOW PATH — Regular / weekend / non-festival days

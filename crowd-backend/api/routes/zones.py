@@ -242,6 +242,10 @@ LATEST_CAMERA_IDS = [
     "cam_rethifile_bo",
     "cam_gate2a_towards_avtm",
     "cam_gate2a_fc_parking",
+    "cam_kzj_fob_mid_4_5",
+    "cam_pf10_bme_counter",
+    "cam_new_kzj_fob_fc_pf1",
+    "cam_new_kzj_fob_near_pf1",
 ]
 
 

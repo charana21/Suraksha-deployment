@@ -17,6 +17,7 @@ export interface UserItem {
   updateAt?: string;
   createBy?: string;
   updateBy?: string;
+  gender?: string;
 }
 
 export interface UserPayload {
@@ -27,6 +28,7 @@ export interface UserPayload {
   active: number;
   password?: string;
   services: string[];
+  gender?: string;
 }
 
 export interface UsersResponse {

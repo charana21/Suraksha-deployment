@@ -907,6 +907,8 @@ class PersistenceWorker:
                 raw_zone_name, station_name, alternative_zone_raw_names
             )
 
+            template_id = getattr(self.settings, "msg91_whatsapp_fob_alert_template_id", "fob_congestion_alert") or "fob_congestion_alert"
+
             alert_payload = {
                 "alert_id": f"fob_congestion_{station_id}_{zone_id}_{int(zone_timestamp.timestamp())}",
                 "severity": "HIGH",
@@ -921,19 +923,29 @@ class PersistenceWorker:
                 ),
                 "timestamp": zone_timestamp,
                 "custom_whatsapp_message": messages_i18n.get("eng", ""),
-                "whatsapp_content_sid": "HXca4c5d5ad4e892ab818cebfd45c30f0c",
+                "send_whatsapp": True,
+                "whatsapp_content_sid": template_id,
                 "whatsapp_template_variables": {
-                    "1": str(station_name),
-                    "2": str(_whatsapp_fob_name(raw_zone_name)),
-                    "3": str(alt1_eng),
-                    "4": str(alt2_eng),
+                    "1": str(_whatsapp_fob_name(raw_zone_name)),
+                    "2": str(alt1_eng),
+                    "3": str(alt2_eng),
                 },
                 "alert_category": "fob_congestion",
+                "whatsapp_cooldown_seconds": cooldown,
             }
 
-            logger.info(f"[PersistenceWorker] Queueing LIVE FOB alert for {zone_id} ({total_people} people)")
-            await self.queue_alert(alert_payload)
+            logger.info(f"[PersistenceWorker] Sending LIVE FOB WhatsApp alert for {zone_id} ({total_people} people)")
             self._last_fob_alert_time[zone_id] = current_time
+
+            try:
+                whatsapp_result = await self.notification_service.send_whatsapp_alert(alert_payload)
+                logger.info(f"[PersistenceWorker] Live FOB WhatsApp dispatch result: {whatsapp_result}")
+            except Exception:
+                logger.exception("[PersistenceWorker] Failed to dispatch live FOB WhatsApp alert")
+
+            persisted_record = dict(alert_payload)
+            persisted_record["send_whatsapp"] = False
+            await self.queue_alert(persisted_record)
 
             await self._upsert_congestion_alert(
                 zone_id,
@@ -1021,6 +1033,8 @@ class PersistenceWorker:
                 raw_zone_name, station_name, alternative_zone_raw_names
             )
 
+            template_id = getattr(self.settings, "msg91_whatsapp_fob_alert_template_id", "fob_congestion_alert") or "fob_congestion_alert"
+
             alert_payload = {
                 "alert_id": f"fob_congestion_{station_id}_{zone_id}_{int(timestamp_now.timestamp())}",
                 "severity": "HIGH",
@@ -1035,18 +1049,27 @@ class PersistenceWorker:
                 ),
                 "timestamp": timestamp_now,
                 "custom_whatsapp_message": messages_i18n.get("eng", ""),
-                "whatsapp_content_sid": "HXca4c5d5ad4e892ab818cebfd45c30f0c",
+                "send_whatsapp": True,
+                "whatsapp_content_sid": template_id,
                 "whatsapp_template_variables": {
-                    "1": str(station_name),
-                    "2": str(_whatsapp_fob_name(raw_zone_name)),
-                    "3": str(alt1_eng),
-                    "4": str(alt2_eng),
+                    "1": str(_whatsapp_fob_name(raw_zone_name)),
+                    "2": str(alt1_eng),
+                    "3": str(alt2_eng),
                 },
                 "alert_category": "fob_congestion",
+                "whatsapp_cooldown_seconds": cooldown,
             }
 
-            logger.info(f"[PersistenceWorker] Queueing DB-backed FOB alert for {zone_id} ({total_people} people)")
-            await self.queue_alert(alert_payload)
+            logger.info(f"[PersistenceWorker] Sending DB-backed FOB WhatsApp alert for {zone_id} ({total_people} people)")
+            try:
+                whatsapp_result = await self.notification_service.send_whatsapp_alert(alert_payload)
+                logger.info(f"[PersistenceWorker] DB-backed FOB WhatsApp dispatch result: {whatsapp_result}")
+            except Exception:
+                logger.exception("[PersistenceWorker] Failed to dispatch DB FOB WhatsApp alert")
+
+            persisted_record = dict(alert_payload)
+            persisted_record["send_whatsapp"] = False
+            await self.queue_alert(persisted_record)
 
             await self._upsert_congestion_alert(
                 zone_id,
@@ -1110,6 +1133,104 @@ class PersistenceWorker:
 
         if found_count > 0:
             logger.info(f"[PersistenceWorker] DB Alert Poll: Dispatched {found_count} camera WhatsApp alerts from DB.")
+
+    async def _queue_db_island_whatsapp_alerts(self) -> None:
+        """
+        DB-backed island platform alerts: queries the 'island_alerts' collection for
+        confirmed, upcoming alerts that haven't been sent via WhatsApp yet, and dispatches them.
+        """
+        if MongoDB.database is None:
+            return
+        if not getattr(self.settings, "island_platform_detection_enabled", True):
+            return
+        if not getattr(self.settings, "island_alert_whatsapp_enabled", True):
+            return
+
+        from services.island_alert_service import island_alert_service
+
+        lookahead = int(getattr(self.settings, "island_alert_whatsapp_lookahead_minutes", 120))
+        try:
+            pending = await island_alert_service.get_pending_whatsapp_alerts(self._now_ist(), lookahead)
+        except Exception:
+            logger.exception("[PersistenceWorker][IslandAlert] Failed to fetch pending island alerts")
+            return
+
+        for island_alert in pending:
+            alert_id = island_alert.get("alert_id")
+
+            # Claim the alert before sending (marked sent regardless of outcome to
+            # prevent infinite loops on failing alerts). If another cycle/process
+            # already claimed it, skip so it's never sent twice.
+            try:
+                if not await island_alert_service.claim_whatsapp_send(alert_id):
+                    logger.info(f"[PersistenceWorker][IslandAlert] {alert_id} already sent, skipping")
+                    continue
+            except Exception:
+                logger.exception("[PersistenceWorker][IslandAlert] claim_whatsapp_send failed")
+                continue
+
+            logger.info(f"[PersistenceWorker][IslandAlert] Sending WhatsApp alert for {alert_id}")
+            try:
+                whatsapp_result = await self.notification_service.send_whatsapp_alert(
+                    self._build_island_whatsapp_payload(island_alert), skip_checks=True
+                )
+                logger.info(f"[PersistenceWorker][IslandAlert] WhatsApp dispatch result: {whatsapp_result}")
+            except Exception:
+                logger.exception("[PersistenceWorker][IslandAlert] send_whatsapp_alert failed")
+
+        if pending:
+            logger.info(f"[PersistenceWorker][IslandAlert] Dispatched {len(pending)} island WhatsApp alerts from DB.")
+
+    def _build_island_whatsapp_payload(self, island_alert: Dict[str, Any]) -> Dict[str, Any]:
+        """Constructs the WhatsApp alert payload for an island platform footfall alert."""
+        island_id = island_alert.get("island_id", "")
+        island_name = island_alert.get("island_name") or island_id
+        window_start = island_alert.get("window_start")
+        window_end = island_alert.get("window_end")
+        time_window = (
+            f"{window_start.strftime('%H:%M')}-{window_end.strftime('%H:%M')}"
+            if isinstance(window_start, datetime) and isinstance(window_end, datetime)
+            else ""
+        )
+        total_footfall = island_alert.get("total_footfall", 0)
+        risk_level = island_alert.get("risk_level", "UNKNOWN")
+        # WhatsApp template variables can't contain newlines, so join on ", "
+        train_numbers = ", ".join(dict.fromkeys(
+            str(t.get("train_number"))
+            for t in island_alert.get("contributing_trains") or []
+            if t.get("train_number")
+        )) or "-"
+
+        template_id = getattr(self.settings, "msg91_whatsapp_island_alert_template_id", "") or "island_alert"
+        # island_alert is a POSITIONAL template: {{1}} platform, {{2}} start,
+        # {{3}} end, {{4}} trains, {{5}} footfall, {{6}} risk level
+        variables = {
+            "1": f"Island Platform {island_name}",
+            "2": window_start.strftime('%H:%M') if isinstance(window_start, datetime) else "-",
+            "3": window_end.strftime('%H:%M') if isinstance(window_end, datetime) else "-",
+            "4": train_numbers,
+            "5": str(total_footfall),
+            "6": str(risk_level),
+        }
+
+        return {
+            "alert_id": island_alert.get("alert_id"),
+            "severity": risk_level,
+            "camera_id": island_id,
+            "location": f"Island Platform {island_name}",
+            "people_count": total_footfall,
+            "trigger_reason": (
+                f"Estimated footfall {total_footfall} exceeds threshold "
+                f"{island_alert.get('threshold')} between {time_window}"
+            ),
+            "timestamp": window_start,
+            "send_email": False,
+            "send_whatsapp": True,
+            "whatsapp_content_sid": template_id,
+            "whatsapp_template_variables": variables,
+            "custom_whatsapp_message": island_alert.get("advisory_message", ""),
+            "alert_category": "island_footfall_risk",
+        }
 
     # -------------------------------------------------------------------------
     # Shared helpers
@@ -1292,6 +1413,8 @@ class PersistenceWorker:
         await self._queue_db_fob_whatsapp_alerts(timestamp_now)
         # --- DB-backed Camera WhatsApp alerts ---
         await self._queue_db_camera_whatsapp_alerts(timestamp_now)
+        # --- DB-backed Island platform WhatsApp alerts ---
+        await self._queue_db_island_whatsapp_alerts()
 
     def _extract_camera_snapshot(self, data, now: datetime):
         """Return (count, last_updated, analytics_timestamp) for a latest_camera_counts entry."""

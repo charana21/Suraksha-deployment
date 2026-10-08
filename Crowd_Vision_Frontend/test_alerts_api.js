@@ -1,6 +1,6 @@
 import https from 'https';
 
-const url = 'https://crowdvision-api.tride.live/api/alerts?hours=24&limit=5';
+const url = 'http://localhost:6006/api/alerts?hours=24&limit=5';
 
 https.get(url, (res) => {
     let data = '';

@@ -15,7 +15,8 @@ function mapDensityLevel(level: string): DensityLevel {
   return 'VERY HIGH';
 }
 
-function mapRiskLevel(level: string): RiskLevel {
+function mapRiskLevel(level?: string): RiskLevel {
+  if (!level) return 'LOW';
   const upperLevel = level.toUpperCase();
   if (upperLevel === 'LOW') return 'LOW';
   if (upperLevel === 'MEDIUM') return 'MEDIUM';
@@ -97,6 +98,7 @@ export function useRealTimeAnalytics(
       setStats(newStats);
       setError(null);
     } catch (err) {
+      console.error('Failed to fetch stream analytics:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
     }
   }, [streamId, isLive]);

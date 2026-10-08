@@ -66,6 +66,7 @@ export const analyticsApi = {
             const json = await fetchJson(`${API_BASE_URL}/analytics/fob/history?${query}`);
             return mapHistoryJson(json);
         } catch (error) {
+            console.error('Error fetching FOB history:', error);
             return { data: [], overall_peak: 0 };
         }
     },
@@ -82,6 +83,7 @@ export const analyticsApi = {
             const json = await fetchJson(`${API_BASE_URL}/analytics/zone/history?${query}`);
             return mapHistoryJson(json);
         } catch (error) {
+            console.error(`Error fetching zone history for ${params.zone_id}:`, error);
             return { data: [], overall_peak: 0 };
         }
     },
@@ -98,6 +100,7 @@ export const analyticsApi = {
             const json = await fetchJson(`${API_BASE_URL}/analytics/camera/history?${query}`);
             return mapHistoryJson(json);
         } catch (error) {
+            console.error(`Error fetching camera history for ${params.camera_id}:`, error);
             return { data: [], overall_peak: 0 };
         }
     },
@@ -114,6 +117,7 @@ export const analyticsApi = {
             const json = await fetchJson(`${API_BASE_URL}/analytics/station/history?${query}`);
             return mapHistoryJson(json);
         } catch (error) {
+            console.error('Error fetching station history:', error);
             return { data: [], overall_peak: 0 };
         }
     },

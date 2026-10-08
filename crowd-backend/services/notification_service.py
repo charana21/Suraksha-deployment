@@ -2,8 +2,11 @@ import smtplib
 import asyncio
 import logging
 import json
+import base64
+from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from datetime import datetime, timedelta
 from functools import partial
 from typing import Dict, Any, Optional
@@ -54,6 +57,39 @@ class NotificationService:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+
+    @staticmethod
+    def _build_feed_monitor_excel_attachment(alert_data: Dict[str, Any]):
+        rows = alert_data.get("feed_monitor_rows", [])
+        if len(rows) <= 1:
+            return None
+
+        from openpyxl import Workbook
+        from openpyxl.styles import Font
+
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Inactive Cameras"
+        worksheet.append(["Camera Id", "Last Timestamp", "Inactive Duration"])
+        for cell in worksheet[1]:
+            cell.font = Font(bold=True)
+
+        for row in rows:
+            worksheet.append([
+                row["camera_id"],
+                row["last_timestamp"] or "No record found",
+                row["inactive_duration"] or "Unknown",
+            ])
+
+        worksheet.freeze_panes = "A2"
+        worksheet.auto_filter.ref = worksheet.dimensions
+        worksheet.column_dimensions["A"].width = 32
+        worksheet.column_dimensions["B"].width = 34
+        worksheet.column_dimensions["C"].width = 30
+
+        output = BytesIO()
+        workbook.save(output)
+        return "inactive_camera_feeds.xlsx", output.getvalue()
 
     async def send_email_alert(self, alert_data: Dict[str, Any], skip_checks: bool = False) -> Dict[str, Any]:
         """
@@ -141,10 +177,24 @@ class NotificationService:
             msg = MIMEMultipart()
             msg['From'] = sender
             msg['To'] = receivers_str  # Comma-separated for multiple recipients
-            msg['Subject'] = f"[{alert_data.get('severity')}] Crowd Alert: {alert_data.get('camera_id')}"
+            msg['Subject'] = alert_data.get('email_subject') or f"[{alert_data.get('severity')}] Crowd Alert: {alert_data.get('camera_id')}"
 
             body = self._format_email_body(alert_data)
             msg.attach(MIMEText(body, 'html'))
+
+            attachment = self._build_feed_monitor_excel_attachment(alert_data)
+            if attachment:
+                filename, content = attachment
+                excel_part = MIMEApplication(
+                    content,
+                    _subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+                excel_part.add_header(
+                    "Content-Disposition",
+                    "attachment",
+                    filename=filename,
+                )
+                msg.attach(excel_part)
 
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
@@ -192,7 +242,7 @@ class NotificationService:
                 return {"status": "error", "error": "Failed to obtain Microsoft access token"}
 
             # Prepare email message
-            subject = f"[{alert_data.get('severity')}] Crowd Alert: {alert_data.get('camera_id')}"
+            subject = alert_data.get('email_subject') or f"[{alert_data.get('severity')}] Crowd Alert: {alert_data.get('camera_id')}"
             body_html = self._format_email_body(alert_data)
 
             # Build toRecipients list for multiple recipients
@@ -213,6 +263,16 @@ class NotificationService:
                 },
                 "saveToSentItems": "true"
             }
+
+            attachment = self._build_feed_monitor_excel_attachment(alert_data)
+            if attachment:
+                filename, content = attachment
+                email_payload["message"]["attachments"] = [{
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": filename,
+                    "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "contentBytes": base64.b64encode(content).decode("ascii"),
+                }]
 
             # Send via Microsoft Graph API
             graph_endpoint = f"https://graph.microsoft.com/v1.0/users/{sender}/sendMail"
@@ -287,6 +347,10 @@ class NotificationService:
     def _format_email_body(self, alert_data: Dict[str, Any]) -> str:
         """Format the email body as beautiful HTML with IST time"""
         from datetime import timedelta
+
+        # Camera feed monitor alerts use a plain body (details inline, or in the Excel attachment)
+        if "feed_monitor_rows" in alert_data:
+            return f"<html><body>{alert_data.get('trigger_reason', '')}</body></html>"
 
         # Parse timestamp and convert to IST
         timestamp = alert_data.get('timestamp', datetime.now())
@@ -539,15 +603,23 @@ class NotificationService:
             booking_office_id and template_id == booking_office_id
         )
 
+        is_island = alert_category == "island_footfall_risk"
+
         if is_booking_office:
             service_keys.append("msg91_whatsapp_booking_office_template_id")
+        elif is_island:
+            service_keys.append("msg91_whatsapp_island_alert_template_id")
         elif alert_category == "fob_congestion":
-            service_keys.extend(["msg91_whatsapp_crowd_alert_template_id", "msg91_custom_whatsapp_message_template_id"])
+            service_keys.extend([
+                "msg91_whatsapp_fob_alert_template_id",
+                "msg91_whatsapp_crowd_alert_template_id",
+                "msg91_custom_whatsapp_message_template_id"
+            ])
         elif crowd_id and template_id == crowd_id:
             service_keys.append("msg91_whatsapp_crowd_alert_template_id")
         elif template_id:
             service_keys.append("msg91_whatsapp_crowd_alert_template_id")
-        if not is_booking_office and str(alert_data.get("custom_whatsapp_message") or "").strip():
+        if not (is_booking_office or is_island) and str(alert_data.get("custom_whatsapp_message") or "").strip():
             service_keys.append("msg91_custom_whatsapp_message_template_id")
 
         return list(dict.fromkeys(service_keys))

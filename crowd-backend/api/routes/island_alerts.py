@@ -317,6 +317,36 @@ async def get_live_island_alerts(
 
 
 @router.get(
+    "/island-alerts/latest",
+    responses={500: {"description": INTERNAL_ERROR_DESC}},
+)
+async def get_latest_island_alerts():
+    """
+    Get the last 10 island alerts, newest first by created_at.
+
+    Returns raw records with no filters (unlike `/island-alerts`, alerts with
+    unconfirmed trains are included). Intended for testing.
+
+    **Example:**
+    ```
+    GET /api/island-alerts/latest
+    ```
+    """
+    try:
+        alerts = await island_alert_service.get_latest_alerts(limit=10)
+
+        return {
+            "status": "success",
+            "count": len(alerts),
+            "alerts": [_serialize_alert(alert) for alert in alerts]
+        }
+
+    except Exception as e:
+        logger.exception("Error getting latest island alerts")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
     "/island-alerts/{alert_id}",
     responses={
         404: {"description": ALERT_NOT_FOUND_DESC},

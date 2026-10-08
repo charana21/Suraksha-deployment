@@ -23,7 +23,7 @@ BAD_DAY_BY_TARGET = {
     "PRS Total": pd.Timestamp("2026-08-20"),
 }
 
-MODEL_VERSION = "v3_high_footfall_enhanced"
+MODEL_VERSION = "v6_calibrated_festivals_and_q4"
 
 # MongoDB collections
 HISTORICAL_COLLECTION = "historical_data"

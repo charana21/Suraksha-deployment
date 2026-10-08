@@ -1,6 +1,4 @@
-
 import { useEffect, useState } from "react";
-
 import {
   ActionIcon,
   Badge,
@@ -15,21 +13,17 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
-
 import { PageLayout } from "@/components/layout/PageLayout";
-
 import {
   whatsappAuditsApi,
   type WhatsAppAuditRecord,
 } from "@/services/whatsappAudits";
-
 import { IconDownload } from "@tabler/icons-react";
 
 const formatTimestamp = (value: string) => {
   if (!value) return "-";
 
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return value;
 
   return new Intl.DateTimeFormat("en-IN", {
@@ -38,15 +32,12 @@ const formatTimestamp = (value: string) => {
   }).format(date);
 };
 
-const formatCoordinates = (
-  record: WhatsAppAuditRecord,
-) => {
+const formatCoordinates = (record: WhatsAppAuditRecord) => {
   const coords = record.location?.coordinates;
 
   if (!coords || coords.length < 2) return "-";
 
   const [longitude, latitude] = coords;
-
   return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 };
 
@@ -62,55 +53,35 @@ const WhatsAppAudits = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [audits, setAudits] =
-    useState<WhatsAppAuditRecord[]>([]);
-
+  const [audits, setAudits] = useState<WhatsAppAuditRecord[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
-
     const loadAudits = async () => {
       setLoading(true);
       setError("");
-
       try {
-        const response =
-          await whatsappAuditsApi.getAudits();
-
+        const response = await whatsappAuditsApi.getAudits();
         if (!isMounted) return;
 
-        const today = new Date()
-          .toISOString()
-          .slice(0, 10);
-
-        const todayAudits = (
-          response.locations || []
-        ).filter(
+        const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+        const todayAudits = (response.locations || []).filter(
           (a) => a.loginDate === today,
         );
 
-        setAudits(todayAudits);
-        setTotalCount(todayAudits.length);
+        setAudits(todayAudits); // store only today's records
+        setTotalCount(todayAudits.length); // count only today's records
       } catch (err) {
         if (!isMounted) return;
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load audits",
-        );
+        setError(err instanceof Error ? err.message : "Failed to load audits");
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
-
     loadAudits();
-
     return () => {
       isMounted = false;
     };
@@ -121,25 +92,12 @@ const WhatsAppAudits = () => {
   }, [pageSize]);
 
   useEffect(() => {
-    const totalPages = Math.max(
-      1,
-      Math.ceil(audits.length / pageSize),
-    );
-
-    setPage((current) =>
-      Math.min(current, totalPages),
-    );
+    const totalPages = Math.max(1, Math.ceil(audits.length / pageSize));
+    setPage((current) => Math.min(current, totalPages));
   }, [audits.length, pageSize]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(audits.length / pageSize),
-  );
-
-  const paginatedAudits = audits.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const totalPages = Math.max(1, Math.ceil(audits.length / pageSize));
+  const paginatedAudits = audits.slice((page - 1) * pageSize, page * pageSize);
 
   const handleDownload = () => {
     if (paginatedAudits.length === 0) return;
@@ -148,15 +106,9 @@ const WhatsAppAudits = () => {
       .map(
         (audit) => `
           <tr>
-            <td>${escapeHtml(
-              audit.platform || "-",
-            )}</td>
-            <td>${escapeHtml(
-              audit.phoneNumber || "-",
-            )}</td>
-            <td>${escapeHtml(
-              audit.loginDate || "-",
-            )}</td>
+            <td>${escapeHtml(audit.platform || "-")}</td>
+            <td>${escapeHtml(audit.phoneNumber || "-")}</td>
+            <td>${escapeHtml(audit.loginDate || "-")}</td>
           </tr>
         `,
       )
@@ -187,15 +139,11 @@ const WhatsAppAudits = () => {
     const blob = new Blob([html], {
       type: "application/vnd.ms-excel;charset=utf-8",
     });
-
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-
     link.href = url;
     link.download = `whatsapp_audits_page_${page}.xls`;
-
     link.click();
-
     URL.revokeObjectURL(url);
   };
 
@@ -205,106 +153,50 @@ const WhatsAppAudits = () => {
       <Box
         mb={12}
         p={16}
-        style={{
-          border:
-            "1px solid hsl(var(--border))",
-          borderRadius: 8,
-          background:
-            "hsl(var(--card))",
-        }}
+        style={{ border: "1px solid #333", borderRadius: 8, background: "#1a1a1a" }}
       >
-        <Group
-          justify="space-between"
-          align="center"
-        >
-          <Group
-            gap={8}
-            align="center"
-          >
-            <Title
-              order={4}
-              style={{
-                color:
-                  "hsl(var(--foreground))",
-                margin: 0,
-              }}
-            >
+        <Group justify="space-between" align="center">
+          <Group gap={8} align="center">
+            <Title order={4} style={{ color: "#fff", margin: 0 }}>
               Today's WhatsApp Audits
             </Title>
-
             <Badge
-              style={{
-                background:
-                  "hsl(var(--secondary))",
-                color:
-                  "hsl(var(--secondary-foreground))",
-                borderRadius: 99,
-              }}
+              style={{ background: "#333", color: "#d0d0d0", borderRadius: 99 }}
               size="md"
             >
               {totalCount || audits.length}
             </Badge>
           </Group>
-
-         <Tooltip
-  label="Download"
-  styles={{
-    tooltip: {
-      background: "hsl(var(--secondary))",
-      color: "hsl(var(--foreground))",
-      border: "1px solid hsl(var(--border))",
-    },
-  }}
->
-  <ActionIcon
-    color="green"
-    variant="filled"
-    size="30px"
-    radius="sm"
-    onClick={handleDownload}
-  >
-    <IconDownload />
-  </ActionIcon>
-</Tooltip>
+        <Tooltip label="Download">
+        <ActionIcon
+          color="green"
+          variant="filled"
+          size="30px"
+          radius="sm"
+          onClick={handleDownload}
+        >
+          <IconDownload />
+        </ActionIcon>
+      </Tooltip>
         </Group>
       </Box>
 
       {/* ── Table card ── */}
       <Box
         p={16}
-        style={{
-          border:
-            "1px solid hsl(var(--border))",
-          borderRadius: 8,
-          background:
-            "hsl(var(--card))",
-        }}
+        style={{ border: "1px solid #333", borderRadius: 8, background: "#1a1a1a" }}
       >
-        <Table
-          style={{
-            width: "100%",
-            borderCollapse:
-              "collapse",
-          }}
-        >
+        <Table style={{ width: "100%", borderCollapse: "collapse" }}>
           <Table.Thead>
             <Table.Tr>
-              {[
-                "Platform",
-                "Phone Number",
-                "Login Date",
-              ].map((h) => (
+              {["Platform", "Phone Number", "Login Date"].map((h) => (
                 <Table.Th
                   key={h}
                   style={{
                     textAlign: "left",
                     padding: "8px",
-                    background:
-                      "hsl(var(--secondary))",
-                    color:
-                      "hsl(var(--foreground))",
-                    borderBottom:
-                      "1px solid hsl(var(--border))",
+                    background: "#111",
+                    color: "#aaa",
                   }}
                 >
                   {h}
@@ -316,40 +208,17 @@ const WhatsAppAudits = () => {
           <Table.Tbody>
             {loading ? (
               <Table.Tr>
-                <Table.Td
-                  colSpan={3}
-                  style={{
-                    padding:
-                      "40px 8px",
-                    border: "none",
-                  }}
-                >
+                <Table.Td colSpan={4} style={{ padding: "40px 8px", border: "none" }}>
                   <Center>
-                    <Loader
-                      size="sm"
-                      color="#228be6"
-                    />
+                    <Loader size="sm" color="#228be6" />
                   </Center>
                 </Table.Td>
               </Table.Tr>
             ) : error ? (
               <Table.Tr>
-                <Table.Td
-                  colSpan={3}
-                  style={{
-                    padding:
-                      "40px 8px",
-                    border: "none",
-                  }}
-                >
+                <Table.Td colSpan={3} style={{ padding: "40px 8px", border: "none" }}>
                   <Center>
-                    <Text
-                      size="sm"
-                      style={{
-                        color:
-                          "#ff8f8f",
-                      }}
-                    >
+                    <Text size="sm" c="#ff8f8f">
                       {error}
                     </Text>
                   </Center>
@@ -357,148 +226,54 @@ const WhatsAppAudits = () => {
               </Table.Tr>
             ) : audits.length === 0 ? (
               <Table.Tr>
-                <Table.Td
-                  colSpan={3}
-                  style={{
-                    padding: "8px",
-                    color:
-                      "hsl(var(--foreground))",
-                  }}
-                >
+                <Table.Td colSpan={4} style={{ padding: "8px", color: "#eee" }}>
                   No audits found.
                 </Table.Td>
               </Table.Tr>
             ) : (
-              paginatedAudits.map(
-                (audit, index) => {
-                  const bg =
-                    index % 2
-                      ? "hsl(var(--secondary))"
-                      : "transparent";
-
-                  const tdStyle = {
-                    padding: "8px",
-                    borderBottom:
-                      "1px solid hsl(var(--border))",
-                    color:
-                      "hsl(var(--foreground))",
-                    background: bg,
-                  };
-
-                  return (
-                    <Table.Tr
-                      key={audit._id}
-                    >
-                      <Table.Td
-                        style={tdStyle}
-                      >
-                        {audit.platform ||
-                          "-"}
-                      </Table.Td>
-
-                      <Table.Td
-                        style={tdStyle}
-                      >
-                        {audit.phoneNumber ||
-                          "-"}
-                      </Table.Td>
-
-                      <Table.Td
-                        style={tdStyle}
-                      >
-                        <Text
-                          size="sm"
-                          style={{
-                            color:
-                              "hsl(var(--foreground))",
-                          }}
-                        >
-                        </Text>
-
-                        <Text
-                          size="sm"
-                          style={{
-                            color:
-                              "hsl(var(--muted-foreground))",
-                          }}
-                        >
-                          {audit.loginDate ||
-                            "-"}
-                        </Text>
-                      </Table.Td>
-                    </Table.Tr>
-                  );
-                },
-              )
+              paginatedAudits.map((audit, index) => {
+                const bg = index % 2 ? "#222" : "transparent";
+                const tdStyle = {
+                  padding: "8px",
+                  borderBottom: "1px solid #333",
+                  color: "#eee",
+                  background: bg,
+                };
+                return (
+                  <Table.Tr key={audit._id}>
+                    <Table.Td style={tdStyle}>{audit.platform || "-"}</Table.Td>
+                    <Table.Td style={tdStyle}>{audit.phoneNumber || "-"}</Table.Td>
+                    <Table.Td style={tdStyle}>
+                      <Text size="sm" c="#eee">
+                        {/* {formatTimestamp(audit.timestamp || audit.loginDate)} */}
+                      </Text>
+                      <Text size="sm" c="#aaa">
+                        {audit.loginDate || "-"}
+                      </Text>
+                    </Table.Td>
+                    {/* <Table.Td style={tdStyle}>{formatCoordinates(audit)}</Table.Td> */}
+                  </Table.Tr>
+                );
+              })
             )}
           </Table.Tbody>
         </Table>
 
-        <Group
-          justify="space-between"
-          align="center"
-          mt={12}
-          gap={12}
-          wrap="wrap"
-        >
-          <Group
-            gap={8}
-            align="center"
-          >
-            <Text
-              size="sm"
-              style={{
-                color:
-                  "hsl(var(--muted-foreground))",
-              }}
-            >
+        <Group justify="space-between" align="center" mt={12} gap={12} wrap="wrap">
+          <Group gap={8} align="center">
+            <Text size="sm" c="#aaa">
               Records per page
             </Text>
-
             <Select
-              data={[
-                "10",
-                "20",
-                "30",
-              ]}
+              data={["10", "20", "30"]}
               value={String(pageSize)}
-              onChange={(value) =>
-                setPageSize(
-                  Number(
-                    value ?? "10",
-                  ),
-                )
-              }
+              onChange={(value) => setPageSize(Number(value ?? "10"))}
               w={70}
               styles={{
                 input: {
-                  background:
-                    "hsl(var(--background))",
-                  border:
-                    "1px solid hsl(var(--border))",
-                  color:
-                    "hsl(var(--foreground))",
-                },
-
-                dropdown: {
-                  background:
-                    "hsl(var(--background))",
-                  border:
-                    "1px solid hsl(var(--border))",
-                },
-
-                option: {
-                  color:
-                    "hsl(var(--foreground))",
-                  background:
-                    "hsl(var(--background))",
-                },
-
-                optionHovered: {
-                  background:
-                    "hsl(var(--secondary))",
-                  color:
-                    "hsl(var(--foreground))",
+                  background: "#2a2a2a",
+                  border: "1px solid #444",
+                  color: "#fff",
                 },
               }}
             />
@@ -512,12 +287,9 @@ const WhatsAppAudits = () => {
             color="blue"
             styles={{
               control: {
-                background:
-                  "hsl(var(--background))",
-                borderColor:
-                  "hsl(var(--border))",
-                color:
-                  "hsl(var(--foreground))",
+                background: "#2a2a2a",
+                borderColor: "#444",
+                color: "#ddd",
               },
             }}
           />

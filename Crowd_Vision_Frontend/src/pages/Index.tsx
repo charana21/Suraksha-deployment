@@ -100,7 +100,7 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-primary bg-card text-foreground">
+      <footer className="border-t border-border bg-[#111] text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row justify-between gap-8">
             {/* Logo + TRIDE Title + Address */}
@@ -114,24 +114,24 @@ const Index = () => {
                 <h2 className="text-xl font-bold tracking-wide">TRIDE</h2>
               </div>
 
-             <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-300">
                 4th Floor, Plot No.29, Matha Bhuvaneswari Society, Madhapur,
                 Hyderabad, Telangana 500084.
               </p>
             </div>
 
             {/* Contact */}
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground">Contact</p>
+            <div className="flex flex-col gap-2 text-sm text-gray-300">
+              <p className="font-semibold text-white">Contact</p>
               <p>For sales and business inquiries:</p>
-              <p className="text-foreground font-medium">sales@tridemobility.com</p>
+              <p className="text-white font-medium">sales@tridemobility.com</p>
 
               <p className="mt-2">Call Us On</p>
-              <p className="text-foreground font-medium">+91 8978881573</p>
+              <p className="text-white font-medium">+91 8978881573</p>
             </div>
 
             {/* Useful Links */}
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground"></div>
+            <div className="flex flex-col gap-2 text-sm text-gray-300"></div>
 
             {/* Risk Pulse Indicator */}
             <div className="flex items-center gap-4">
@@ -142,8 +142,8 @@ const Index = () => {
           </div>
 
           {/* Bottom Section */}
-          <div className="border-tbg-primary mt-6 pt-4 flex flex-col md:flex-row justify-between text-xs text-muted-foreground">
-            <span>©2026 ALL RIGHTS RESERVED</span>
+          <div className="border-t border-gray-700 mt-6 pt-4 flex flex-col md:flex-row justify-between text-xs text-gray-400">
+            <span>©2025 ALL RIGHTS RESERVED</span>
             <span>Designed by TRIDE</span>
           </div>
         </div>

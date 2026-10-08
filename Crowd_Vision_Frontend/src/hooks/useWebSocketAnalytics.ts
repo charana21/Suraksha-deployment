@@ -18,7 +18,8 @@ function mapDensityLevel(level: string): DensityLevel {
   return 'VERY HIGH';
 }
 
-function mapRiskLevel(level: string): RiskLevel {
+function mapRiskLevel(level?: string): RiskLevel {
+  if (!level) return 'LOW';
   const upperLevel = level.toUpperCase();
   if (upperLevel === 'LOW') return 'LOW';
   if (upperLevel === 'MEDIUM') return 'MEDIUM';
@@ -119,6 +120,8 @@ export function useWebSocketAnalytics({
   const handleMessage = useCallback(
     (message: AnalyticsMessage | AlertMessage) => {
       try {
+        console.log('[WebSocket] Received message:', message.type, 'camera:', message.camera_id);
+
         if (message.type === 'analytics') {
           const newStats = processAnalytics(message);
           setLastUpdate(new Date());
@@ -143,15 +146,18 @@ export function useWebSocketAnalytics({
             // Single camera mode: check if message matches
             // Try matching by camera_id OR just accept all (since we might not have mapping)
             // For now, accept all messages since we only have one camera usually
+            console.log('[WebSocket] Setting stats - people:', newStats.peopleCount, 'zones:', newStats.zones.length);
             setStats(newStats);
           }
 
           // Call callback if provided
           onAnalyticsRef.current?.(message.camera_id, newStats);
         } else if (message.type === 'alert') {
+          console.log(`[WebSocket] Alert from ${message.camera_id}:`, message.data);
           onAlertRef.current?.(message.camera_id, message.data);
         }
       } catch (err) {
+        console.error('[WebSocket] Failed to process message:', err);
         setError(err instanceof Error ? err.message : 'Failed to process message');
       }
     },
@@ -183,6 +189,7 @@ export function useWebSocketAnalytics({
       onOpen: () => {
         setIsConnected(true);
         setError(null);
+        console.log('[WebSocket] Connected to analytics stream');
       },
       onClose: () => {
         setIsConnected(false);

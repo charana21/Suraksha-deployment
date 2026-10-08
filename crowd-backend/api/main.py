@@ -15,7 +15,7 @@ import train_announcement
 from services.rtsp_manager import get_rtsp_manager
 from services.camera_service import CameraService
 from db.mongodb import connect_to_mongo, close_mongo_connection
-from services import footfallinsights
+from services import footfallinsights, crowd_control_service
 from services.persistence_worker import PersistenceWorker
 from services.websocket_manager import get_connection_manager
 from utils.logging_config import setup_logging, get_logger
@@ -94,6 +94,10 @@ async def _startup(app: FastAPI, settings):
     app.state.suraksha_optin_task = asyncio.create_task(lifespan_tasks.suraksha_optin_scheduler())
     app.state.suraksha_reset_task = asyncio.create_task(lifespan_tasks.suraksha_reset_scheduler())
     logger.info("Suraksha opt-in and reset schedulers started")
+    app.state.camera_feed_monitor_task = asyncio.create_task(
+        CameraService.camera_feed_monitor_scheduler()
+    )
+    logger.info("Camera feed monitor scheduler started (30min interval)")
 
     trigger_announcement_event = asyncio.Event()
     app.state.announcement_task = asyncio.create_task(
@@ -126,6 +130,7 @@ async def _shutdown(app: FastAPI, logger):
     cancel_task(app.state.announcement_task, "Announcement generator stopped")
     cancel_task(app.state.live_train_fetcher_task, "Live train fetcher stopped")
     cancel_task(app.state.flow_analysis_task, "Flow analysis service stopped")
+    cancel_task(app.state.camera_feed_monitor_task, "Camera feed monitor scheduler stopped")
     # Stop the auto-forecast watcher
     try:
         from services.forecasting.auto_pipeline import AutoForecastTrigger
@@ -227,6 +232,7 @@ app.include_router(calibration.router, prefix="/api", tags=["Calibration"], depe
 app.include_router(footfallinsights.router, prefix="/api", tags=["Footfall Insights"])
 app.include_router(location.router, prefix="/api", tags=["Location"])
 app.include_router(user_login.router, prefix="/api")
+app.include_router(crowd_control_service.router, prefix="/api", dependencies=[require_viewer])
     # Removed webhooks.router
 
 

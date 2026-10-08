@@ -1,5 +1,0 @@
-[
-  "tests/test_forecasting_automation.py::test_best_validation_accuracy_wins",
-  "tests/test_forecasting_automation.py::test_trigger_queues_follow_up_run_when_training_is_active",
-  "tests/test_forecasting_automation.py::test_validation_cutoffs_expand_with_available_history"
-]

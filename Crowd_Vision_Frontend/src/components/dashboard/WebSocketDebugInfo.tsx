@@ -43,13 +43,13 @@ export function WebSocketDebugInfo({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <span className="font-medium">Stream ID:</span>
-            <code className="ml-1 bg-card px-1 py-0.5 rounded">
+            <code className="ml-1 bg-white px-1 py-0.5 rounded">
               {selectedCamera.id}
             </code>
           </div>
           <div>
             <span className="font-medium">Camera ID:</span>
-            <code className="ml-1 bg-card px-1 py-0.5 rounded">
+            <code className="ml-1 bg-white px-1 py-0.5 rounded">
               {selectedCamera.cameraId || 'NOT SET'}
             </code>
           </div>
@@ -57,7 +57,7 @@ export function WebSocketDebugInfo({
 
         <div>
           <span className="font-medium">WebSocket Subscribing To:</span>
-          <code className="ml-1 bg-card px-1 py-0.5 rounded">
+          <code className="ml-1 bg-white px-1 py-0.5 rounded">
             {webSocketCameraId || 'null'}
           </code>
         </div>
