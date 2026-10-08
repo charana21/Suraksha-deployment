@@ -480,6 +480,62 @@ def create_document():
         "With this setting enabled, whenever electricity returns, the computer automatically powers on, boots Ubuntu, starts K3s, and runs the application completely unattended."
     )
 
+    # -------------------------------------------------------------
+    # SECTION 8: MULTI-SUBNET & CROSS-VLAN RESOLUTION GUIDE
+    # -------------------------------------------------------------
+    add_h1("8. Multi-Subnet & Cross-VLAN DNS Resolution Guide")
+    add_body(
+        "Why ping works but DNS fails across subnets: When you can ping 10.54.23.55 from a different subnet/VLAN, Layer-3 IP routing is working correctly. However, '.local' mDNS (Multicast DNS) uses multicast UDP packets on port 5353. By RFC 6762 standard, multicast packets are restricted to a single Layer-2 broadcast domain (TTL=1) and are dropped by enterprise routers between subnets by default.",
+        bold_prefix="Root Cause: "
+    )
+
+    add_callout(
+        "Diagnosis Summary:",
+        "• IP Routing: WORKING (Devices on Subnet B can reach 10.54.23.55 directly).\n"
+        "• mDNS Limitation: Multicast packets cannot jump across subnets/VLANs without a router relay.\n"
+        "• Goal: Provide a Unicast DNS name that resolves across ALL subnets in the office.",
+        is_success=False
+    )
+
+    add_h2("Solution 1: Corporate Domain A-Record (Recommended - No Router Setup Needed)")
+    add_body(
+        "The fastest, cleanest, and most robust solution across all subnets, Wi-Fi networks, and guest/staff VLANs is to create a DNS A-Record under your organization's domain (e.g. in Cloudflare, AWS Route 53, or GoDaddy):\n\n"
+        "    Record Type: A\n"
+        "    Name: crowdvision.tride.live (or dashboard.tride.live)\n"
+        "    Value / IP: 10.54.23.55\n"
+        "    TTL: Auto / 300\n\n"
+        "Why this works across ALL subnets:\n"
+        "• Every device on any subnet uses public DNS (Google 8.8.8.8, Cloudflare 1.1.1.1, or office DHCP).\n"
+        "• Public DNS resolves 'crowdvision.tride.live' to private IP 10.54.23.55.\n"
+        "• Because IP routing already works between your subnets, everyone opens http://crowdvision.tride.live/ with ZERO configuration on their PCs or office routers."
+    )
+
+    add_h2("Solution 2: Central Office Router / Local DNS Server (Enterprise Standard)")
+    add_body(
+        "If you prefer keeping the name strictly internal without public DNS, ask your office network / IT administrator to add a local DNS record on the central office router (FortiGate, Cisco, pfSense, UniFi, or Windows Server DNS):\n\n"
+        "    Hostname: crowdvision-dashboard (or crowdvision-dashboard.local)\n"
+        "    IP Address: 10.54.23.55\n\n"
+        "Why this works:\n"
+        "The central router handles DNS for all subnets. When any device on any subnet asks for 'crowdvision-dashboard', the router answers with 10.54.23.55 via standard Unicast DNS (UDP port 53)."
+    )
+
+    add_h2("Solution 3: Enable mDNS Gateway / Reflector on the Office Router")
+    add_body(
+        "If your office uses managed network switches/routers (e.g., Ubiquiti UniFi, Cisco, Aruba, pfSense, or Fortinet), enable 'mDNS Repeater' or 'mDNS Gateway' in the router management interface:\n"
+        "• UniFi: Settings -> Network -> Enable 'Multicast DNS'.\n"
+        "• pfSense / OPNsense: Install and enable 'Avahi / mDNS Repeater' package across interfaces.\n"
+        "• Cisco / Aruba: Enable 'mDNS Gateway / Service Discovery'.\n"
+        "This allows 'crowdvision-dashboard.local' to cross between different Wi-Fi and Ethernet subnets."
+    )
+
+    add_h2("Solution 4: Client hosts File (Immediate PC-Specific Fix)")
+    add_body(
+        "For immediate access from any specific computer on another subnet:\n"
+        "Add this line to the computer's hosts file:\n"
+        "    10.54.23.55    crowdvision-dashboard\n"
+        "The browser will immediately open http://crowdvision-dashboard/ across subnets."
+    )
+
     # Save document
     output_path = "/home/user/k3s/Suraksha-deployment/DNS-config.docx"
     doc.save(output_path)

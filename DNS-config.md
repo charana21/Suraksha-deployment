@@ -243,3 +243,49 @@ To ensure the HP Z6 G4 Workstation automatically turns back on if electricity is
 
 With this setting enabled, whenever power returns, the computer automatically powers on, boots Ubuntu, starts K3s, and runs the entire application completely unattended.
 
+---
+
+## 8. Multi-Subnet & Cross-VLAN DNS Resolution Guide
+
+### Why Ping Works But `.local` DNS Fails Across Subnets
+When you can **ping `10.54.23.55`** from a different office subnet or Wi-Fi network, **Layer-3 IP routing is working properly**.
+
+However, `.local` domain names rely on **mDNS (Multicast DNS / RFC 6762)** over UDP port 5353. By internet standard, multicast packets are **strictly Link-Local** (TTL=1) and **cannot cross Layer-3 routers or VLANs**. Office routers drop multicast packets between subnets by default to prevent broadcast storms.
+
+### 4 Solutions for Multi-Subnet Resolution
+
+#### Solution 1: Corporate Domain A-Record (Recommended — Zero Network Changes)
+Add an internal A-Record under your organization's domain (in Cloudflare, AWS Route 53, GoDaddy, etc.) pointing to the private IP:
+* **Record Type:** `A`
+* **Name:** `crowdvision.tride.live` *(or `dashboard.tride.live`)*
+* **Target IP:** `10.54.23.55`
+
+**Why this works across ALL subnets:**
+* Every computer and mobile device across any office Wi-Fi, Ethernet, or VLAN queries standard public DNS.
+* Public DNS returns `10.54.23.55`.
+* Since IP routing between subnets already works, everyone opens **`http://crowdvision.tride.live/`** immediately with zero configuration.
+
+#### Solution 2: Central Office Router / Intranet DNS Server (Enterprise Standard)
+Ask your office network / IT administrator to add a local DNS record on the central office gateway/router (FortiGate, Cisco, pfSense, UniFi, or Windows Server Active Directory DNS):
+* **Hostname:** `crowdvision-dashboard` *(or `crowdvision-dashboard.office`)*
+* **IP Address:** `10.54.23.55`
+
+Since all subnets in the office query the central office router for DNS, all subnets resolve the name.
+
+#### Solution 3: Enable mDNS Gateway / Repeater on the Office Router
+If your office uses managed network equipment (UniFi, Cisco, Aruba, Fortinet, pfSense):
+* **UniFi:** In Network Settings, enable **Multicast DNS (mDNS)**.
+* **pfSense / OPNsense:** Enable the **mDNS Repeater / Avahi** service across all VLAN interfaces.
+* **Cisco / Aruba:** Enable **mDNS Gateway / Service Discovery**.
+
+This allows the router to forward `crowdvision-dashboard.local` across all subnets.
+
+#### Solution 4: Client `hosts` File (Immediate PC-Specific Fix)
+On any computer in another subnet:
+Add to `hosts` file:
+```text
+10.54.23.55    crowdvision-dashboard
+```
+The browser will immediately open `http://crowdvision-dashboard/`.
+
+
