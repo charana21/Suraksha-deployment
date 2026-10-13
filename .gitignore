@@ -1,1 +1,148 @@
+# =============================================================================
+# SECRETS, CREDENTIALS, AND SENSITIVE FILES
+# =============================================================================
+# Environment files (secrets, local configurations)
+.env
+.env.*
+*.env
+!.env.example
+!.env.template
+!*.example.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+production.env
+secrets.env
+
+# Cloud & Service Account keys
+*service-account*.json
+*service_account*.json
+*credentials*.json
+*credential*.json
+client_secret*.json
+firebase-service-account*.json
+google-credentials*.json
+token.json
+
+# Private keys, certificates & stores
+*.pem
+*.key
+*.pkcs12
+*.pfx
+*.p12
+*.crt
+*.cer
+*.der
+id_rsa
+id_rsa*
+id_ed25519
+id_ed25519*
+id_ecdsa*
+id_dsa*
+
+# AWS & Cloud CLI configs
+.aws/
+.gcloud/
+.azure/
+
+# Kubernetes Secrets & runtime manifests with real secrets
+*secrets.yaml
+*.secret.yaml
+k3s/stack/secrets.env
+k3s/secrets.yaml
+!*example*.yaml
+!*template*.yaml
+!k3s/secret.yaml
+
+# Database dumps and SQLite files
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql
+
+# Logs
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =============================================================================
+# DEPENDENCIES AND RUNTIME ARTIFACTS
+# =============================================================================
+# Node.js
+node_modules/
+dist/
+dist-ssr/
+.npm/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.envrc
+
+# Testing & Coverage
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# =============================================================================
+# IDE, EDITORS, AND OS FILES
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+.claude/
+.copilot/
+
+# Scratch & temporary testing files
+scratch/test_*.py
+_tmp_*/
+

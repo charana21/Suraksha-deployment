@@ -98,17 +98,17 @@ def load_active_camera_ids() -> List[str]:
     """Fetch active camera IDs from MongoDB if available, otherwise use default active set."""
     try:
         from pymongo import MongoClient
-        uri = os.environ.get(
-            "MONGODB_URI",
-            "mongodb://suraksha_ai:Tr%21deSuraksha%4026@telematics-mongo0.evrides.in:12021/crowdvision?authSource=crowdvision"
-        )
-        dbname = os.environ.get("MONGODB_DATABASE", "crowdvision_prod")
-        client = MongoClient(uri, serverSelectionTimeoutMS=3000)
-        cams = list(client[dbname].cameras.find({"is_active": True}, {"camera_id": 1}))
-        if cams:
-            cids = [c["camera_id"] for c in cams if "camera_id" in c]
-            log_console(f"Loaded {len(cids)} active cameras from database {dbname}.")
-            return sorted(cids)
+        uri = os.environ.get("MONGODB_URI")
+        if not uri:
+            log_console("MONGODB_URI not configured in environment; using default active fleet.")
+        else:
+            dbname = os.environ.get("MONGODB_DATABASE", "crowdvision_prod")
+            client = MongoClient(uri, serverSelectionTimeoutMS=3000)
+            cams = list(client[dbname].cameras.find({"is_active": True}, {"camera_id": 1}))
+            if cams:
+                cids = [c["camera_id"] for c in cams if "camera_id" in c]
+                log_console(f"Loaded {len(cids)} active cameras from database {dbname}.")
+                return sorted(cids)
     except Exception as e:
         log_console(f"Could not query MongoDB for cameras ({e}), using default fleet.")
 

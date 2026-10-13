@@ -27,7 +27,7 @@ const { Client: TwilioClient } = require('twilio');
 
 // --- Database Configuration ---
 // URI to the PRODUCTION/CLOUD MongoDB
-// const MONGODB_URI = "mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority";
+// Set MONGODB_URI via environment: process.env.MONGODB_URI="mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority"
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // --- Alert Threshold ---

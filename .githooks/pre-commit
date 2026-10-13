@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Suraksha Pre-Commit Secret Guard Hook
+# Prevents committing secrets or sensitive files into git
+# =============================================================================
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCANNER="$REPO_ROOT/scripts/scan_secrets.py"
+
+if [[ ! -f "$SCANNER" ]]; then
+    echo "[WARN] Secret scanner script not found at $SCANNER. Skipping check." >&2
+    exit 0
+fi
+
+python3 "$SCANNER" --staged
